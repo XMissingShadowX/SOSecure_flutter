@@ -4,12 +4,14 @@ import 'package:go_router/go_router.dart';
 import '../after/after_tab_screen.dart';
 import '../before/before_tab_screen.dart';
 import '../during/during_tab_screen.dart';
+import '../during/sos_button.dart';
 import '../home/home_tab_screen.dart';
 import '../medic/medic_tab_screen.dart';
 
 // Puerto de components/app-shell.tsx + bottom-navigation.tsx. Un solo AppBar para las 5
 // tabs (con el acceso a Ajustes) en vez de uno por tab. El watcher único de geolocalización
-// vive en location_provider.dart (Fase 1); el botón SOS flotante llega en la Fase 2.
+// vive en location_provider.dart (Fase 1). El SOSButton se superpone a las 5 tabs vía
+// Stack, igual que en la web (fixed sobre toda la app, no solo sobre during-tab).
 class AppShellScreen extends StatefulWidget {
   const AppShellScreen({super.key});
 
@@ -43,7 +45,12 @@ class _AppShellScreenState extends State<AppShellScreen> {
           ),
         ],
       ),
-      body: IndexedStack(index: _index, children: _tabs),
+      body: Stack(
+        children: [
+          IndexedStack(index: _index, children: _tabs),
+          const SosButton(),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),

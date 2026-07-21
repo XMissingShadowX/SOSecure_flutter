@@ -1,17 +1,29 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Faltaba desde el scaffold inicial (Fase 0) — sin este permiso CUALQUIER llamada
+         de red (Supabase, backend Next.js) falla con "Failed host lookup" para
+         cualquier hostname, sin importar el DNS/red del dispositivo. Causa raíz real
+         del bug de pantalla en blanco + fallos de red investigados en la Fase 2. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Fase 1: geolocator (location_provider.dart). Fase 0 ya pide notification vía
          permission_handler — POST_NOTIFICATIONS también debe declararse aquí para
          Android 13+, o la solicitud de permiso simplemente no aparece. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Fase 2: RecorderController (cámara/mic) + foreground service para que la
+         grabación/ubicación del SOS sobrevivan con la app en segundo plano. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <application
         android:label="sosecure_flutter"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
-        <!-- TEMPORAL: solo para probar contra Next.js local vía adb reverse (Env.apiBaseUrl
-             apuntando a http://localhost:3000). Quitar antes de apuntar a producción HTTPS. -->
+        android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
             android:exported="true"

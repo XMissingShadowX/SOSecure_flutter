@@ -106,7 +106,39 @@ class _PinLockScreenState extends State<PinLockScreen> {
     if (_loading) {
       return const Scaffold(body: SizedBox.shrink());
     }
-    if (_config == null || !_config!.pinEnabled || !_config!.pinConfigured) {
+    // Si _config sigue null tras el fetch fue porque _loadConfig() cayó en el catch —
+    // hay que mostrar el error, no quedarse en blanco (bug real: antes esto devolvía
+    // el mismo SizedBox.shrink() de "no hay PIN configurado", dejando la app
+    // silenciosamente en blanco para siempre ante cualquier falla de red/API).
+    if (_config == null) {
+      return Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
+                  const SizedBox(height: 12),
+                  Text(_error ?? 'No se pudo verificar el estado del PIN.', textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () => setState(() {
+                      _loading = true;
+                      _error = null;
+                      _loadConfig();
+                    }),
+                    child: const Text('Reintentar'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    if (!_config!.pinEnabled || !_config!.pinConfigured) {
       return const Scaffold(body: SizedBox.shrink());
     }
 

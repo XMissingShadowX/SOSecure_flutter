@@ -66,5 +66,23 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Fase 2: RecorderController (paquete camera) + ubicación/grabación en segundo
+	     plano durante una alerta SOS activa. Sin equivalente de "foreground service" en
+	     iOS — los Background Modes son la contraparte declarativa (ver
+	     platform/sos_foreground_service.dart). -->
+	<key>NSCameraUsageDescription</key>
+	<string>SOSecure necesita la cámara para grabar video durante una alerta SOS.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>SOSecure necesita el micrófono para grabar audio durante una alerta SOS.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>SOSecure necesita tu ubicación para compartirla con tus contactos de emergencia.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>SOSecure necesita tu ubicación en segundo plano mientras una alerta SOS está activa.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>audio</string>
+		<string>processing</string>
+	</array>
 </dict>
 </plist>

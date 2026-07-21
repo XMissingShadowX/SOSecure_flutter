@@ -7,8 +7,12 @@ class Env {
 
   // Mismo backend Next.js que consume la web — las rutas /api/pin, /api/chat, etc.
   // viven ahí, sin cambios (ver plan de migración).
-  // TEMPORAL: apuntando a Next.js local vía adb reverse tcp:3000 tcp:3000, para probar
-  // el fix de getAuthedUser() antes de que se despliegue a producción. Revertir a
-  // 'https://sosecure.site' antes de hacer merge/build de release.
-  static const apiBaseUrl = 'http://localhost:3000';
+  // NOTA: 'sosecure.site' es el dominio documentado en CLAUDE.md como fuente de verdad
+  // para los redirects de Magic Link (Supabase Auth) — pero en la red de prueba usada
+  // para la Fase 2 ese dominio no resolvía DNS en el teléfono físico (fallo consistente,
+  // no transitorio; sí resuelve desde la PC). Se usa el dominio de Vercel directamente
+  // para desbloquear las pruebas. Si se prueba el flujo de "olvidé mi PIN"
+  // (Magic Link) desde Flutter, revisar si Supabase acepta este dominio en su allowlist
+  // de redirect URLs, o volver a 'https://sosecure.site' una vez resuelto el DNS.
+  static const apiBaseUrl = 'https://sosecure-ten.vercel.app';
 }
