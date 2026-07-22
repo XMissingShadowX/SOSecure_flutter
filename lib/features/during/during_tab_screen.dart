@@ -15,6 +15,8 @@ import '../../domain/models/location_sample.dart';
 import '../../state/contacts_provider.dart';
 import '../../state/location_history_provider.dart';
 import '../../state/location_provider.dart';
+import '../../state/auth_provider.dart';
+import '../../state/offline_queue_provider.dart';
 import '../../state/sos_provider.dart';
 import '../../state/standalone_recorder_provider.dart';
 import '../../state/voice_sos_provider.dart';
@@ -142,7 +144,34 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
         if (mounted) setState(() => _done = false);
       });
     } catch (e) {
-      setState(() => _error = 'Error al enviar el reporte: $e');
+      // Puerto de la cola offline (offline_queue_provider.dart) también para
+      // reportes de incidentes, no solo alertas SOS — antes de esto un fallo
+      // de red aquí simplemente perdía el reporte, sin reintento.
+      final userId = ref.read(currentUserProvider)?.id;
+      if (userId != null) {
+        await ref.read(offlineQueueProvider.notifier).enqueue(
+          table: 'incidents',
+          payload: {
+            'user_id': userId,
+            'title': _typeLabels[_type]!,
+            'description': _descriptionController.text.isEmpty ? null : _descriptionController.text,
+            'incident_type': _type.value,
+            'severity': severity,
+            'latitude': location.latitude,
+            'longitude': location.longitude,
+          },
+        );
+        setState(() {
+          _done = true;
+          _descriptionController.clear();
+          _answers = ['', '', ''];
+        });
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted) setState(() => _done = false);
+        });
+      } else {
+        setState(() => _error = 'Error al enviar el reporte: $e');
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
     }

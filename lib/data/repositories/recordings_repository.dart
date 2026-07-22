@@ -172,6 +172,37 @@ class RecordingsRepository {
     return recordings;
   }
 
+  // Puerto de la consulta de video vinculado a una alerta en la vista de
+  // detalle de after-tab.tsx (equivalente a /api/emergency/[id]/video, pero
+  // consumido directo desde el cliente autenticado en vez de una ruta pública).
+  Future<StoredRecording?> getRecordingForAlert(String alertId) async {
+    final data = await supabase
+        .from('recordings')
+        .select('id, recording_type, storage_path, duration_ms, created_at, latitude, longitude')
+        .eq('sos_alert_id', alertId)
+        .order('created_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    if (data == null) return null;
+    final path = data['storage_path'] as String;
+    String? url;
+    try {
+      url = await supabase.storage.from('recordings').createSignedUrl(path, 3600);
+    } catch (_) {
+      url = null;
+    }
+    return StoredRecording(
+      id: data['id'] as String,
+      recordingType: data['recording_type'] as String,
+      storagePath: path,
+      signedUrl: url,
+      durationMs: data['duration_ms'] as int? ?? 0,
+      createdAt: DateTime.parse(data['created_at'] as String),
+      latitude: (data['latitude'] as num?)?.toDouble(),
+      longitude: (data['longitude'] as num?)?.toDouble(),
+    );
+  }
+
   Future<void> deleteRecording(StoredRecording rec) async {
     await supabase.storage.from('recordings').remove([rec.storagePath]);
     await supabase.from('recordings').delete().eq('id', rec.id);

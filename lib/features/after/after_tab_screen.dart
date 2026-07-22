@@ -285,6 +285,7 @@ class _AlertTile extends ConsumerWidget {
     final isActive = alert.status == 'active';
     return ListTile(
       contentPadding: EdgeInsets.zero,
+      onTap: () => _showDetail(context, ref),
       leading: Icon(Icons.warning_amber_rounded, color: destructive, size: 20),
       title: Text(alert.createdAt?.toLocal().toString().substring(0, 16) ?? '—', style: const TextStyle(fontSize: 13)),
       subtitle: Text('${alert.latitude.toStringAsFixed(4)}, ${alert.longitude.toStringAsFixed(4)}', style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
@@ -312,6 +313,97 @@ class _AlertTile extends ConsumerWidget {
       default:
         return 'Resuelta';
     }
+  }
+
+  void _showDetail(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => _AlertDetailSheet(alert: alert),
+    );
+  }
+}
+
+// Vista de detalle de alerta (pendiente del plan original de Fase 3): info
+// completa de una alerta pasada — estado, ubicación, contactos notificados,
+// y la grabación vinculada si existe (vía sos_alert_id en `recordings`).
+class _AlertDetailSheet extends ConsumerStatefulWidget {
+  final SosAlert alert;
+  const _AlertDetailSheet({required this.alert});
+
+  @override
+  ConsumerState<_AlertDetailSheet> createState() => _AlertDetailSheetState();
+}
+
+class _AlertDetailSheetState extends ConsumerState<_AlertDetailSheet> {
+  final _recordingsRepo = RecordingsRepository();
+  StoredRecording? _recording;
+  bool _loadingRecording = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _recordingsRepo.getRecordingForAlert(widget.alert.id).then((rec) {
+      if (mounted) setState(() {
+        _recording = rec;
+        _loadingRecording = false;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final alert = widget.alert;
+    final destructive = Theme.of(context).colorScheme.error;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: destructive, size: 22),
+                const SizedBox(width: 8),
+                Text('Alerta #${alert.id.substring(0, 8)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _row('Fecha', alert.createdAt?.toLocal().toString().substring(0, 19) ?? '—'),
+            _row('Estado', alert.status),
+            _row('Ubicación', '${alert.latitude.toStringAsFixed(6)}, ${alert.longitude.toStringAsFixed(6)}'),
+            const SizedBox(height: 8),
+            const Text('Contactos notificados', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+            const SizedBox(height: 6),
+            alert.contactsNotified.isEmpty
+                ? const Text('Ninguno', style: TextStyle(fontSize: 12, color: Colors.grey))
+                : Wrap(spacing: 6, runSpacing: 6, children: alert.contactsNotified.map((n) => Chip(label: Text(n, style: const TextStyle(fontSize: 11)))).toList()),
+            const SizedBox(height: 16),
+            const Text('Grabación', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+            const SizedBox(height: 6),
+            if (_loadingRecording)
+              const Center(child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator()))
+            else if (_recording == null)
+              const Text('No hay grabación vinculada a esta alerta.', style: TextStyle(fontSize: 12, color: Colors.grey))
+            else
+              _RecordingTile(rec: _recording!),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _row(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          SizedBox(width: 90, child: Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey))),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
+        ],
+      ),
+    );
   }
 }
 
