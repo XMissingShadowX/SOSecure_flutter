@@ -140,12 +140,20 @@ class _SosButtonState extends ConsumerState<SosButton> {
             ),
           ),
           const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(color: destructive.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(999)),
-            child: Text(
-              _holding ? 'Manteniendo...' : 'Mantén presionado para SOS',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: destructive),
+          // Solo la etiqueta de texto lleva el desenfoque de fondo — el botón
+          // en sí queda tal cual, sin blur (ajuste pedido tras ver el diseño).
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(color: destructive.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(999)),
+                child: Text(
+                  _holding ? 'Manteniendo...' : 'Mantén presionado para SOS',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: destructive),
+                ),
+              ),
             ),
           ),
         ],

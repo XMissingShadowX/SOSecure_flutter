@@ -6,8 +6,10 @@ import '../data/repositories/alerts_repository.dart';
 import '../data/repositories/recordings_repository.dart';
 import '../domain/models/sos_alert.dart';
 import '../platform/sos_foreground_service.dart';
+import 'auth_provider.dart';
 import 'contacts_provider.dart';
 import 'location_provider.dart';
+import 'offline_queue_provider.dart';
 import 'recorder_controller.dart';
 
 part 'sos_provider.g.dart';
@@ -86,7 +88,21 @@ class Sos extends _$Sos {
       });
     } catch (_) {
       // La alerta en Supabase falló (sin conexión, etc.) — la grabación local sigue
-      // en curso; el usuario puede reintentar guardar al finalizar.
+      // en curso. Se encola para reintentar en cuanto vuelva la conexión (ver
+      // offline_queue_provider.dart), en vez de perder la alerta silenciosamente.
+      final userId = ref.read(currentUserProvider)?.id;
+      if (userId != null) {
+        await ref.read(offlineQueueProvider.notifier).enqueue(
+          table: 'sos_alerts',
+          payload: {
+            'user_id': userId,
+            'latitude': location.latitude,
+            'longitude': location.longitude,
+            'status': 'active',
+            'contacts_notified': names,
+          },
+        );
+      }
     }
   }
 

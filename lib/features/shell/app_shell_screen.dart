@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../state/offline_queue_provider.dart';
 import '../after/after_tab_screen.dart';
 import '../before/before_tab_screen.dart';
 import '../during/during_tab_screen.dart';
@@ -12,14 +14,14 @@ import '../medic/medic_tab_screen.dart';
 // tabs (con el acceso a Ajustes) en vez de uno por tab. El watcher único de geolocalización
 // vive en location_provider.dart (Fase 1). El SOSButton se superpone a las 5 tabs vía
 // Stack, igual que en la web (fixed sobre toda la app, no solo sobre during-tab).
-class AppShellScreen extends StatefulWidget {
+class AppShellScreen extends ConsumerStatefulWidget {
   const AppShellScreen({super.key});
 
   @override
-  State<AppShellScreen> createState() => _AppShellScreenState();
+  ConsumerState<AppShellScreen> createState() => _AppShellScreenState();
 }
 
-class _AppShellScreenState extends State<AppShellScreen> {
+class _AppShellScreenState extends ConsumerState<AppShellScreen> {
   int _index = 0;
 
   static const _titles = ['Inicio', 'Antes', 'Durante', 'Después', 'Apoyo'];
@@ -34,10 +36,24 @@ class _AppShellScreenState extends State<AppShellScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final pendingCount = ref.watch(offlineQueueProvider).length;
     return Scaffold(
       appBar: AppBar(
         title: Text(_titles[_index]),
         actions: [
+          // Espeja el badge de header_sync en app-shell.tsx — cuántos elementos
+          // (alertas SOS, en esta fase) están esperando reconexión para subirse.
+          if (pendingCount > 0)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Center(
+                child: Chip(
+                  avatar: const Icon(Icons.cloud_off, size: 16),
+                  label: Text('$pendingCount pendiente${pendingCount > 1 ? 's' : ''}'),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Ajustes',

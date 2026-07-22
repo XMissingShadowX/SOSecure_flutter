@@ -55,6 +55,22 @@ dependencies:
   uuid: ^4.5.1
   flutter_foreground_task: ^8.17.0
 
+  # Fase 3 — after-tab, ubicación en vivo compartida, temporizador, cola offline
+  connectivity_plus: ^6.1.0
+  url_launcher: ^6.3.1
+  speech_to_text: ^7.0.0
+  gal: ^2.3.0
+  record: ^5.2.0
+  share_plus: ^10.1.4
+
+dependency_overrides:
+  # record_linux 0.7.2 (resuelto transitivamente por el paquete `record`) no
+  # implementa la interfaz completa de record_platform_interface ^1.6.0 —
+  # rompe la compilación de Android por más que el proyecto no use Linux
+  # desktop (el analizador de plugins igual resuelve todas las plataformas
+  # declaradas en el pubspec.lock). Se fija a una versión más nueva compatible.
+  record_linux: ^1.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

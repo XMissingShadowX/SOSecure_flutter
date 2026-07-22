@@ -6,6 +6,7 @@ class SosAlert {
   final double longitude;
   final String status; // 'active' | 'resolved' | 'false_alarm'
   final List<String> contactsNotified;
+  final DateTime? createdAt;
 
   SosAlert({
     required this.id,
@@ -14,6 +15,7 @@ class SosAlert {
     required this.longitude,
     required this.status,
     required this.contactsNotified,
+    this.createdAt,
   });
 
   factory SosAlert.fromJson(Map<String, dynamic> json) {
@@ -24,6 +26,7 @@ class SosAlert {
       longitude: (json['longitude'] as num).toDouble(),
       status: json['status'] as String? ?? 'active',
       contactsNotified: (json['contacts_notified'] as List?)?.cast<String>() ?? const [],
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : null,
     );
   }
 }

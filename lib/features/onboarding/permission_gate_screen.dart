@@ -176,8 +176,11 @@ class _PermissionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final safe = Theme.of(context).colorScheme.tertiary;
+    // Color.alphaBlend contra la superficie real — un color translúcido
+    // directo en `color:` de Card se compone mal con el tinte/sombra de
+    // Material 3 y se ve oscuro en modo claro en vez de un tinte suave.
     return Card(
-      color: granted ? safe.withValues(alpha: 0.08) : null,
+      color: granted ? Color.alphaBlend(safe.withValues(alpha: 0.08), Theme.of(context).colorScheme.surface) : null,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
