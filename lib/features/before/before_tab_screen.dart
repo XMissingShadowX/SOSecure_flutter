@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart' as ll;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../domain/models/live_contact.dart';
 import '../../state/contact_locations_provider.dart';
 import '../../state/live_sharing_provider.dart';
 import '../../state/location_provider.dart';
 import '../../platform/sos_alarm.dart';
 import '../../state/security_timer_provider.dart';
 import '../../state/voice_sos_provider.dart';
+import '../map/map_tab_screen.dart';
+import '../routes/routes_tab_screen.dart';
 
 // Puerto parcial de components/tabs/before-tab.tsx para la Fase 3: compartir
 // ubicación en vivo (hooks/use-live-location.ts) y el temporizador de
@@ -54,20 +59,90 @@ class _BeforeTabScreenState extends ConsumerState<BeforeTabScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Orden y agrupación calcada de before-tab.tsx: cabecera, luego las
+    // secciones colapsables de rutas y mapa (ambas cerradas por defecto, igual
+    // que routesExpanded/mapExpanded en la web), y después temporizador, zonas
+    // seguras, ubicación en vivo y palabra clave — en ese orden exacto.
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: const [
         _BeforeStatusCard(),
         SizedBox(height: 16),
+        _CollapsibleSection(
+          icon: Icons.navigation_outlined,
+          title: 'Ruta segura',
+          child: RoutesTabScreen(),
+        ),
+        SizedBox(height: 16),
+        _CollapsibleSection(
+          icon: Icons.map_outlined,
+          title: 'Mapa de incidentes',
+          child: MapTabScreen(),
+        ),
+        SizedBox(height: 16),
         _SecurityTimerCard(),
+        SizedBox(height: 16),
+        _SafeZonesCard(),
         SizedBox(height: 16),
         _LiveSharingCard(),
         SizedBox(height: 16),
         _VoiceKeywordCard(),
-        SizedBox(height: 16),
-        _SafeZonesCard(),
-        SizedBox(height: 16),
-        _RoutesPlaceholder(),
+      ],
+    );
+  }
+}
+
+// Puerto de los botones routesExpanded/mapExpanded de before-tab.tsx — ambas
+// secciones arrancan colapsadas y el usuario las abre a demanda.
+class _CollapsibleSection extends StatefulWidget {
+  final IconData icon;
+  final String title;
+  final Widget child;
+  const _CollapsibleSection({
+    required this.icon,
+    required this.title,
+    required this.child,
+  });
+
+  @override
+  State<_CollapsibleSection> createState() => _CollapsibleSectionState();
+}
+
+class _CollapsibleSectionState extends State<_CollapsibleSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                Icon(widget.icon, size: 20, color: primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+                Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  color: Colors.grey,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_expanded) ...[const SizedBox(height: 8), widget.child],
       ],
     );
   }
@@ -275,6 +350,7 @@ class _LiveSharingCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isSharing = ref.watch(liveSharingProvider);
     final contacts = ref.watch(contactLocationsProvider);
+    final location = ref.watch(locationWatcherProvider);
     final primary = Theme.of(context).colorScheme.primary;
 
     return Card(
@@ -334,9 +410,129 @@ class _LiveSharingCard extends ConsumerWidget {
                 ),
               ),
             ],
+            if ((isSharing && location.hasCoordinates) ||
+                contacts.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _LiveSharingMap(
+                selfPoint: (isSharing && location.hasCoordinates)
+                    ? ll.LatLng(location.latitude!, location.longitude!)
+                    : null,
+                contacts: contacts,
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+}
+
+// Puerto simplificado de TrackingMap (before-tab.tsx): un marcador verde para
+// "Tú" (si estás compartiendo) y uno azul por cada contacto con ubicación en
+// vivo — sin el enfoque/click-to-focus de la web, solo la vista conjunta.
+class _LiveSharingMap extends StatelessWidget {
+  final ll.LatLng? selfPoint;
+  final List<LiveContact> contacts;
+  const _LiveSharingMap({required this.selfPoint, required this.contacts});
+
+  @override
+  Widget build(BuildContext context) {
+    final points = [
+      if (selfPoint != null) selfPoint!,
+      ...contacts.map((c) => ll.LatLng(c.latitude, c.longitude)),
+    ];
+    if (points.isEmpty) return const SizedBox.shrink();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        height: 220,
+        child: FlutterMap(
+          options: MapOptions(
+            initialCenter: points.first,
+            initialZoom: 15,
+            initialCameraFit: points.length > 1
+                ? CameraFit.bounds(
+                    bounds: LatLngBounds.fromPoints(points),
+                    padding: const EdgeInsets.all(40),
+                  )
+                : null,
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: isDark
+                  ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                  : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+              subdomains: const ['a', 'b', 'c', 'd'],
+              userAgentPackageName: 'com.sosecure.app',
+            ),
+            MarkerLayer(
+              markers: [
+                if (selfPoint != null)
+                  Marker(
+                    point: selfPoint!,
+                    width: 90,
+                    height: 48,
+                    child: const _LiveMarkerLabel(
+                      label: 'Tú',
+                      color: Color(0xFF4ADE80),
+                    ),
+                  ),
+                ...contacts.map(
+                  (c) => Marker(
+                    point: ll.LatLng(c.latitude, c.longitude),
+                    width: 90,
+                    height: 48,
+                    child: _LiveMarkerLabel(
+                      label: c.displayName,
+                      color: const Color(0xFF3B82F6),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LiveMarkerLabel extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _LiveMarkerLabel({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.7),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(color: Colors.white, fontSize: 10),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -513,22 +709,5 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
           .read(voiceSosProvider.notifier)
           .setKeyword(result.trim().toLowerCase());
     }
-  }
-}
-
-class _RoutesPlaceholder extends StatelessWidget {
-  const _RoutesPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Card(
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Text(
-          'Rutas seguras y mapa — Fase 5',
-          style: TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-      ),
-    );
   }
 }

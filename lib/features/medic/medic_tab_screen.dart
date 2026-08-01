@@ -120,6 +120,7 @@ class _ChatBodyState extends ConsumerState<_ChatBody> {
   Widget build(BuildContext context) {
     final chat = ref.watch(medicChatProvider);
     final simpleMode = ref.watch(simpleModeProvider);
+    final fontSize = ref.watch(chatFontSizeProvider);
     final primary = Theme.of(context).colorScheme.primary;
 
     _scrollToBottom();
@@ -183,7 +184,10 @@ class _ChatBodyState extends ConsumerState<_ChatBody> {
               if (index >= chat.messages.length) {
                 return const _TypingIndicator();
               }
-              return _MessageBubble(message: chat.messages[index]);
+              return _MessageBubble(
+                message: chat.messages[index],
+                fontSize: fontSize,
+              );
             },
           ),
         ),
@@ -216,6 +220,7 @@ class _ChatBodyState extends ConsumerState<_ChatBody> {
                   minLines: simpleMode ? 3 : 1,
                   maxLines: 5,
                   textInputAction: TextInputAction.send,
+                  style: TextStyle(fontSize: fontSize),
                   decoration: const InputDecoration(
                     hintText: 'Escribe cómo te sientes...',
                     border: OutlineInputBorder(),
@@ -278,7 +283,8 @@ class _TypingIndicator extends StatelessWidget {
 
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
-  const _MessageBubble({required this.message});
+  final double fontSize;
+  const _MessageBubble({required this.message, required this.fontSize});
 
   @override
   Widget build(BuildContext context) {
@@ -311,14 +317,14 @@ class _MessageBubble extends StatelessWidget {
                   color: isUser
                       ? onPrimary
                       : Theme.of(context).colorScheme.onSurface,
-                  fontSize: 16,
+                  fontSize: fontSize,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 _formatTime(message.timestamp),
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: (fontSize * 0.7).clamp(10, 14),
                   color:
                       (isUser
                               ? onPrimary

@@ -138,6 +138,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onChanged: (value) =>
                 ref.read(simpleModeProvider.notifier).set(value),
           ),
+          const _ChatFontSizeTile(),
           const Divider(),
           const _SectionLabel('Seguridad'),
           if (_loadingPin)
@@ -203,6 +204,67 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (selected != null && context.mounted) {
       await context.setLocale(selected);
     }
+  }
+}
+
+// No existe en la web (ahí el tamaño del chat es fijo) — agregado a pedido
+// para accesibilidad, con presets discretos en vez de un slider libre para
+// que la fuente resultante sea predecible.
+class _ChatFontSizeTile extends ConsumerWidget {
+  const _ChatFontSizeTile();
+
+  static const _sizes = [14.0, 16.0, 18.0, 20.0, 24.0];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final fontSize = ref.watch(chatFontSizeProvider);
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Tamaño de letra en Apoyo',
+                style: TextStyle(color: Colors.grey),
+              ),
+              Text(
+                '${fontSize.toInt()}pt',
+                style: TextStyle(fontWeight: FontWeight.bold, color: primary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: _sizes.map((size) {
+              final selected = fontSize == size;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: selected ? primary : null,
+                      foregroundColor: selected ? Colors.white : null,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                    onPressed: () =>
+                        ref.read(chatFontSizeProvider.notifier).set(size),
+                    child: Text(
+                      'A',
+                      style: TextStyle(fontSize: size.clamp(14, 20)),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
   }
 }
 

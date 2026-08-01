@@ -31,7 +31,9 @@ class DuringTabScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      // Bottom extra para que la última tarjeta no quede tapada por el botón
+      // flotante SOS — mismo ajuste que en before_tab_screen.dart.
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: const [
         _StatusCard(),
         SizedBox(height: 16),
@@ -60,18 +62,29 @@ class _StatusCard extends ConsumerWidget {
     // — mismo fix para el mismo glitch de Card + color translúcido en M3.
     final surface = Theme.of(context).colorScheme.surface;
     return Card(
-      color: sos.active ? Color.alphaBlend(destructive.withValues(alpha: 0.08), surface) : Color.alphaBlend(primary.withValues(alpha: 0.05), surface),
+      color: sos.active
+          ? Color.alphaBlend(destructive.withValues(alpha: 0.08), surface)
+          : Color.alphaBlend(primary.withValues(alpha: 0.05), surface),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            Icon(Icons.radio, color: sos.active ? destructive : primary, size: 20),
+            Icon(
+              Icons.radio,
+              color: sos.active ? destructive : primary,
+              size: 20,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                sos.active ? 'SOS activo — ${sos.alert != null ? "Alerta #${sos.alert!.id.substring(0, 8)}" : "creando alerta..."}' : 'Modo emergencia — reporta y graba evidencia',
+                sos.active
+                    ? 'SOS activo — ${sos.alert != null ? "Alerta #${sos.alert!.id.substring(0, 8)}" : "creando alerta..."}'
+                    : 'Modo emergencia — reporta y graba evidencia',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.w600, color: sos.active ? destructive : null),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: sos.active ? destructive : null,
+                ),
               ),
             ),
           ],
@@ -86,7 +99,8 @@ class _IncidentReportCard extends ConsumerStatefulWidget {
   const _IncidentReportCard();
 
   @override
-  ConsumerState<_IncidentReportCard> createState() => _IncidentReportCardState();
+  ConsumerState<_IncidentReportCard> createState() =>
+      _IncidentReportCardState();
 }
 
 class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
@@ -115,7 +129,8 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
     setState(() => _error = null);
     final location = ref.read(locationWatcherProvider);
     final questions = incidentQuestions[_type] ?? [];
-    final allAnswered = questions.isEmpty || _answers.every((a) => a.isNotEmpty);
+    final allAnswered =
+        questions.isEmpty || _answers.every((a) => a.isNotEmpty);
     if (!location.hasCoordinates) {
       setState(() => _error = 'Activa la ubicación para reportar.');
       return;
@@ -125,12 +140,16 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
       return;
     }
     setState(() => _sending = true);
-    final severity = questions.isNotEmpty ? calculateSeverity(_answers) : 'medium';
+    final severity = questions.isNotEmpty
+        ? calculateSeverity(_answers)
+        : 'medium';
     try {
       await _repo.reportIncident(
         type: _type,
         title: _typeLabels[_type]!,
-        description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
+        description: _descriptionController.text.isEmpty
+            ? null
+            : _descriptionController.text,
         severity: severity,
         latitude: location.latitude!,
         longitude: location.longitude!,
@@ -149,18 +168,22 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
       // de red aquí simplemente perdía el reporte, sin reintento.
       final userId = ref.read(currentUserProvider)?.id;
       if (userId != null) {
-        await ref.read(offlineQueueProvider.notifier).enqueue(
-          table: 'incidents',
-          payload: {
-            'user_id': userId,
-            'title': _typeLabels[_type]!,
-            'description': _descriptionController.text.isEmpty ? null : _descriptionController.text,
-            'incident_type': _type.value,
-            'severity': severity,
-            'latitude': location.latitude,
-            'longitude': location.longitude,
-          },
-        );
+        await ref
+            .read(offlineQueueProvider.notifier)
+            .enqueue(
+              table: 'incidents',
+              payload: {
+                'user_id': userId,
+                'title': _typeLabels[_type]!,
+                'description': _descriptionController.text.isEmpty
+                    ? null
+                    : _descriptionController.text,
+                'incident_type': _type.value,
+                'severity': severity,
+                'latitude': location.latitude,
+                'longitude': location.longitude,
+              },
+            );
         setState(() {
           _done = true;
           _descriptionController.clear();
@@ -190,16 +213,30 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
           children: [
             Row(
               children: [
-                Icon(Icons.add_circle_outline, color: Theme.of(context).colorScheme.tertiary, size: 20),
+                Icon(
+                  Icons.add_circle_outline,
+                  color: Theme.of(context).colorScheme.tertiary,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
-                const Text('Reportar incidente', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text(
+                  'Reportar incidente',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               ],
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<IncidentType>(
               value: _type,
-              decoration: const InputDecoration(labelText: 'Tipo de incidente', isDense: true),
-              items: _typeLabels.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+              decoration: const InputDecoration(
+                labelText: 'Tipo de incidente',
+                isDense: true,
+              ),
+              items: _typeLabels.entries
+                  .map(
+                    (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+                  )
+                  .toList(),
               onChanged: (v) {
                 if (v == null) return;
                 setState(() {
@@ -223,13 +260,26 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
                         for (final opt in const ['si', 'no', 'no_se'])
                           Expanded(
                             child: Padding(
-                              padding: EdgeInsets.only(right: opt == 'no_se' ? 0 : 6),
+                              padding: EdgeInsets.only(
+                                right: opt == 'no_se' ? 0 : 6,
+                              ),
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  backgroundColor: _answers[idx] == opt ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15) : null,
+                                  backgroundColor: _answers[idx] == opt
+                                      ? Theme.of(context).colorScheme.primary
+                                            .withValues(alpha: 0.15)
+                                      : null,
                                 ),
-                                onPressed: () => setState(() => _answers[idx] = opt),
-                                child: Text(opt == 'si' ? 'Sí' : opt == 'no' ? 'No' : 'No sé', style: const TextStyle(fontSize: 12)),
+                                onPressed: () =>
+                                    setState(() => _answers[idx] = opt),
+                                child: Text(
+                                  opt == 'si'
+                                      ? 'Sí'
+                                      : opt == 'no'
+                                      ? 'No'
+                                      : 'No sé',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
                               ),
                             ),
                           ),
@@ -243,26 +293,60 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
             TextField(
               controller: _descriptionController,
               maxLines: 2,
-              decoration: const InputDecoration(labelText: 'Detalles adicionales', isDense: true),
+              decoration: const InputDecoration(
+                labelText: 'Detalles adicionales',
+                isDense: true,
+              ),
             ),
             const SizedBox(height: 12),
-            if (_error != null) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12))),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  _error!,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
             if (_done)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.check_circle, size: 16), SizedBox(width: 6), Text('Reporte enviado')]),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.tertiary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle, size: 16),
+                    SizedBox(width: 6),
+                    Text('Reporte enviado'),
+                  ],
+                ),
               )
             else
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: _sending || !location.hasCoordinates ? null : _submit,
+                  onPressed: _sending || !location.hasCoordinates
+                      ? null
+                      : _submit,
                   child: Text(_sending ? 'Enviando...' : 'Enviar reporte'),
                 ),
               ),
-            if (!location.hasCoordinates) const Padding(padding: EdgeInsets.only(top: 6), child: Text('Se necesita ubicación para reportar.', style: TextStyle(fontSize: 11, color: Colors.grey))),
+            if (!location.hasCoordinates)
+              const Padding(
+                padding: EdgeInsets.only(top: 6),
+                child: Text(
+                  'Se necesita ubicación para reportar.',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ),
           ],
         ),
       ),
@@ -285,7 +369,8 @@ class _AltActivationCardState extends ConsumerState<_AltActivationCard> {
 
   void _onSecretTap() {
     final now = DateTime.now();
-    if (_firstTapAt == null || now.difference(_firstTapAt!) > const Duration(seconds: 3)) {
+    if (_firstTapAt == null ||
+        now.difference(_firstTapAt!) > const Duration(seconds: 3)) {
       _firstTapAt = now;
       _tapCount = 1;
     } else {
@@ -311,30 +396,62 @@ class _AltActivationCardState extends ConsumerState<_AltActivationCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Activación alternativa', style: TextStyle(fontWeight: FontWeight.w600)),
+            const Text(
+              'Activación alternativa',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 4),
-            const Text('Formas de activar el SOS si no puedes usar el botón principal.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            const Text(
+              'Formas de activar el SOS si no puedes usar el botón principal.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
             const SizedBox(height: 12),
-            _altRow('👆', '3 toques rápidos', 'Toca 3 veces seguidas el botón de abajo'),
+            _altRow(
+              '👆',
+              '3 toques rápidos',
+              'Toca 3 veces seguidas el botón de abajo',
+            ),
             _altRow(
               '🎙️',
               'Activación por voz',
-              voice.enabled ? 'Di "${voice.keyword}" para activar' : 'Configúrala en la pestaña Antes',
+              voice.enabled
+                  ? 'Di "${voice.keyword}" para activar'
+                  : 'Configúrala en la pestaña Antes',
               trailing: voice.enabled && voice.listening && !sos.active
-                  ? const Text('● escuchando', style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.w600))
+                  ? const Text(
+                      '● escuchando',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.green,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    )
                   : null,
             ),
-            _altRow('⏱️', 'Temporizador expirado', 'Si no confirmas a tiempo, se activa solo'),
+            _altRow(
+              '⏱️',
+              'Temporizador expirado',
+              'Si no confirmas a tiempo, se activa solo',
+            ),
             const SizedBox(height: 8),
             OutlinedButton(
-              style: OutlinedButton.styleFrom(side: BorderSide(color: warning, style: BorderStyle.solid)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: warning, style: BorderStyle.solid),
+              ),
               onPressed: _onSecretTap,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text('👆 Toque secreto'),
                   const Spacer(),
-                  CircleAvatar(radius: 11, backgroundColor: warning, child: Text('${3 - _tapCount}', style: const TextStyle(fontSize: 11, color: Colors.white))),
+                  CircleAvatar(
+                    radius: 11,
+                    backgroundColor: warning,
+                    child: Text(
+                      '${3 - _tapCount}',
+                      style: const TextStyle(fontSize: 11, color: Colors.white),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -344,12 +461,20 @@ class _AltActivationCardState extends ConsumerState<_AltActivationCard> {
     );
   }
 
-  Widget _altRow(String emoji, String title, String subtitle, {Widget? trailing}) {
+  Widget _altRow(
+    String emoji,
+    String title,
+    String subtitle, {
+    Widget? trailing,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Container(
         padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Row(
           children: [
             Text(emoji, style: const TextStyle(fontSize: 20)),
@@ -358,8 +483,17 @@ class _AltActivationCardState extends ConsumerState<_AltActivationCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                  Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
                 ],
               ),
             ),
@@ -433,7 +567,9 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
         // El audio no aplica a la Galería (Gal solo maneja fotos/videos) —
         // se guarda en el almacenamiento propio de la app.
         final docsDir = await getApplicationDocumentsDirectory();
-        final saved = await _lastFile!.copy('${docsDir.path}/${_lastFile!.uri.pathSegments.last}');
+        final saved = await _lastFile!.copy(
+          '${docsDir.path}/${_lastFile!.uri.pathSegments.last}',
+        );
         setState(() => _statusMsg = 'Audio guardado en ${saved.path}');
       }
     } catch (e) {
@@ -450,7 +586,9 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
     if (_lastFile == null) return;
     setState(() => _busy = true);
     try {
-      await Share.shareXFiles([XFile(_lastFile!.path)], text: '🚨 Grabación SOSecure');
+      await Share.shareXFiles([
+        XFile(_lastFile!.path),
+      ], text: '🚨 Grabación SOSecure');
       setState(() => _statusMsg = 'Compartido');
     } catch (e) {
       setState(() => _statusMsg = 'Error al compartir: $e');
@@ -505,9 +643,20 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [Icon(Icons.videocam_outlined, color: primary, size: 20), const SizedBox(width: 8), const Text('Grabar evidencia', style: TextStyle(fontWeight: FontWeight.w600))]),
+            Row(
+              children: [
+                Icon(Icons.videocam_outlined, color: primary, size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'Grabar evidencia',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
-            if (recorder.mode == StandaloneRecMode.video && recorder.videoController != null && recorder.videoController!.value.isInitialized)
+            if (recorder.mode == StandaloneRecMode.video &&
+                recorder.videoController != null &&
+                recorder.videoController!.value.isInitialized)
               AspectRatio(
                 aspectRatio: 16 / 9,
                 child: ClipRRect(
@@ -516,25 +665,55 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
                 ),
               ),
             if (recorder.errorMessage != null)
-              Padding(padding: const EdgeInsets.only(top: 8), child: Text('⚠️ ${recorder.errorMessage}', style: TextStyle(color: destructive, fontSize: 12))),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '⚠️ ${recorder.errorMessage}',
+                  style: TextStyle(color: destructive, fontSize: 12),
+                ),
+              ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: recorder.mode == StandaloneRecMode.video ? null : _toggleAudio,
-                    icon: Icon(recorder.mode == StandaloneRecMode.audio ? Icons.mic_off : Icons.mic),
-                    label: Text(recorder.mode == StandaloneRecMode.audio ? 'Detener audio' : 'Grabar audio'),
-                    style: recorder.mode == StandaloneRecMode.audio ? OutlinedButton.styleFrom(foregroundColor: destructive) : null,
+                    onPressed: recorder.mode == StandaloneRecMode.video
+                        ? null
+                        : _toggleAudio,
+                    icon: Icon(
+                      recorder.mode == StandaloneRecMode.audio
+                          ? Icons.mic_off
+                          : Icons.mic,
+                    ),
+                    label: Text(
+                      recorder.mode == StandaloneRecMode.audio
+                          ? 'Detener audio'
+                          : 'Grabar audio',
+                    ),
+                    style: recorder.mode == StandaloneRecMode.audio
+                        ? OutlinedButton.styleFrom(foregroundColor: destructive)
+                        : null,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: recorder.mode == StandaloneRecMode.audio ? null : _toggleVideo,
-                    icon: Icon(recorder.mode == StandaloneRecMode.video ? Icons.videocam_off : Icons.videocam),
-                    label: Text(recorder.mode == StandaloneRecMode.video ? 'Detener video' : 'Grabar video'),
-                    style: recorder.mode == StandaloneRecMode.video ? OutlinedButton.styleFrom(foregroundColor: destructive) : null,
+                    onPressed: recorder.mode == StandaloneRecMode.audio
+                        ? null
+                        : _toggleVideo,
+                    icon: Icon(
+                      recorder.mode == StandaloneRecMode.video
+                          ? Icons.videocam_off
+                          : Icons.videocam,
+                    ),
+                    label: Text(
+                      recorder.mode == StandaloneRecMode.video
+                          ? 'Detener video'
+                          : 'Grabar video',
+                    ),
+                    style: recorder.mode == StandaloneRecMode.video
+                        ? OutlinedButton.styleFrom(foregroundColor: destructive)
+                        : null,
                   ),
                 ),
               ],
@@ -542,28 +721,63 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
             if (_lastFile != null) ...[
               const SizedBox(height: 12),
               const Divider(),
-              Text(_statusMsg.isEmpty ? 'Grabación lista — ¿qué quieres hacer?' : _statusMsg, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              Text(
+                _statusMsg.isEmpty
+                    ? 'Grabación lista — ¿qué quieres hacer?'
+                    : _statusMsg,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
               const SizedBox(height: 8),
               Column(
                 children: [
-                  SizedBox(width: double.infinity, child: OutlinedButton.icon(onPressed: _busy ? null : _saveToGallery, icon: const Icon(Icons.save_outlined, size: 18), label: const Text('Guardar en el dispositivo'))),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _busy ? null : _saveToGallery,
+                      icon: const Icon(Icons.save_outlined, size: 18),
+                      label: const Text('Guardar en el dispositivo'),
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: _busy || contacts.isEmpty ? null : _shareToContacts,
+                      onPressed: _busy || contacts.isEmpty
+                          ? null
+                          : _shareToContacts,
                       icon: const Icon(Icons.send_outlined, size: 18),
-                      label: Text(contacts.isEmpty ? 'Enviar a contactos (sin contactos)' : 'Enviar a contactos'),
+                      label: Text(
+                        contacts.isEmpty
+                            ? 'Enviar a contactos (sin contactos)'
+                            : 'Enviar a contactos',
+                      ),
                     ),
                   ),
                   const SizedBox(height: 6),
-                  SizedBox(width: double.infinity, child: OutlinedButton.icon(onPressed: _busy ? null : _uploadToCloud, icon: const Icon(Icons.cloud_upload_outlined, size: 18), label: const Text('Guardar en la nube'))),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _busy ? null : _uploadToCloud,
+                      icon: const Icon(Icons.cloud_upload_outlined, size: 18),
+                      label: const Text('Guardar en la nube'),
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   TextButton(onPressed: _clear, child: const Text('Descartar')),
                 ],
               ),
             ] else
-              const Padding(padding: EdgeInsets.only(top: 8), child: Text('La grabación queda lista para guardar, enviar o subir cuando la detengas.', style: TextStyle(fontSize: 11, color: Colors.grey))),
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'La grabación queda lista para guardar, enviar o subir cuando la detengas.',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ),
           ],
         ),
       ),
@@ -575,7 +789,8 @@ class _LocationHistoryCard extends ConsumerStatefulWidget {
   const _LocationHistoryCard();
 
   @override
-  ConsumerState<_LocationHistoryCard> createState() => _LocationHistoryCardState();
+  ConsumerState<_LocationHistoryCard> createState() =>
+      _LocationHistoryCardState();
 }
 
 class _LocationHistoryCardState extends ConsumerState<_LocationHistoryCard> {
@@ -583,16 +798,22 @@ class _LocationHistoryCardState extends ConsumerState<_LocationHistoryCard> {
   final _names = <String, String>{};
 
   Future<void> _resolve(LocationSample sample) async {
-    final key = '${sample.latitude.toStringAsFixed(5)},${sample.longitude.toStringAsFixed(5)}';
+    final key =
+        '${sample.latitude.toStringAsFixed(5)},${sample.longitude.toStringAsFixed(5)}';
     if (_names.containsKey(key)) return;
-    final name = await _geocoding.reverseGeocode(sample.latitude, sample.longitude);
+    final name = await _geocoding.reverseGeocode(
+      sample.latitude,
+      sample.longitude,
+    );
     if (mounted) setState(() => _names[key] = name);
   }
 
   @override
   Widget build(BuildContext context) {
     final history = ref.watch(locationHistoryProvider);
-    final last5 = history.length > 5 ? history.sublist(history.length - 5) : history;
+    final last5 = history.length > 5
+        ? history.sublist(history.length - 5)
+        : history;
     for (final s in last5) {
       _resolve(s);
     }
@@ -604,23 +825,44 @@ class _LocationHistoryCardState extends ConsumerState<_LocationHistoryCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Historial de ubicación', style: TextStyle(fontWeight: FontWeight.w600)),
+            const Text(
+              'Historial de ubicación',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 8),
             if (reversed.isEmpty)
-              const Text('Aún no hay historial de ubicación reciente.', style: TextStyle(fontSize: 12, color: Colors.grey))
+              const Text(
+                'Aún no hay historial de ubicación reciente.',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              )
             else
               ...reversed.asMap().entries.map((entry) {
                 final i = entry.key;
                 final sample = entry.value;
-                final key = '${sample.latitude.toStringAsFixed(5)},${sample.longitude.toStringAsFixed(5)}';
-                final minutesAgo = DateTime.now().difference(sample.timestamp).inMinutes;
+                final key =
+                    '${sample.latitude.toStringAsFixed(5)},${sample.longitude.toStringAsFixed(5)}';
+                final minutesAgo = DateTime.now()
+                    .difference(sample.timestamp)
+                    .inMinutes;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Row(
                     children: [
-                      Chip(label: Text(i == 0 ? 'Ahora' : 'Hace ${minutesAgo}min', style: const TextStyle(fontSize: 10)), visualDensity: VisualDensity.compact),
+                      Chip(
+                        label: Text(
+                          i == 0 ? 'Ahora' : 'Hace ${minutesAgo}min',
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
                       const SizedBox(width: 8),
-                      Expanded(child: Text(_names[key] ?? '📍 Cargando...', style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis)),
+                      Expanded(
+                        child: Text(
+                          _names[key] ?? '📍 Cargando...',
+                          style: const TextStyle(fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                 );

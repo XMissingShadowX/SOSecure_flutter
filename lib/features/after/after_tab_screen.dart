@@ -26,7 +26,9 @@ class AfterTabScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      // Bottom extra para que la última tarjeta no quede tapada por el botón
+      // flotante SOS — mismo ajuste que en before_tab_screen.dart.
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: const [
         _AfterStatusCard(),
         SizedBox(height: 16),
@@ -49,7 +51,8 @@ class _DangerZonesSection extends ConsumerStatefulWidget {
   const _DangerZonesSection();
 
   @override
-  ConsumerState<_DangerZonesSection> createState() => _DangerZonesSectionState();
+  ConsumerState<_DangerZonesSection> createState() =>
+      _DangerZonesSectionState();
 }
 
 class _DangerZonesSectionState extends ConsumerState<_DangerZonesSection> {
@@ -60,43 +63,84 @@ class _DangerZonesSectionState extends ConsumerState<_DangerZonesSection> {
   Widget build(BuildContext context) {
     final location = ref.watch(locationWatcherProvider);
     if (location.hasCoordinates && _zones == null) {
-      _repo.getNearbyDangerZones(latitude: location.latitude!, longitude: location.longitude!).then((z) {
-        if (mounted) setState(() => _zones = z);
-      });
+      _repo
+          .getNearbyDangerZones(
+            latitude: location.latitude!,
+            longitude: location.longitude!,
+          )
+          .then((z) {
+            if (mounted) setState(() => _zones = z);
+          });
     }
     final zones = _zones ?? const [];
     if (zones.isEmpty) return const SizedBox.shrink();
 
     final warning = Theme.of(context).colorScheme.tertiary;
     return Card(
-      color: Color.alphaBlend(warning.withValues(alpha: 0.08), Theme.of(context).colorScheme.surface),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: warning.withValues(alpha: 0.5))),
+      color: Color.alphaBlend(
+        warning.withValues(alpha: 0.08),
+        Theme.of(context).colorScheme.surface,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: warning.withValues(alpha: 0.5)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [Icon(Icons.warning_amber_rounded, color: warning, size: 20), const SizedBox(width: 8), const Text('Zonas de peligro cercanas', style: TextStyle(fontWeight: FontWeight.w600))]),
+            Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: warning, size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'Zonas de peligro cercanas',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
-            ...zones.map((z) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    children: [
-                      Icon(Icons.location_on, color: warning, size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('${z.count} incidente${z.count > 1 ? 's' : ''} reportado${z.count > 1 ? 's' : ''}', style: const TextStyle(fontSize: 13)),
-                            Text('${z.latitude.toStringAsFixed(4)}, ${z.longitude.toStringAsFixed(4)}', style: const TextStyle(fontSize: 11, color: Colors.grey, fontFamily: 'monospace')),
-                          ],
-                        ),
+            ...zones.map(
+              (z) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  children: [
+                    Icon(Icons.location_on, color: warning, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${z.count} incidente${z.count > 1 ? 's' : ''} reportado${z.count > 1 ? 's' : ''}',
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                          Text(
+                            '${z.latitude.toStringAsFixed(4)}, ${z.longitude.toStringAsFixed(4)}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ],
                       ),
-                      Chip(label: const Text('Evitar', style: TextStyle(fontSize: 10)), backgroundColor: Theme.of(context).colorScheme.error.withValues(alpha: 0.15), visualDensity: VisualDensity.compact),
-                    ],
-                  ),
-                )),
+                    ),
+                    Chip(
+                      label: const Text(
+                        'Evitar',
+                        style: TextStyle(fontSize: 10),
+                      ),
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.error.withValues(alpha: 0.15),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -112,7 +156,10 @@ class _AfterStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final safe = Theme.of(context).colorScheme.tertiary;
     return Card(
-      color: Color.alphaBlend(safe.withValues(alpha: 0.06), Theme.of(context).colorScheme.surface),
+      color: Color.alphaBlend(
+        safe.withValues(alpha: 0.06),
+        Theme.of(context).colorScheme.surface,
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         child: Row(
@@ -122,8 +169,16 @@ class _AfterStatusCard extends StatelessWidget {
             Expanded(
               child: Column(
                 children: const [
-                  Text('Modo DESPUÉS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15), textAlign: TextAlign.center),
-                  Text('Seguimiento y protección post-incidente', style: TextStyle(fontSize: 12, color: Colors.grey), textAlign: TextAlign.center),
+                  Text(
+                    'Modo DESPUÉS',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    textAlign: TextAlign.center,
+                  ),
+                  Text(
+                    'Seguimiento y protección post-incidente',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
             ),
@@ -155,7 +210,8 @@ class _ArrivedWellCardState extends ConsumerState<_ArrivedWellCard> {
     setState(() => _sending = true);
 
     final now = DateTime.now();
-    final text = '✅ Llegué bien a mi destino — ${now.toLocal().toString().substring(0, 16)}\n\n'
+    final text =
+        '✅ Llegué bien a mi destino — ${now.toLocal().toString().substring(0, 16)}\n\n'
         'Mensaje enviado automáticamente desde la app SOSecure.';
 
     var sent = 0;
@@ -167,7 +223,8 @@ class _ArrivedWellCardState extends ConsumerState<_ArrivedWellCard> {
         mode: LaunchMode.externalApplication,
       );
       if (opened) sent++;
-      if (contact != contacts.last) await Future.delayed(const Duration(milliseconds: 600));
+      if (contact != contacts.last)
+        await Future.delayed(const Duration(milliseconds: 600));
     }
 
     if (!mounted) return;
@@ -192,30 +249,62 @@ class _ArrivedWellCardState extends ConsumerState<_ArrivedWellCard> {
               children: [
                 Icon(Icons.home_outlined, color: safe, size: 20),
                 const SizedBox(width: 8),
-                const Text('Llegué bien', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text(
+                  'Llegué bien',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               ],
             ),
             const SizedBox(height: 4),
-            const Text('Avisa a tus contactos que llegaste seguro a tu destino.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            const Text(
+              'Avisa a tus contactos que llegaste seguro a tu destino.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
             const SizedBox(height: 12),
             if (_sentCount != null)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: safe.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                child: Text('$_sentCount contacto${_sentCount == 1 ? '' : 's'} notificado${_sentCount == 1 ? '' : 's'} por WhatsApp', style: TextStyle(color: safe, fontSize: 13)),
+                decoration: BoxDecoration(
+                  color: safe.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$_sentCount contacto${_sentCount == 1 ? '' : 's'} notificado${_sentCount == 1 ? '' : 's'} por WhatsApp',
+                  style: TextStyle(color: safe, fontSize: 13),
+                ),
               )
             else
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(backgroundColor: safe),
-                  onPressed: contacts.isEmpty || _sending ? null : _notifyArrived,
-                  icon: _sending ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.check),
-                  label: Text(_sending ? 'Enviando...' : 'Notificar que llegué bien'),
+                  onPressed: contacts.isEmpty || _sending
+                      ? null
+                      : _notifyArrived,
+                  icon: _sending
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.check),
+                  label: Text(
+                    _sending ? 'Enviando...' : 'Notificar que llegué bien',
+                  ),
                 ),
               ),
-            if (contacts.isEmpty) const Padding(padding: EdgeInsets.only(top: 8), child: Text('No tienes contactos de emergencia guardados.', style: TextStyle(fontSize: 11, color: Colors.red))),
+            if (contacts.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'No tienes contactos de emergencia guardados.',
+                  style: TextStyle(fontSize: 11, color: Colors.red),
+                ),
+              ),
           ],
         ),
       ),
@@ -241,31 +330,63 @@ class _AlertHistorySection extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.shield_outlined, color: Theme.of(context).colorScheme.error, size: 20),
+                Icon(
+                  Icons.shield_outlined,
+                  color: Theme.of(context).colorScheme.error,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
-                const Expanded(child: Text('Historial de alertas SOS', style: TextStyle(fontWeight: FontWeight.w600))),
+                const Expanded(
+                  child: Text(
+                    'Historial de alertas SOS',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
                 DropdownButton<String>(
-                  value: _dayOptions.entries.firstWhere((e) => e.value == days, orElse: () => _dayOptions.entries.first).key,
+                  value: _dayOptions.entries
+                      .firstWhere(
+                        (e) => e.value == days,
+                        orElse: () => _dayOptions.entries.first,
+                      )
+                      .key,
                   underline: const SizedBox.shrink(),
-                  items: _dayOptions.keys.map((k) => DropdownMenuItem(value: k, child: Text(k))).toList(),
+                  items: _dayOptions.keys
+                      .map((k) => DropdownMenuItem(value: k, child: Text(k)))
+                      .toList(),
                   onChanged: (v) {
-                    if (v != null) ref.read(alertHistoryDaysProvider.notifier).set(_dayOptions[v]!);
+                    if (v != null)
+                      ref
+                          .read(alertHistoryDaysProvider.notifier)
+                          .set(_dayOptions[v]!);
                   },
                 ),
               ],
             ),
             const SizedBox(height: 8),
             history.when(
-              loading: () => const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator())),
-              error: (e, _) => Padding(padding: const EdgeInsets.all(12), child: Text('Error: $e')),
+              loading: () => const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text('Error: $e'),
+              ),
               data: (alerts) {
                 if (alerts.isEmpty) {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Center(child: Text('No hay alertas en este período', style: TextStyle(fontSize: 12, color: Colors.grey))),
+                    child: Center(
+                      child: Text(
+                        'No hay alertas en este período',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ),
                   );
                 }
-                return Column(children: alerts.map((a) => _AlertTile(alert: a)).toList());
+                return Column(
+                  children: alerts.map((a) => _AlertTile(alert: a)).toList(),
+                );
               },
             ),
           ],
@@ -287,18 +408,34 @@ class _AlertTile extends ConsumerWidget {
       contentPadding: EdgeInsets.zero,
       onTap: () => _showDetail(context, ref),
       leading: Icon(Icons.warning_amber_rounded, color: destructive, size: 20),
-      title: Text(alert.createdAt?.toLocal().toString().substring(0, 16) ?? '—', style: const TextStyle(fontSize: 13)),
-      subtitle: Text('${alert.latitude.toStringAsFixed(4)}, ${alert.longitude.toStringAsFixed(4)}', style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
+      title: Text(
+        alert.createdAt?.toLocal().toString().substring(0, 16) ?? '—',
+        style: const TextStyle(fontSize: 13),
+      ),
+      subtitle: Text(
+        '${alert.latitude.toStringAsFixed(4)}, ${alert.longitude.toStringAsFixed(4)}',
+        style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+      ),
       trailing: PopupMenuButton<String>(
         child: Chip(
-          label: Text(_statusLabel(alert.status), style: const TextStyle(fontSize: 11)),
-          backgroundColor: isActive ? destructive.withValues(alpha: 0.15) : Theme.of(context).colorScheme.surfaceContainerHighest,
+          label: Text(
+            _statusLabel(alert.status),
+            style: const TextStyle(fontSize: 11),
+          ),
+          backgroundColor: isActive
+              ? destructive.withValues(alpha: 0.15)
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           labelStyle: TextStyle(color: isActive ? destructive : null),
         ),
-        onSelected: (status) => ref.read(alertHistoryProvider.notifier).markStatus(alert.id, status),
+        onSelected: (status) => ref
+            .read(alertHistoryProvider.notifier)
+            .markStatus(alert.id, status),
         itemBuilder: (_) => const [
           PopupMenuItem(value: 'resolved', child: Text('Marcar como resuelta')),
-          PopupMenuItem(value: 'false_alarm', child: Text('Marcar como falsa alarma')),
+          PopupMenuItem(
+            value: 'false_alarm',
+            child: Text('Marcar como falsa alarma'),
+          ),
         ],
       ),
     );
@@ -344,10 +481,11 @@ class _AlertDetailSheetState extends ConsumerState<_AlertDetailSheet> {
   void initState() {
     super.initState();
     _recordingsRepo.getRecordingForAlert(widget.alert.id).then((rec) {
-      if (mounted) setState(() {
-        _recording = rec;
-        _loadingRecording = false;
-      });
+      if (mounted)
+        setState(() {
+          _recording = rec;
+          _loadingRecording = false;
+        });
     });
   }
 
@@ -366,26 +504,68 @@ class _AlertDetailSheetState extends ConsumerState<_AlertDetailSheet> {
               children: [
                 Icon(Icons.warning_amber_rounded, color: destructive, size: 22),
                 const SizedBox(width: 8),
-                Text('Alerta #${alert.id.substring(0, 8)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(
+                  'Alerta #${alert.id.substring(0, 8)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
-            _row('Fecha', alert.createdAt?.toLocal().toString().substring(0, 19) ?? '—'),
+            _row(
+              'Fecha',
+              alert.createdAt?.toLocal().toString().substring(0, 19) ?? '—',
+            ),
             _row('Estado', alert.status),
-            _row('Ubicación', '${alert.latitude.toStringAsFixed(6)}, ${alert.longitude.toStringAsFixed(6)}'),
+            _row(
+              'Ubicación',
+              '${alert.latitude.toStringAsFixed(6)}, ${alert.longitude.toStringAsFixed(6)}',
+            ),
             const SizedBox(height: 8),
-            const Text('Contactos notificados', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+            const Text(
+              'Contactos notificados',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
             const SizedBox(height: 6),
             alert.contactsNotified.isEmpty
-                ? const Text('Ninguno', style: TextStyle(fontSize: 12, color: Colors.grey))
-                : Wrap(spacing: 6, runSpacing: 6, children: alert.contactsNotified.map((n) => Chip(label: Text(n, style: const TextStyle(fontSize: 11)))).toList()),
+                ? const Text(
+                    'Ninguno',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  )
+                : Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: alert.contactsNotified
+                        .map(
+                          (n) => Chip(
+                            label: Text(
+                              n,
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
             const SizedBox(height: 16),
-            const Text('Grabación', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+            const Text(
+              'Grabación',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
             const SizedBox(height: 6),
             if (_loadingRecording)
-              const Center(child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator()))
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(8),
+                  child: CircularProgressIndicator(),
+                ),
+              )
             else if (_recording == null)
-              const Text('No hay grabación vinculada a esta alerta.', style: TextStyle(fontSize: 12, color: Colors.grey))
+              const Text(
+                'No hay grabación vinculada a esta alerta.',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              )
             else
               _RecordingTile(rec: _recording!),
           ],
@@ -399,7 +579,13 @@ class _AlertDetailSheetState extends ConsumerState<_AlertDetailSheet> {
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
-          SizedBox(width: 90, child: Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey))),
+          SizedBox(
+            width: 90,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ),
           Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
         ],
       ),
@@ -421,23 +607,43 @@ class _RecordingsSection extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.videocam_outlined, color: Theme.of(context).colorScheme.primary, size: 20),
+                Icon(
+                  Icons.videocam_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
-                const Text('Grabaciones', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text(
+                  'Grabaciones',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               ],
             ),
             const SizedBox(height: 8),
             recordings.when(
-              loading: () => const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator())),
-              error: (e, _) => Padding(padding: const EdgeInsets.all(12), child: Text('Error: $e')),
+              loading: () => const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text('Error: $e'),
+              ),
               data: (list) {
                 if (list.isEmpty) {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Center(child: Text('No hay grabaciones', style: TextStyle(fontSize: 12, color: Colors.grey))),
+                    child: Center(
+                      child: Text(
+                        'No hay grabaciones',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ),
                   );
                 }
-                return Column(children: list.map((r) => _RecordingTile(rec: r)).toList());
+                return Column(
+                  children: list.map((r) => _RecordingTile(rec: r)).toList(),
+                );
               },
             ),
           ],
@@ -473,7 +679,9 @@ class _RecordingTileState extends ConsumerState<_RecordingTile> {
       final res = await http.get(Uri.parse(url));
       if (res.statusCode != 200) throw Exception('HTTP ${res.statusCode}');
 
-      final hasAccess = await Gal.hasAccess(toAlbum: true) || await Gal.requestAccess(toAlbum: true);
+      final hasAccess =
+          await Gal.hasAccess(toAlbum: true) ||
+          await Gal.requestAccess(toAlbum: true);
       if (!hasAccess) throw Exception('Permiso de galería denegado');
 
       final tempDir = await getTemporaryDirectory();
@@ -485,13 +693,17 @@ class _RecordingTileState extends ConsumerState<_RecordingTile> {
         await Gal.putVideo(tempFile.path, album: 'SOSecure');
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Guardado en la galería (álbum SOSecure)')),
+          const SnackBar(
+            content: Text('Guardado en la galería (álbum SOSecure)'),
+          ),
         );
       } else {
         // El audio no aplica a la Galería (Gal solo maneja fotos/videos) —
         // se guarda en el almacenamiento propio de la app.
         final docsDir = await getApplicationDocumentsDirectory();
-        final saved = await tempFile.copy('${docsDir.path}/${tempFile.uri.pathSegments.last}');
+        final saved = await tempFile.copy(
+          '${docsDir.path}/${tempFile.uri.pathSegments.last}',
+        );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Audio guardado en ${saved.path}')),
@@ -499,7 +711,9 @@ class _RecordingTileState extends ConsumerState<_RecordingTile> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al descargar: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al descargar: $e')));
     } finally {
       if (tempFile != null && await tempFile.exists()) await tempFile.delete();
       if (mounted) setState(() => _downloading = false);
@@ -512,20 +726,37 @@ class _RecordingTileState extends ConsumerState<_RecordingTile> {
     final durationS = (rec.durationMs / 1000).round();
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(rec.recordingType == 'video' ? Icons.videocam : Icons.mic, size: 20),
-      title: Text(rec.createdAt.toLocal().toString().substring(0, 16), style: const TextStyle(fontSize: 13)),
-      subtitle: Text('${durationS}s${rec.latitude != null ? ' · ${rec.latitude!.toStringAsFixed(4)}, ${rec.longitude!.toStringAsFixed(4)}' : ''}', style: const TextStyle(fontSize: 11)),
+      leading: Icon(
+        rec.recordingType == 'video' ? Icons.videocam : Icons.mic,
+        size: 20,
+      ),
+      title: Text(
+        rec.createdAt.toLocal().toString().substring(0, 16),
+        style: const TextStyle(fontSize: 13),
+      ),
+      subtitle: Text(
+        '${durationS}s${rec.latitude != null ? ' · ${rec.latitude!.toStringAsFixed(4)}, ${rec.longitude!.toStringAsFixed(4)}' : ''}',
+        style: const TextStyle(fontSize: 11),
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
             icon: _downloading
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.download, size: 20),
             onPressed: rec.signedUrl == null || _downloading ? null : _download,
           ),
           IconButton(
-            icon: Icon(Icons.delete_outline, size: 20, color: Theme.of(context).colorScheme.error),
+            icon: Icon(
+              Icons.delete_outline,
+              size: 20,
+              color: Theme.of(context).colorScheme.error,
+            ),
             onPressed: () => ref.read(recordingsProvider.notifier).delete(rec),
           ),
         ],

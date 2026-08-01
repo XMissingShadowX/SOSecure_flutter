@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../state/offline_queue_provider.dart';
+import '../../state/settings_provider.dart';
 import '../../state/volume_sos_provider.dart';
 import '../after/after_tab_screen.dart';
 import '../before/before_tab_screen.dart';
@@ -38,10 +39,13 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
   @override
   Widget build(BuildContext context) {
     final pendingCount = ref.watch(offlineQueueProvider).length;
+    final simpleMode = ref.watch(simpleModeProvider);
     // Mantiene VolumeSos vivo (keepAlive) desde que arranca el shell, escuchando
     // en toda la app salvo mientras hay un SOS activo — igual que useVolumeSOS
     // montado globalmente en app-shell.tsx.
     ref.watch(volumeSosProvider);
+
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(_titles[_index]),
@@ -70,43 +74,97 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
       ),
       body: Stack(
         children: [
-          IndexedStack(index: _index, children: _tabs),
+          Column(
+            children: [
+              // Puerto del banner amarillo de app-shell.tsx (simpleMode && ...).
+              if (simpleMode)
+                Container(
+                  width: double.infinity,
+                  color: Colors.amber.withValues(alpha: 0.2),
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: const Text(
+                    'Modo simple activo',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.amber,
+                    ),
+                  ),
+                ),
+              Expanded(
+                // Puerto de className={cn('flex-1 overflow-y-auto', simpleMode && 'text-lg')}
+                // — escala el texto base de todas las tabs ~12.5% (equivalente a
+                // text-lg de Tailwind sobre el 1rem base) sin tocar cada widget.
+                child: Theme(
+                  data: simpleMode
+                      ? theme.copyWith(
+                          textTheme: theme.textTheme.apply(
+                            fontSizeFactor: 1.125,
+                          ),
+                        )
+                      : theme,
+                  child: IndexedStack(index: _index, children: _tabs),
+                ),
+              ),
+            ],
+          ),
           // Oculto en Apoyo (índice 4): el botón flotante idle tapa la caja de
           // mensajes del chat — el panel de alerta activa igual se muestra si hay
           // un SOS en curso (ver SosButton.hideIdleButton).
           SosButton(hideIdleButton: _index == 4),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Inicio',
+      bottomNavigationBar: Theme(
+        // Puerto de bottom-navigation.tsx: barra e íconos más grandes en modo
+        // simple (h-20 vs h-16, íconos w-7 h-7 vs w-5 h-5, label text-xs vs
+        // text-[10px]) — NavigationBarThemeData es la única forma de tocar
+        // tamaño de ícono/label sin reconstruir NavigationDestination a mano.
+        data: theme.copyWith(
+          navigationBarTheme: theme.navigationBarTheme.copyWith(
+            height: simpleMode ? 80 : 64,
+            iconTheme: WidgetStateProperty.resolveWith(
+              (states) => IconThemeData(size: simpleMode ? 28 : 24),
+            ),
+            labelTextStyle: WidgetStateProperty.resolveWith(
+              (states) => TextStyle(
+                fontSize: simpleMode ? 13 : 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.route_outlined),
-            selectedIcon: Icon(Icons.route),
-            label: 'Antes',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.videocam_outlined),
-            selectedIcon: Icon(Icons.videocam),
-            label: 'Durante',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history),
-            label: 'Después',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.favorite_outline),
-            selectedIcon: Icon(Icons.favorite),
-            label: 'Apoyo',
-          ),
-        ],
+        ),
+        child: NavigationBar(
+          selectedIndex: _index,
+          onDestinationSelected: (i) => setState(() => _index = i),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'Inicio',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.route_outlined),
+              selectedIcon: Icon(Icons.route),
+              label: 'Antes',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.videocam_outlined),
+              selectedIcon: Icon(Icons.videocam),
+              label: 'Durante',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.history_outlined),
+              selectedIcon: Icon(Icons.history),
+              label: 'Después',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.favorite_outline),
+              selectedIcon: Icon(Icons.favorite),
+              label: 'Apoyo',
+            ),
+          ],
+        ),
       ),
     );
   }

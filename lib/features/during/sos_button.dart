@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../state/location_provider.dart';
 import '../../state/recorder_controller.dart';
+import '../../state/settings_provider.dart';
 import '../../state/sos_provider.dart';
 
 const _holdDuration = Duration(milliseconds: 1000);
@@ -89,6 +90,7 @@ class _SosButtonState extends ConsumerState<SosButton> {
   Widget build(BuildContext context) {
     final sos = ref.watch(sosProvider);
     final destructive = Theme.of(context).colorScheme.error;
+    final simpleMode = ref.watch(simpleModeProvider);
 
     if (sos.active) {
       return _SosActivePanel(sos: sos);
@@ -97,6 +99,15 @@ class _SosButtonState extends ConsumerState<SosButton> {
     if (widget.hideIdleButton) {
       return const SizedBox.shrink();
     }
+
+    // Puerto de las medidas simpleMode de sos-button.tsx: botón 7rem/112px
+    // (vs 5rem/80px normal), ícono w-12/48px (vs w-8/32px), texto text-base
+    // (vs text-xs), y más separación del borde inferior (bottom-24 vs bottom-20).
+    final outerSize = simpleMode ? 112.0 : 80.0;
+    final innerSize = simpleMode ? 100.0 : 72.0;
+    final iconSize = simpleMode ? 44.0 : 28.0;
+    final labelFontSize = simpleMode ? 15.0 : 11.0;
+    final bottomOffset = simpleMode ? 32.0 : 24.0;
 
     return Stack(
       children: [
@@ -108,7 +119,7 @@ class _SosButtonState extends ConsumerState<SosButton> {
         Positioned(
           left: 0,
           right: 0,
-          bottom: 24,
+          bottom: bottomOffset,
           child: Column(
             children: [
               // Franja invisible del gesto secreto (5 toques en 3s), equivalente al
@@ -126,15 +137,15 @@ class _SosButtonState extends ConsumerState<SosButton> {
                 onLongPressEnd: (_) => _endHold(),
                 onLongPressCancel: _endHold,
                 child: SizedBox(
-                  width: 80,
-                  height: 80,
+                  width: outerSize,
+                  height: outerSize,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       if (_holding)
                         SizedBox(
-                          width: 80,
-                          height: 80,
+                          width: outerSize,
+                          height: outerSize,
                           child: CircularProgressIndicator(
                             value: _holdProgress,
                             strokeWidth: 4,
@@ -143,8 +154,8 @@ class _SosButtonState extends ConsumerState<SosButton> {
                           ),
                         ),
                       Container(
-                        width: 72,
-                        height: 72,
+                        width: innerSize,
+                        height: innerSize,
                         decoration: BoxDecoration(
                           color: destructive,
                           shape: BoxShape.circle,
@@ -156,20 +167,20 @@ class _SosButtonState extends ConsumerState<SosButton> {
                             ),
                           ],
                         ),
-                        child: const Column(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
                               Icons.warning_amber_rounded,
                               color: Colors.white,
-                              size: 28,
+                              size: iconSize,
                             ),
                             Text(
                               'SOS',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 11,
+                                fontSize: labelFontSize,
                               ),
                             ),
                           ],
@@ -200,7 +211,7 @@ class _SosButtonState extends ConsumerState<SosButton> {
                           ? 'Manteniendo...'
                           : 'Mantén presionado para SOS',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: simpleMode ? 14 : 12,
                         fontWeight: FontWeight.w500,
                         color: destructive,
                       ),

@@ -6,6 +6,8 @@ part 'settings_provider.g.dart';
 
 const _simpleModeKey = 'sosecure.simpleMode';
 const _themeModeKey = 'sosecure.themeMode';
+const _chatFontSizeKey = 'sosecure.chatFontSize';
+const _defaultChatFontSize = 16.0;
 
 // Espeja lib/store.ts: simpleMode persistido en localStorage en la web -> shared_preferences
 // aquí. El tema/idioma los maneja easy_localization/ThemeMode nativamente, sin duplicar
@@ -50,6 +52,32 @@ class AppThemeMode extends _$AppThemeMode {
   Future<void> set(ThemeMode mode) async {
     state = mode;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_themeModeKey, mode == ThemeMode.light ? 'light' : 'dark');
+    await prefs.setString(
+      _themeModeKey,
+      mode == ThemeMode.light ? 'light' : 'dark',
+    );
+  }
+}
+
+// No existe equivalente en la web (el tamaño de fuente del chat de Apoyo ahí
+// es fijo) — se agrega a pedido, para accesibilidad, con el mismo mecanismo
+// de persistencia que el resto de esta clase.
+@Riverpod(keepAlive: true)
+class ChatFontSize extends _$ChatFontSize {
+  @override
+  double build() {
+    _load();
+    return _defaultChatFontSize;
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getDouble(_chatFontSizeKey) ?? _defaultChatFontSize;
+  }
+
+  Future<void> set(double size) async {
+    state = size;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_chatFontSizeKey, size);
   }
 }

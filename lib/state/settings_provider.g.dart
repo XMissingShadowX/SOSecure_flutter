@@ -36,5 +36,20 @@ final appThemeModeProvider = NotifierProvider<AppThemeMode, ThemeMode>.internal(
 );
 
 typedef _$AppThemeMode = Notifier<ThemeMode>;
+String _$chatFontSizeHash() => r'986fe184509c25717eeb51a35791ab9437417f16';
+
+/// See also [ChatFontSize].
+@ProviderFor(ChatFontSize)
+final chatFontSizeProvider = NotifierProvider<ChatFontSize, double>.internal(
+  ChatFontSize.new,
+  name: r'chatFontSizeProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$chatFontSizeHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ChatFontSize = Notifier<double>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
