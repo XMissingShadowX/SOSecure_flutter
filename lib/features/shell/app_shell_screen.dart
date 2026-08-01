@@ -54,7 +54,9 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
               child: Center(
                 child: Chip(
                   avatar: const Icon(Icons.cloud_off, size: 16),
-                  label: Text('$pendingCount pendiente${pendingCount > 1 ? 's' : ''}'),
+                  label: Text(
+                    '$pendingCount pendiente${pendingCount > 1 ? 's' : ''}',
+                  ),
                   visualDensity: VisualDensity.compact,
                 ),
               ),
@@ -69,18 +71,41 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
       body: Stack(
         children: [
           IndexedStack(index: _index, children: _tabs),
-          const SosButton(),
+          // Oculto en Apoyo (índice 4): el botón flotante idle tapa la caja de
+          // mensajes del chat — el panel de alerta activa igual se muestra si hay
+          // un SOS en curso (ver SosButton.hideIdleButton).
+          SosButton(hideIdleButton: _index == 4),
         ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Inicio'),
-          NavigationDestination(icon: Icon(Icons.route_outlined), selectedIcon: Icon(Icons.route), label: 'Antes'),
-          NavigationDestination(icon: Icon(Icons.videocam_outlined), selectedIcon: Icon(Icons.videocam), label: 'Durante'),
-          NavigationDestination(icon: Icon(Icons.history_outlined), selectedIcon: Icon(Icons.history), label: 'Después'),
-          NavigationDestination(icon: Icon(Icons.favorite_outline), selectedIcon: Icon(Icons.favorite), label: 'Apoyo'),
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Inicio',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.route_outlined),
+            selectedIcon: Icon(Icons.route),
+            label: 'Antes',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.videocam_outlined),
+            selectedIcon: Icon(Icons.videocam),
+            label: 'Durante',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.history_outlined),
+            selectedIcon: Icon(Icons.history),
+            label: 'Después',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.favorite_outline),
+            selectedIcon: Icon(Icons.favorite),
+            label: 'Apoyo',
+          ),
         ],
       ),
     );

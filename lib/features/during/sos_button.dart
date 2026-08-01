@@ -19,7 +19,12 @@ const _secretTapWindow = Duration(milliseconds: 3000);
 // superior (gesto secreto), activan el SOS. Cuando sosActive, muestra el panel de
 // alerta con el estado de RecorderController y opciones de finalizar/falsa alarma.
 class SosButton extends ConsumerStatefulWidget {
-  const SosButton({super.key});
+  // El botón flotante idle se oculta en pantallas cuya UI ya usa ese espacio
+  // (ej. la caja de mensajes del chat de Apoyo) — el panel de alerta activa
+  // sigue mostrándose siempre, sin importar esta bandera, porque un SOS activo
+  // no debe poder ocultarse cambiando de tab.
+  final bool hideIdleButton;
+  const SosButton({super.key, this.hideIdleButton = false});
 
   @override
   ConsumerState<SosButton> createState() => _SosButtonState();
@@ -87,6 +92,10 @@ class _SosButtonState extends ConsumerState<SosButton> {
 
     if (sos.active) {
       return _SosActivePanel(sos: sos);
+    }
+
+    if (widget.hideIdleButton) {
+      return const SizedBox.shrink();
     }
 
     return Stack(
