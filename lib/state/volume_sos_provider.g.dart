@@ -1,25 +1,25 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'sos_provider.dart';
+part of 'volume_sos_provider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$sosHash() => r'174d452994faede5cce3853a935519effd24297f';
+String _$volumeSosHash() => r'5cec63fd52fede85de152181bb52f5cbd236f2ad';
 
-/// See also [Sos].
-@ProviderFor(Sos)
-final sosProvider = NotifierProvider<Sos, SosState>.internal(
-  Sos.new,
-  name: r'sosProvider',
+/// See also [VolumeSos].
+@ProviderFor(VolumeSos)
+final volumeSosProvider = NotifierProvider<VolumeSos, VolumeSosState>.internal(
+  VolumeSos.new,
+  name: r'volumeSosProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$sosHash,
+      : _$volumeSosHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$Sos = Notifier<SosState>;
+typedef _$VolumeSos = Notifier<VolumeSosState>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

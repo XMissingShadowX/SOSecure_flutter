@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../state/offline_queue_provider.dart';
+import '../../state/volume_sos_provider.dart';
 import '../after/after_tab_screen.dart';
 import '../before/before_tab_screen.dart';
 import '../during/during_tab_screen.dart';
@@ -37,6 +38,10 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
   @override
   Widget build(BuildContext context) {
     final pendingCount = ref.watch(offlineQueueProvider).length;
+    // Mantiene VolumeSos vivo (keepAlive) desde que arranca el shell, escuchando
+    // en toda la app salvo mientras hay un SOS activo — igual que useVolumeSOS
+    // montado globalmente en app-shell.tsx.
+    ref.watch(volumeSosProvider);
     return Scaffold(
       appBar: AppBar(
         title: Text(_titles[_index]),

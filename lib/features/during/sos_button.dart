@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:camera/camera.dart';
@@ -40,7 +41,9 @@ class _SosButtonState extends ConsumerState<SosButton> {
     _progressTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
       final elapsed = DateTime.now().difference(start);
       setState(() {
-        _holdProgress = (elapsed.inMilliseconds / _holdDuration.inMilliseconds).clamp(0, 1).toDouble();
+        _holdProgress = (elapsed.inMilliseconds / _holdDuration.inMilliseconds)
+            .clamp(0, 1)
+            .toDouble();
       });
       if (elapsed >= _holdDuration) {
         timer.cancel();
@@ -86,77 +89,209 @@ class _SosButtonState extends ConsumerState<SosButton> {
       return _SosActivePanel(sos: sos);
     }
 
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 24,
-      child: Column(
-        children: [
-          // Franja invisible del gesto secreto (5 toques en 3s), equivalente al
-          // <div onClick={handleSecretTap}> oculto encima del botón en la web.
-          GestureDetector(
-            onTap: _onSecretTap,
-            child: Container(width: 80, height: 32, color: Colors.transparent),
-          ),
-          GestureDetector(
-            onLongPressStart: (_) => _startHold(),
-            onLongPressEnd: (_) => _endHold(),
-            onLongPressCancel: _endHold,
-            child: SizedBox(
-              width: 80,
-              height: 80,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  if (_holding)
-                    SizedBox(
-                      width: 80,
-                      height: 80,
-                      child: CircularProgressIndicator(
-                        value: _holdProgress,
-                        strokeWidth: 4,
-                        color: Colors.white.withValues(alpha: 0.6),
-                        backgroundColor: Colors.transparent,
-                      ),
-                    ),
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: destructive,
-                      shape: BoxShape.circle,
-                      boxShadow: [BoxShadow(color: destructive.withValues(alpha: 0.5), blurRadius: 24, offset: const Offset(0, 8))],
-                    ),
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.warning_amber_rounded, color: Colors.white, size: 28),
-                        Text('SOS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          // Solo la etiqueta de texto lleva el desenfoque de fondo — el botón
-          // en sí queda tal cual, sin blur (ajuste pedido tras ver el diseño).
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(color: destructive.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(999)),
-                child: Text(
-                  _holding ? 'Manteniendo...' : 'Mantén presionado para SOS',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: destructive),
+    return Stack(
+      children: [
+        // iOS no expone una API pública para interceptar los botones físicos de
+        // volumen (a diferencia de Android, VolumeButtonChannel/MainActivity.kt) —
+        // este botón flotante secundario es el sustituto de esa vía de activación
+        // en iOS, siempre visible además del botón SOS principal.
+        if (Platform.isIOS) const _IosSecondaryButton(),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 24,
+          child: Column(
+            children: [
+              // Franja invisible del gesto secreto (5 toques en 3s), equivalente al
+              // <div onClick={handleSecretTap}> oculto encima del botón en la web.
+              GestureDetector(
+                onTap: _onSecretTap,
+                child: Container(
+                  width: 80,
+                  height: 32,
+                  color: Colors.transparent,
                 ),
               ),
-            ),
+              GestureDetector(
+                onLongPressStart: (_) => _startHold(),
+                onLongPressEnd: (_) => _endHold(),
+                onLongPressCancel: _endHold,
+                child: SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (_holding)
+                        SizedBox(
+                          width: 80,
+                          height: 80,
+                          child: CircularProgressIndicator(
+                            value: _holdProgress,
+                            strokeWidth: 4,
+                            color: Colors.white.withValues(alpha: 0.6),
+                            backgroundColor: Colors.transparent,
+                          ),
+                        ),
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: destructive,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: destructive.withValues(alpha: 0.5),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                            Text(
+                              'SOS',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              // Solo la etiqueta de texto lleva el desenfoque de fondo — el botón
+              // en sí queda tal cual, sin blur (ajuste pedido tras ver el diseño).
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: destructive.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      _holding
+                          ? 'Manteniendo...'
+                          : 'Mantén presionado para SOS',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: destructive,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
+      ],
+    );
+  }
+}
+
+// Botón secundario visible en iOS: mismo gesto de mantener presionado 1s que
+// el botón SOS principal, en un ícono discreto de esquina superior — no hay
+// confirmación intermedia porque el mismo hold ya evita activaciones por
+// toques accidentales.
+class _IosSecondaryButton extends ConsumerStatefulWidget {
+  const _IosSecondaryButton();
+
+  @override
+  ConsumerState<_IosSecondaryButton> createState() =>
+      _IosSecondaryButtonState();
+}
+
+class _IosSecondaryButtonState extends ConsumerState<_IosSecondaryButton> {
+  double _holdProgress = 0;
+  Timer? _progressTimer;
+
+  void _startHold() {
+    if (ref.read(sosProvider).active) return;
+    final start = DateTime.now();
+    _progressTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+      final elapsed = DateTime.now().difference(start);
+      setState(() {
+        _holdProgress = (elapsed.inMilliseconds / _holdDuration.inMilliseconds)
+            .clamp(0, 1)
+            .toDouble();
+      });
+      if (elapsed >= _holdDuration) {
+        timer.cancel();
+        setState(() => _holdProgress = 0);
+        ref.read(sosProvider.notifier).activate();
+      }
+    });
+  }
+
+  void _endHold() {
+    _progressTimer?.cancel();
+    setState(() => _holdProgress = 0);
+  }
+
+  @override
+  void dispose() {
+    _progressTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final destructive = Theme.of(context).colorScheme.error;
+    return Positioned(
+      top: 12,
+      right: 12,
+      child: GestureDetector(
+        onLongPressStart: (_) => _startHold(),
+        onLongPressEnd: (_) => _endHold(),
+        onLongPressCancel: _endHold,
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (_holdProgress > 0)
+                CircularProgressIndicator(
+                  value: _holdProgress,
+                  strokeWidth: 3,
+                  color: destructive.withValues(alpha: 0.7),
+                  backgroundColor: Colors.transparent,
+                ),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: destructive.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: destructive.withValues(alpha: 0.4)),
+                ),
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  color: destructive,
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -195,8 +330,17 @@ class _SosActivePanel extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: surface,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: destructive.withValues(alpha: 0.4), width: 1.5),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 12))],
+                    border: Border.all(
+                      color: destructive.withValues(alpha: 0.4),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        blurRadius: 24,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -204,9 +348,22 @@ class _SosActivePanel extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(width: 10, height: 10, decoration: BoxDecoration(color: destructive, shape: BoxShape.circle)),
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: destructive,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
                           const SizedBox(width: 8),
-                          Text('SOS ACTIVO', style: TextStyle(color: destructive, fontWeight: FontWeight.bold)),
+                          Text(
+                            'SOS ACTIVO',
+                            style: TextStyle(
+                              color: destructive,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -215,7 +372,10 @@ class _SosActivePanel extends ConsumerWidget {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: Container(
-                            decoration: BoxDecoration(color: Colors.black, border: Border.all(color: destructive, width: 2)),
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              border: Border.all(color: destructive, width: 2),
+                            ),
                             child: _CameraPreview(recorder: recorder),
                           ),
                         ),
@@ -225,12 +385,23 @@ class _SosActivePanel extends ConsumerWidget {
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Ubicación', style: TextStyle(fontSize: 12)),
-                              Text('${location.latitude!.toStringAsFixed(6)}, ${location.longitude!.toStringAsFixed(6)}', style: const TextStyle(fontFamily: 'monospace')),
+                              const Text(
+                                'Ubicación',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              Text(
+                                '${location.latitude!.toStringAsFixed(6)}, ${location.longitude!.toStringAsFixed(6)}',
+                                style: const TextStyle(fontFamily: 'monospace'),
+                              ),
                             ],
                           ),
                         ),
@@ -241,24 +412,53 @@ class _SosActivePanel extends ConsumerWidget {
                           runSpacing: 6,
                           alignment: WrapAlignment.center,
                           children: sos.contactsNotified
-                              .map((name) => Chip(label: Text(name, style: TextStyle(color: destructive)), backgroundColor: destructive.withValues(alpha: 0.15)))
+                              .map(
+                                (name) => Chip(
+                                  label: Text(
+                                    name,
+                                    style: TextStyle(color: destructive),
+                                  ),
+                                  backgroundColor: destructive.withValues(
+                                    alpha: 0.15,
+                                  ),
+                                ),
+                              )
                               .toList(),
                         ),
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton.icon(
-                          onPressed: sos.saving ? null : () => ref.read(sosProvider.notifier).saveAndClose(),
-                          icon: sos.saving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.check),
-                          label: Text(sos.saving ? 'Guardando...' : 'Guardar y cerrar'),
+                          onPressed: sos.saving
+                              ? null
+                              : () => ref
+                                    .read(sosProvider.notifier)
+                                    .saveAndClose(),
+                          icon: sos.saving
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.check),
+                          label: Text(
+                            sos.saving ? 'Guardando...' : 'Guardar y cerrar',
+                          ),
                         ),
                       ),
                       const SizedBox(height: 8),
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(foregroundColor: destructive, side: BorderSide(color: destructive)),
-                          onPressed: sos.saving ? null : () => _confirmCancel(context, ref),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: destructive,
+                            side: BorderSide(color: destructive),
+                          ),
+                          onPressed: sos.saving
+                              ? null
+                              : () => _confirmCancel(context, ref),
                           icon: const Icon(Icons.close),
                           label: const Text('Fue una falsa alarma'),
                         ),
@@ -279,11 +479,18 @@ class _SosActivePanel extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('¿Confirmar falsa alarma?'),
-        content: const Text('Se detendrá la grabación y se eliminará la alerta.'),
+        content: const Text(
+          'Se detendrá la grabación y se eliminará la alerta.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Mantener activo')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Mantener activo'),
+          ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
             onPressed: () {
               Navigator.pop(ctx);
               ref.read(sosProvider.notifier).cancel();

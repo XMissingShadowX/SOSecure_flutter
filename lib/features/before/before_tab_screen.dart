@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../state/contact_locations_provider.dart';
 import '../../state/live_sharing_provider.dart';
 import '../../state/location_provider.dart';
+import '../../platform/sos_alarm.dart';
 import '../../state/security_timer_provider.dart';
 import '../../state/voice_sos_provider.dart';
 
@@ -27,15 +28,26 @@ class _BeforeTabScreenState extends ConsumerState<BeforeTabScreen> {
     // vive keepAlive, así que sobreviven a rebuilds de este widget.
     final timerNotifier = ref.read(securityTimerProvider.notifier);
     timerNotifier.onFiveMinuteWarning = () {
+      SosAlarm.triggerWarning(
+        '⏱️ SOSecure',
+        'Quedan 5 minutos para que expire tu temporizador de seguridad',
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('⏱️ Quedan 5 minutos para que expire tu temporizador de seguridad')),
+        const SnackBar(
+          content: Text(
+            '⏱️ Quedan 5 minutos para que expire tu temporizador de seguridad',
+          ),
+        ),
       );
     };
     timerNotifier.onExpired = () {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('⏰ Temporizador expirado — se activó una alerta SOS'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('⏰ Temporizador expirado — se activó una alerta SOS'),
+          backgroundColor: Colors.red,
+        ),
       );
     };
   }
@@ -69,7 +81,10 @@ class _BeforeStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
     return Card(
-      color: Color.alphaBlend(primary.withValues(alpha: 0.05), Theme.of(context).colorScheme.surface),
+      color: Color.alphaBlend(
+        primary.withValues(alpha: 0.05),
+        Theme.of(context).colorScheme.surface,
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         child: Row(
@@ -80,8 +95,16 @@ class _BeforeStatusCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: const [
-                  Text('Modo ANTES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15), textAlign: TextAlign.center),
-                  Text('Prepárate antes de salir', style: TextStyle(fontSize: 12, color: Colors.grey), textAlign: TextAlign.center),
+                  Text(
+                    'Modo ANTES',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    textAlign: TextAlign.center,
+                  ),
+                  Text(
+                    'Prepárate antes de salir',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
             ),
@@ -124,7 +147,10 @@ class _SecurityTimerCardState extends ConsumerState<_SecurityTimerCard> {
               children: [
                 Icon(Icons.timer_outlined, color: destructive, size: 20),
                 const SizedBox(width: 8),
-                const Text('Temporizador de seguridad', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text(
+                  'Temporizador de seguridad',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               ],
             ),
             const SizedBox(height: 4),
@@ -137,15 +163,23 @@ class _SecurityTimerCardState extends ConsumerState<_SecurityTimerCard> {
               Center(
                 child: Text(
                   _formatDuration(timer.remaining!),
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: destructive, fontFamily: 'monospace'),
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: destructive,
+                    fontFamily: 'monospace',
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.tertiary),
-                  onPressed: () => ref.read(securityTimerProvider.notifier).cancel(),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.tertiary,
+                  ),
+                  onPressed: () =>
+                      ref.read(securityTimerProvider.notifier).cancel(),
                   icon: const Icon(Icons.check),
                   label: const Text('Llegué bien'),
                 ),
@@ -157,14 +191,19 @@ class _SecurityTimerCardState extends ConsumerState<_SecurityTimerCard> {
                     child: TextField(
                       controller: _minutesController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Minutos', isDense: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Minutos',
+                        isDense: true,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   FilledButton(
                     onPressed: () {
                       final mins = int.tryParse(_minutesController.text) ?? 30;
-                      ref.read(securityTimerProvider.notifier).start(Duration(minutes: mins));
+                      ref
+                          .read(securityTimerProvider.notifier)
+                          .start(Duration(minutes: mins));
                     },
                     child: const Text('Iniciar'),
                   ),
@@ -188,15 +227,24 @@ class _SecurityTimerCardState extends ConsumerState<_SecurityTimerCard> {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: selected ? primary.withValues(alpha: 0.15) : Theme.of(context).colorScheme.surfaceContainerHighest,
+                            color: selected
+                                ? primary.withValues(alpha: 0.15)
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: selected ? primary : Colors.transparent, width: 1.5),
+                            border: Border.all(
+                              color: selected ? primary : Colors.transparent,
+                              width: 1.5,
+                            ),
                           ),
                           child: Text(
                             '${m}min',
                             style: TextStyle(
                               fontSize: 13,
-                              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                              fontWeight: selected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
                               color: selected ? primary : null,
                             ),
                           ),
@@ -239,10 +287,16 @@ class _LiveSharingCard extends ConsumerWidget {
               children: [
                 Icon(Icons.share_location_outlined, color: primary, size: 20),
                 const SizedBox(width: 8),
-                const Expanded(child: Text('Compartir mi ubicación en vivo', style: TextStyle(fontWeight: FontWeight.w600))),
+                const Expanded(
+                  child: Text(
+                    'Compartir mi ubicación en vivo',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
                 Switch(
                   value: isSharing,
-                  onChanged: (_) => ref.read(liveSharingProvider.notifier).toggle(),
+                  onChanged: (_) =>
+                      ref.read(liveSharingProvider.notifier).toggle(),
                 ),
               ],
             ),
@@ -253,15 +307,32 @@ class _LiveSharingCard extends ConsumerWidget {
             ),
             if (contacts.isNotEmpty) ...[
               const SizedBox(height: 12),
-              const Text('Compartiendo contigo ahora', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              const Text(
+                'Compartiendo contigo ahora',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 4),
-              ...contacts.map((c) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    leading: const Icon(Icons.person_pin_circle_outlined, size: 20),
-                    title: Text(c.displayName, style: const TextStyle(fontSize: 13)),
-                    subtitle: Text('${c.latitude.toStringAsFixed(4)}, ${c.longitude.toStringAsFixed(4)}', style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
-                  )),
+              ...contacts.map(
+                (c) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  leading: const Icon(
+                    Icons.person_pin_circle_outlined,
+                    size: 20,
+                  ),
+                  title: Text(
+                    c.displayName,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  subtitle: Text(
+                    '${c.latitude.toStringAsFixed(4)}, ${c.longitude.toStringAsFixed(4)}',
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ],
         ),
@@ -293,10 +364,16 @@ class _SafeZonesCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Zonas seguras cercanas', style: TextStyle(fontWeight: FontWeight.w600)),
+            const Text(
+              'Zonas seguras cercanas',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 4),
             if (!location.hasCoordinates)
-              const Text('Activa tu ubicación para buscar zonas cercanas', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const Text(
+                'Activa tu ubicación para buscar zonas cercanas',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
             const SizedBox(height: 8),
             GridView.count(
               crossAxisCount: 2,
@@ -313,9 +390,11 @@ class _SafeZonesCard extends ConsumerWidget {
                   onPressed: !location.hasCoordinates
                       ? null
                       : () => launchUrl(
-                            Uri.parse('https://www.google.com/maps/search/$query/@${location.latitude},${location.longitude},15z'),
-                            mode: LaunchMode.externalApplication,
+                          Uri.parse(
+                            'https://www.google.com/maps/search/$query/@${location.latitude},${location.longitude},15z',
                           ),
+                          mode: LaunchMode.externalApplication,
+                        ),
                 );
               }).toList(),
             ),
@@ -349,28 +428,47 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
               children: [
                 Icon(Icons.mic_none_outlined, color: primary, size: 20),
                 const SizedBox(width: 8),
-                const Expanded(child: Text('Palabra clave de voz', style: TextStyle(fontWeight: FontWeight.w600))),
+                const Expanded(
+                  child: Text(
+                    'Palabra clave de voz',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
                 Switch(
                   value: voice.enabled,
-                  onChanged: (v) => ref.read(voiceSosProvider.notifier).setEnabled(v),
+                  onChanged: (v) =>
+                      ref.read(voiceSosProvider.notifier).setEnabled(v),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               voice.enabled
-                  ? (voice.listening ? 'Escuchando: "${voice.keyword}"' : 'Activando micrófono...')
+                  ? (voice.listening
+                        ? 'Escuchando: "${voice.keyword}"'
+                        : 'Activando micrófono...')
                   : 'Di la palabra clave para activar el SOS con las manos libres.',
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
             if (voice.errorMessage != null) ...[
               const SizedBox(height: 4),
-              Text(voice.errorMessage!, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.error)),
+              Text(
+                voice.errorMessage!,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
             ],
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: Text('Palabra: "${voice.keyword}"', style: const TextStyle(fontSize: 13))),
+                Expanded(
+                  child: Text(
+                    'Palabra: "${voice.keyword}"',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
                 TextButton(
                   onPressed: () => _editKeyword(context, ref, voice.keyword),
                   child: const Text('Cambiar'),
@@ -383,21 +481,37 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
     );
   }
 
-  Future<void> _editKeyword(BuildContext context, WidgetRef ref, String current) async {
+  Future<void> _editKeyword(
+    BuildContext context,
+    WidgetRef ref,
+    String current,
+  ) async {
     final controller = TextEditingController(text: current);
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Palabra clave de SOS'),
-        content: TextField(controller: controller, autofocus: true, decoration: const InputDecoration(hintText: 'ej. socorro')),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'ej. socorro'),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text('Guardar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('Guardar'),
+          ),
         ],
       ),
     );
     if (result != null && result.trim().isNotEmpty) {
-      await ref.read(voiceSosProvider.notifier).setKeyword(result.trim().toLowerCase());
+      await ref
+          .read(voiceSosProvider.notifier)
+          .setKeyword(result.trim().toLowerCase());
     }
   }
 }
@@ -410,7 +524,10 @@ class _RoutesPlaceholder extends StatelessWidget {
     return const Card(
       child: Padding(
         padding: EdgeInsets.all(16),
-        child: Text('Rutas seguras y mapa — Fase 5', style: TextStyle(fontSize: 12, color: Colors.grey)),
+        child: Text(
+          'Rutas seguras y mapa — Fase 5',
+          style: TextStyle(fontSize: 12, color: Colors.grey),
+        ),
       ),
     );
   }

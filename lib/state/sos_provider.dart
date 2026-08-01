@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../data/repositories/alerts_repository.dart';
 import '../data/repositories/recordings_repository.dart';
 import '../domain/models/sos_alert.dart';
+import '../platform/sos_alarm.dart';
 import '../platform/sos_foreground_service.dart';
 import 'auth_provider.dart';
 import 'contacts_provider.dart';
@@ -27,7 +28,12 @@ class SosState {
     this.saving = false,
   });
 
-  SosState copyWith({bool? active, SosAlert? alert, List<String>? contactsNotified, bool? saving}) {
+  SosState copyWith({
+    bool? active,
+    SosAlert? alert,
+    List<String>? contactsNotified,
+    bool? saving,
+  }) {
     return SosState(
       active: active ?? this.active,
       alert: alert ?? this.alert,
@@ -63,6 +69,12 @@ class Sos extends _$Sos {
 
     state = state.copyWith(active: true, contactsNotified: names);
     unawaited(SosForegroundService.start());
+    unawaited(
+      SosAlarm.triggerUrgent(
+        '🚨 SOSecure SOS Activado',
+        'Alerta de emergencia enviada a tus contactos',
+      ),
+    );
 
     // La grabación es evidencia suplementaria — si falla, la alerta procede igual.
     unawaited(ref.read(recorderProvider.notifier).start());
@@ -92,16 +104,18 @@ class Sos extends _$Sos {
       // offline_queue_provider.dart), en vez de perder la alerta silenciosamente.
       final userId = ref.read(currentUserProvider)?.id;
       if (userId != null) {
-        await ref.read(offlineQueueProvider.notifier).enqueue(
-          table: 'sos_alerts',
-          payload: {
-            'user_id': userId,
-            'latitude': location.latitude,
-            'longitude': location.longitude,
-            'status': 'active',
-            'contacts_notified': names,
-          },
-        );
+        await ref
+            .read(offlineQueueProvider.notifier)
+            .enqueue(
+              table: 'sos_alerts',
+              payload: {
+                'user_id': userId,
+                'latitude': location.latitude,
+                'longitude': location.longitude,
+                'status': 'active',
+                'contacts_notified': names,
+              },
+            );
       }
     }
   }
@@ -128,7 +142,9 @@ class Sos extends _$Sos {
     if (file != null && alert != null) {
       try {
         final location = ref.read(locationWatcherProvider);
-        final durationMs = startedAt == null ? 0 : DateTime.now().difference(startedAt).inMilliseconds;
+        final durationMs = startedAt == null
+            ? 0
+            : DateTime.now().difference(startedAt).inMilliseconds;
         await _recordingsRepo.uploadSosRecording(
           file: file,
           // Confirmado en el spike de Fase 2: CameraController produce mp4 en Android.

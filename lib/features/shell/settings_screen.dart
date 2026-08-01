@@ -6,10 +6,10 @@ import 'package:go_router/go_router.dart';
 import '../../data/api/pin_api.dart';
 import '../../data/supabase_client.dart';
 import '../../state/settings_provider.dart';
+import '../../state/volume_sos_provider.dart';
 
 // Puerto del diálogo de Ajustes de components/app-shell.tsx: tema, idioma, PIN, modo
-// simple. El toggle de configuración del botón de volumen se agrega en la Fase 4, cuando
-// exista volume_sos_provider.dart — por ahora hay un espacio reservado, sin bloquear el resto.
+// simple, y el ajuste de pulsaciones/ventana de tiempo del botón de volumen (Fase 4).
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -51,8 +51,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _pinEnabled = previous);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
     }
   }
 
@@ -67,14 +68,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           keyboardType: TextInputType.number,
           obscureText: true,
           maxLength: 8,
-          decoration: const InputDecoration(hintText: 'Nuevo PIN (mínimo 4 dígitos)'),
+          decoration: const InputDecoration(
+            hintText: 'Nuevo PIN (mínimo 4 dígitos)',
+          ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(context, controller.text),
-              child: const Text('Guardar')),
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Guardar'),
+          ),
         ],
       ),
     );
@@ -83,8 +89,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await _pinApi.savePin(pin: pin, pinEnabled: true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('No se pudo guardar el PIN: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No se pudo guardar el PIN: $e')));
       return;
     }
     if (!mounted) return;
@@ -124,9 +131,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           SwitchListTile(
             title: const Text('Modo simple'),
-            subtitle: const Text('Interfaz simplificada, textos e íconos más grandes'),
+            subtitle: const Text(
+              'Interfaz simplificada, textos e íconos más grandes',
+            ),
             value: simpleMode,
-            onChanged: (value) => ref.read(simpleModeProvider.notifier).set(value),
+            onChanged: (value) =>
+                ref.read(simpleModeProvider.notifier).set(value),
           ),
           const Divider(),
           const _SectionLabel('Seguridad'),
@@ -138,9 +148,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           else ...[
             SwitchListTile(
               title: const Text('Bloqueo por PIN'),
-              subtitle: Text(_pinConfigured
-                  ? 'Protege contactos, ubicación e historial'
-                  : 'Configura un PIN para activarlo'),
+              subtitle: Text(
+                _pinConfigured
+                    ? 'Protege contactos, ubicación e historial'
+                    : 'Configura un PIN para activarlo',
+              ),
               value: _pinEnabled && _pinConfigured,
               onChanged: _pinConfigured ? _togglePinEnabled : null,
             ),
@@ -152,16 +164,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
           const Divider(),
           const _SectionLabel('Botón de volumen (SOS)'),
-          const ListTile(
-            title: Text('Disponible en la Fase 4'),
-            subtitle: Text('Activación de SOS con el botón físico de volumen'),
-            enabled: false,
-          ),
+          const _VolumeSosCard(),
           const Divider(),
           ListTile(
-            leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
-            title: Text('Cerrar sesión',
-                style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            leading: Icon(
+              Icons.logout,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            title: Text(
+              'Cerrar sesión',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
             onTap: _signOut,
           ),
         ],
@@ -177,10 +190,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: locales
-              .map((l) => ListTile(
-                    title: Text(l.languageCode.toUpperCase()),
-                    onTap: () => Navigator.pop(context, l),
-                  ))
+              .map(
+                (l) => ListTile(
+                  title: Text(l.languageCode.toUpperCase()),
+                  onTap: () => Navigator.pop(context, l),
+                ),
+              )
               .toList(),
         ),
       ),
@@ -188,6 +203,104 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (selected != null && context.mounted) {
       await context.setLocale(selected);
     }
+  }
+}
+
+// Puerto de la tarjeta "Botón de volumen" de app-shell.tsx: presets de
+// pulsaciones ([3,4,5,7,10]) y ventana de tiempo ([2,3,4,5]s), idénticos a
+// los de la web, en vez de un slider libre.
+class _VolumeSosCard extends ConsumerWidget {
+  const _VolumeSosCard();
+
+  static const _pressOptions = [3, 4, 5, 7, 10];
+  static const _windowOptionsMs = [2000, 3000, 4000, 5000];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final volume = ref.watch(volumeSosProvider);
+    final notifier = ref.read(volumeSosProvider.notifier);
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Pulsaciones necesarias',
+                style: TextStyle(color: Colors.grey),
+              ),
+              Text(
+                '${volume.pressesRequired}×',
+                style: TextStyle(fontWeight: FontWeight.bold, color: primary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: _pressOptions.map((n) {
+              final selected = volume.pressesRequired == n;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: selected ? primary : null,
+                      foregroundColor: selected ? Colors.white : null,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                    onPressed: () => notifier.setPressesRequired(n),
+                    child: Text('$n×'),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Ventana de tiempo',
+                style: TextStyle(color: Colors.grey),
+              ),
+              Text(
+                '${volume.windowMs / 1000}s',
+                style: TextStyle(fontWeight: FontWeight.bold, color: primary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: _windowOptionsMs.map((ms) {
+              final selected = volume.windowMs == ms;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: selected ? primary : null,
+                      foregroundColor: selected ? Colors.white : null,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                    onPressed: () => notifier.setWindowMs(ms),
+                    child: Text('${ms / 1000}s'),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Presiona el botón de volumen ${volume.pressesRequired} veces en ${volume.windowMs / 1000} segundos para activar el SOS.',
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
   }
 }
 
