@@ -334,33 +334,46 @@ class _LiveBroadcastToggle extends ConsumerWidget {
         alertId != null && recorder.status == RecorderStatus.recording;
     final destructive = Theme.of(context).colorScheme.error;
 
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: live.live ? Colors.white : destructive,
-          backgroundColor: live.live ? destructive : null,
-          side: BorderSide(color: destructive),
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: live.live ? Colors.white : destructive,
+              backgroundColor: live.live ? destructive : null,
+              side: BorderSide(color: destructive),
+            ),
+            onPressed: !canGoLive
+                ? null
+                : () {
+                    if (live.live) {
+                      ref.read(liveBroadcastProvider.notifier).stop();
+                    } else {
+                      ref.read(liveBroadcastProvider.notifier).start(alertId!);
+                    }
+                  },
+            icon: Icon(
+              live.live ? Icons.stop_circle_outlined : Icons.podcasts,
+              size: 18,
+            ),
+            label: Text(
+              live.live
+                  ? 'Transmitiendo en vivo (${live.segmentsSent} clips) — detener'
+                  : 'Transmitir en vivo a contactos',
+            ),
+          ),
         ),
-        onPressed: !canGoLive
-            ? null
-            : () {
-                if (live.live) {
-                  ref.read(liveBroadcastProvider.notifier).stop();
-                } else {
-                  ref.read(liveBroadcastProvider.notifier).start(alertId!);
-                }
-              },
-        icon: Icon(
-          live.live ? Icons.stop_circle_outlined : Icons.podcasts,
-          size: 18,
-        ),
-        label: Text(
-          live.live
-              ? 'Transmitiendo en vivo — detener'
-              : 'Transmitir en vivo a contactos',
-        ),
-      ),
+        if (live.error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              live.error!,
+              style: TextStyle(color: destructive, fontSize: 11),
+              textAlign: TextAlign.center,
+            ),
+          ),
+      ],
     );
   }
 }

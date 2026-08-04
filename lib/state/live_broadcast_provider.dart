@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -9,7 +10,10 @@ import 'recorder_controller.dart';
 
 part 'live_broadcast_provider.g.dart';
 
-const segmentDuration = Duration(milliseconds: 1500);
+// Subido a 2s (desde 1.5s): el encoder de video de CameraX necesita un
+// margen real tras startVideoRecording() antes de poder recibir un nuevo
+// stopVideoRecording() sin crashear — ver la nota en _captureAndSend.
+const segmentDuration = Duration(milliseconds: 2000);
 
 class LiveBroadcastState {
   final bool live;
@@ -42,6 +46,7 @@ class LiveBroadcast extends _$LiveBroadcast {
   RealtimeChannel? _channel;
   Timer? _timer;
   int _seq = 0;
+  bool _capturing = false;
 
   @override
   LiveBroadcastState build() {
@@ -62,12 +67,20 @@ class LiveBroadcast extends _$LiveBroadcast {
     // paso.
     final joined = Completer<void>();
     _channel!.subscribe((status, error) {
+      debugPrint('[LiveBroadcast] subscribe status=$status error=$error');
       if (status == RealtimeSubscribeStatus.subscribed && !joined.isCompleted) {
         joined.complete();
       }
     });
-    await joined.future.timeout(const Duration(seconds: 10), onTimeout: () {});
+    await joined.future.timeout(
+      const Duration(seconds: 10),
+      onTimeout: () =>
+          debugPrint('[LiveBroadcast] timeout esperando SUBSCRIBED'),
+    );
 
+    debugPrint(
+      '[LiveBroadcast] canal unido, mandando status live=true para $alertId',
+    );
     await _repo.sendStatus(_channel!, live: true);
     state = const LiveBroadcastState(live: true);
 
@@ -75,14 +88,35 @@ class LiveBroadcast extends _$LiveBroadcast {
   }
 
   Future<void> _captureAndSend(String alertId) async {
-    final file = await ref.read(recorderProvider.notifier).rotateSegment();
-    if (file == null || _channel == null) return;
+    // Bug real encontrado en pruebas: Timer.periodic dispara cada
+    // segmentDuration SIN esperar a que el ciclo anterior (detener +
+    // reiniciar grabación + subir) termine. Si ese ciclo tardaba más que el
+    // intervalo (upload lento, red mala), el siguiente tick llamaba
+    // rotateSegment() -> stopVideoRecording() mientras el encoder de video de
+    // CameraX del startVideoRecording() anterior todavía no terminaba de
+    // inicializarse, crasheando con NullPointerException nativo
+    // ("Encoder.stop on a null object reference") y dejando rotateSegment()
+    // devolviendo null para siempre. Este candado evita ticks superpuestos.
+    if (_capturing) {
+      debugPrint('[LiveBroadcast] tick ignorado — el anterior sigue en curso');
+      return;
+    }
+    _capturing = true;
     try {
+      final file = await ref.read(recorderProvider.notifier).rotateSegment();
+      if (file == null) {
+        debugPrint(
+          '[LiveBroadcast] rotateSegment() devolvió null (seq=$_seq) — no se manda nada',
+        );
+        return;
+      }
+      if (_channel == null) return;
       final url = await _repo.uploadSegment(
         file: file,
         alertId: alertId,
         seq: _seq,
       );
+      debugPrint('[LiveBroadcast] segmento $_seq subido: $url');
       await _repo.sendSegment(
         _channel!,
         VideoSegmentPayload(
@@ -91,10 +125,14 @@ class LiveBroadcast extends _$LiveBroadcast {
           ts: DateTime.now().millisecondsSinceEpoch,
         ),
       );
+      debugPrint('[LiveBroadcast] segmento $_seq transmitido por broadcast');
       _seq++;
       state = state.copyWith(segmentsSent: _seq);
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[LiveBroadcast] ERROR en segmento $_seq: $e\n$st');
       state = state.copyWith(error: 'Error al transmitir: $e');
+    } finally {
+      _capturing = false;
     }
   }
 

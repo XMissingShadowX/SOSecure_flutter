@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -172,10 +174,25 @@ class Recorder extends _$Recorder {
     if (controller == null || state.status != RecorderStatus.recording)
       return null;
     try {
-      final xfile = await controller.stopVideoRecording();
-      await controller.startVideoRecording();
+      // stopVideoRecording()/startVideoRecording() de CameraX pueden colgarse
+      // sin lanzar excepción ni resolver el Future (visto en pruebas reales:
+      // el primer segmento nunca llegaba y "_capturing" quedaba trabado para
+      // siempre). El timeout convierte ese colgado silencioso en una
+      // TimeoutException capturable, para que el guard de _captureAndSend se
+      // libere y el próximo tick pueda reintentar en vez de morir para
+      // siempre.
+      debugPrint('[Recorder] rotateSegment: llamando stopVideoRecording()');
+      final xfile = await controller.stopVideoRecording().timeout(
+        const Duration(seconds: 6),
+      );
+      debugPrint('[Recorder] rotateSegment: stop OK, llamando startVideoRecording()');
+      await controller.startVideoRecording().timeout(
+        const Duration(seconds: 6),
+      );
+      debugPrint('[Recorder] rotateSegment: start OK');
       return File(xfile.path);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[Recorder] rotateSegment: ERROR/timeout — $e');
       return null;
     }
   }
