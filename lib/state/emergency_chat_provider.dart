@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/env.dart';
 import '../data/repositories/emergency_chat_repository.dart';
 import '../data/supabase_client.dart';
 import '../domain/models/emergency_chat_message.dart';
@@ -203,8 +204,14 @@ class EmergencyChat extends _$EmergencyChat {
     final userId = ref.read(currentUserProvider)?.id;
     if (userId == null) return;
     final sosAlert = ref.read(sosProvider).alert;
+    // Antes solo mandaba el link de Google Maps — el contacto no tenía
+    // ninguna forma de llegar a /emergency/{id} (la página real donde se ve
+    // la transmisión en vivo) desde el chat. El sufijo `sosecure-live:{id}`
+    // (invisible en la UI, ver el parseo en emergency_chat_widget.dart) es
+    // lo que le permite al widget mostrar el botón "Ver transmisión" en vez
+    // de que el usuario tenga que copiar la URL a mano.
     final text = sosAlert != null
-        ? '🚨 ALERTA SOS — Estoy en peligro.\n📍 https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}'
+        ? '🚨 ALERTA SOS — Estoy en peligro.\n📍 https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}\n🎥 Ver en vivo: ${Env.apiBaseUrl}/emergency/${sosAlert.id}\nsosecure-live:${sosAlert.id}'
         : '🚨 ALERTA SOS — Estoy en peligro. No tengo ubicación disponible.';
     for (final receiverId in state.resolvedIds.values) {
       if (receiverId == null || receiverId == userId) continue;

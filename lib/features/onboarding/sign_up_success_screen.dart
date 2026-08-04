@@ -14,11 +14,16 @@ class SignUpSuccessScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.mark_email_read_outlined,
-                    size: 64, color: Theme.of(context).colorScheme.primary),
+                Icon(
+                  Icons.mark_email_read_outlined,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 const SizedBox(height: 16),
-                const Text('Revisa tu correo',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Revisa tu correo',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 const Text(
                   'Te enviamos un enlace de confirmación. Ábrelo para activar tu cuenta.',

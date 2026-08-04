@@ -52,7 +52,8 @@ class Contacts extends _$Contacts {
     );
     final current = state.valueOrNull ?? [];
     state = AsyncData([
-      for (final c in current) if (c.id == id) updated else c,
+      for (final c in current)
+        if (c.id == id) updated else c,
     ]);
   }
 

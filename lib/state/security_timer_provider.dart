@@ -68,6 +68,10 @@ class SecurityTimer extends _$SecurityTimer {
       onFiveMinuteWarning?.call();
     }
 
-    state = SecurityTimerState(active: true, endTime: end, remaining: remaining);
+    state = SecurityTimerState(
+      active: true,
+      endTime: end,
+      remaining: remaining,
+    );
   }
 }

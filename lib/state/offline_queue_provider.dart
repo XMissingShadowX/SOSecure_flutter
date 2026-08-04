@@ -36,17 +36,35 @@ class OfflineQueue extends _$OfflineQueue {
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getStringList(_queueKey) ?? [];
-    state = raw.map((s) => OfflineQueueItem.fromJson(jsonDecode(s) as Map<String, dynamic>)).toList();
+    state = raw
+        .map(
+          (s) =>
+              OfflineQueueItem.fromJson(jsonDecode(s) as Map<String, dynamic>),
+        )
+        .toList();
     if (state.isNotEmpty) flush();
   }
 
   Future<void> _persist() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_queueKey, state.map((i) => jsonEncode(i.toJson())).toList());
+    await prefs.setStringList(
+      _queueKey,
+      state.map((i) => jsonEncode(i.toJson())).toList(),
+    );
   }
 
-  Future<void> enqueue({required String table, required Map<String, dynamic> payload}) async {
-    state = [...state, OfflineQueueItem(table: table, payload: payload, queuedAt: DateTime.now())];
+  Future<void> enqueue({
+    required String table,
+    required Map<String, dynamic> payload,
+  }) async {
+    state = [
+      ...state,
+      OfflineQueueItem(
+        table: table,
+        payload: payload,
+        queuedAt: DateTime.now(),
+      ),
+    ];
     await _persist();
   }
 

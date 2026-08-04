@@ -34,7 +34,16 @@ const Map<IncidentType, List<String>> incidentQuestions = {
 
 // 'si' = 1, 'no_se' = 0.5, 'no' = 0 — idéntico a calculateSeverity() de la web.
 IncidentSeverity calculateSeverity(List<String> answers) {
-  final score = answers.fold<double>(0, (sum, a) => sum + (a == 'si' ? 1 : a == 'no_se' ? 0.5 : 0));
+  final score = answers.fold<double>(
+    0,
+    (sum, a) =>
+        sum +
+        (a == 'si'
+            ? 1
+            : a == 'no_se'
+            ? 0.5
+            : 0),
+  );
   if (score >= 3) return 'high';
   if (score == 0) return 'low';
   return 'medium';

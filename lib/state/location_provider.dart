@@ -64,25 +64,35 @@ class LocationWatcher extends _$LocationWatcher {
       }
 
       if (!await Geolocator.isLocationServiceEnabled()) {
-        state = state.copyWith(loading: false, error: 'El GPS está desactivado.');
+        state = state.copyWith(
+          loading: false,
+          error: 'El GPS está desactivado.',
+        );
         return;
       }
 
       // enableHighAccuracy/timeout/maximumAge equivalentes a hooks/use-geolocation.ts.
-      const settings = LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 0);
-      final subscription = Geolocator.getPositionStream(locationSettings: settings).listen(
-        (position) {
-          state = LocationState(
-            latitude: position.latitude,
-            longitude: position.longitude,
-            accuracy: position.accuracy,
-            loading: false,
-          );
-        },
-        onError: (_) {
-          state = state.copyWith(loading: false, error: 'No se pudo obtener la ubicación.');
-        },
+      const settings = LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 0,
       );
+      final subscription =
+          Geolocator.getPositionStream(locationSettings: settings).listen(
+            (position) {
+              state = LocationState(
+                latitude: position.latitude,
+                longitude: position.longitude,
+                accuracy: position.accuracy,
+                loading: false,
+              );
+            },
+            onError: (_) {
+              state = state.copyWith(
+                loading: false,
+                error: 'No se pudo obtener la ubicación.',
+              );
+            },
+          );
       ref.onDispose(subscription.cancel);
     } catch (e) {
       state = state.copyWith(loading: false, error: 'Error de ubicación: $e');

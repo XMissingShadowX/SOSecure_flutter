@@ -22,7 +22,10 @@ class LiveLocationRepository {
   }
 
   Future<void> stopSharing(String userId) async {
-    await supabase.from('user_locations').update({'is_sharing': false}).eq('user_id', userId);
+    await supabase
+        .from('user_locations')
+        .update({'is_sharing': false})
+        .eq('user_id', userId);
   }
 
   // Resuelve contactos con email → user_id de SOSecure, vía la RPC
@@ -30,19 +33,28 @@ class LiveLocationRepository {
   Future<Map<String, String>> resolveContactUserIds(List<String> emails) async {
     final result = <String, String>{};
     for (final email in emails) {
-      final userId = await supabase.rpc('get_user_id_by_email', params: {'p_email': email});
+      final userId = await supabase.rpc(
+        'get_user_id_by_email',
+        params: {'p_email': email},
+      );
       if (userId != null) result[email] = userId as String;
     }
     return result;
   }
 
-  Future<List<LiveContact>> getContactLocations(List<String> contactUserIds) async {
+  Future<List<LiveContact>> getContactLocations(
+    List<String> contactUserIds,
+  ) async {
     if (contactUserIds.isEmpty) return [];
-    final data = await supabase
-        .from('user_locations')
-        .select('*')
-        .inFilter('user_id', contactUserIds)
-        .eq('is_sharing', true) as List;
-    return data.map((e) => LiveContact.fromJson(e as Map<String, dynamic>)).toList();
+    final data =
+        await supabase
+                .from('user_locations')
+                .select('*')
+                .inFilter('user_id', contactUserIds)
+                .eq('is_sharing', true)
+            as List;
+    return data
+        .map((e) => LiveContact.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

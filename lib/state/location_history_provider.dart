@@ -21,9 +21,15 @@ class LocationHistory extends _$LocationHistory {
       final now = DateTime.now();
       final updated = [
         ...state.where((s) => now.difference(s.timestamp) < _maxAge),
-        LocationSample(latitude: next.latitude!, longitude: next.longitude!, timestamp: now),
+        LocationSample(
+          latitude: next.latitude!,
+          longitude: next.longitude!,
+          timestamp: now,
+        ),
       ];
-      state = updated.length > _maxSamples ? updated.sublist(updated.length - _maxSamples) : updated;
+      state = updated.length > _maxSamples
+          ? updated.sublist(updated.length - _maxSamples)
+          : updated;
     });
     return const [];
   }

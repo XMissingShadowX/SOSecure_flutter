@@ -96,8 +96,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),
-                    Text(_error!,
-                        style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 24),
                   FilledButton(
@@ -106,7 +110,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2))
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Text('Registrarme'),
                   ),
                 ],

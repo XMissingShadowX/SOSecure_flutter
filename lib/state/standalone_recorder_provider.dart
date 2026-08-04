@@ -19,9 +19,19 @@ class StandaloneRecorderState {
   final DateTime? startedAt;
   final String? errorMessage;
 
-  const StandaloneRecorderState({this.mode = StandaloneRecMode.idle, this.videoController, this.startedAt, this.errorMessage});
+  const StandaloneRecorderState({
+    this.mode = StandaloneRecMode.idle,
+    this.videoController,
+    this.startedAt,
+    this.errorMessage,
+  });
 
-  StandaloneRecorderState copyWith({StandaloneRecMode? mode, CameraController? videoController, DateTime? startedAt, String? errorMessage}) {
+  StandaloneRecorderState copyWith({
+    StandaloneRecMode? mode,
+    CameraController? videoController,
+    DateTime? startedAt,
+    String? errorMessage,
+  }) {
     return StandaloneRecorderState(
       mode: mode ?? this.mode,
       videoController: videoController ?? this.videoController,
@@ -58,8 +68,14 @@ class StandaloneRecorder extends _$StandaloneRecorder {
     }
     final dir = await getTemporaryDirectory();
     _pendingPath = '${dir.path}/audio-${_uuid.v4()}.m4a';
-    await _audioRecorder.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: _pendingPath!);
-    state = StandaloneRecorderState(mode: StandaloneRecMode.audio, startedAt: DateTime.now());
+    await _audioRecorder.start(
+      const RecordConfig(encoder: AudioEncoder.aacLc),
+      path: _pendingPath!,
+    );
+    state = StandaloneRecorderState(
+      mode: StandaloneRecMode.audio,
+      startedAt: DateTime.now(),
+    );
   }
 
   Future<File?> stopAudio() async {
@@ -86,19 +102,33 @@ class StandaloneRecorder extends _$StandaloneRecorder {
         state = state.copyWith(errorMessage: 'No hay cámara disponible.');
         return;
       }
-      final back = cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.back, orElse: () => cameras.first);
-      final controller = CameraController(back, ResolutionPreset.medium, enableAudio: true);
+      final back = cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => cameras.first,
+      );
+      final controller = CameraController(
+        back,
+        ResolutionPreset.medium,
+        enableAudio: true,
+      );
       await controller.initialize();
       await controller.prepareForVideoRecording();
       await controller.startVideoRecording();
-      state = StandaloneRecorderState(mode: StandaloneRecMode.video, videoController: controller, startedAt: DateTime.now());
+      state = StandaloneRecorderState(
+        mode: StandaloneRecMode.video,
+        videoController: controller,
+        startedAt: DateTime.now(),
+      );
     } catch (e) {
-      state = state.copyWith(errorMessage: 'No se pudo iniciar la grabación: $e');
+      state = state.copyWith(
+        errorMessage: 'No se pudo iniciar la grabación: $e',
+      );
     }
   }
 
   Future<File?> stopVideo() async {
-    if (state.mode != StandaloneRecMode.video || state.videoController == null) return null;
+    if (state.mode != StandaloneRecMode.video || state.videoController == null)
+      return null;
     try {
       final xfile = await state.videoController!.stopVideoRecording();
       await state.videoController!.dispose();
@@ -117,7 +147,9 @@ class StandaloneRecorder extends _$StandaloneRecorder {
     } else if (state.mode == StandaloneRecMode.video) {
       try {
         await state.videoController?.stopVideoRecording();
-      } catch (_) {/* noop */}
+      } catch (_) {
+        /* noop */
+      }
       await state.videoController?.dispose();
     }
     state = const StandaloneRecorderState();

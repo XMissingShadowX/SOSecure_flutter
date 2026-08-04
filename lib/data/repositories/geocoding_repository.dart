@@ -25,21 +25,29 @@ class GeocodingRepository {
       final features = data['features'] as List?;
       if (features == null || features.isEmpty) return _fallback(lat, lng);
 
-      final props = (features.first as Map<String, dynamic>)['properties'] as Map<String, dynamic>? ?? {};
+      final props =
+          (features.first as Map<String, dynamic>)['properties']
+              as Map<String, dynamic>? ??
+          {};
       final street = (props['street'] ?? props['name'] ?? '') as String;
       final number = (props['housenumber'] ?? '') as String;
       final district = (props['district'] ?? props['suburb'] ?? '') as String;
-      final city = (props['city'] ?? props['town'] ?? props['village'] ?? '') as String;
+      final city =
+          (props['city'] ?? props['town'] ?? props['village'] ?? '') as String;
 
       String result;
       if (street.isNotEmpty) {
-        final parts = [street + (number.isNotEmpty ? ' $number' : ''), district.isNotEmpty ? district : city]
-            .where((p) => p.isNotEmpty)
-            .toList();
+        final parts = [
+          street + (number.isNotEmpty ? ' $number' : ''),
+          district.isNotEmpty ? district : city,
+        ].where((p) => p.isNotEmpty).toList();
         result = parts.join(', ');
       } else {
         final name = props['name'] as String?;
-        result = [name, city].whereType<String>().where((p) => p.isNotEmpty).join(', ');
+        result = [
+          name,
+          city,
+        ].whereType<String>().where((p) => p.isNotEmpty).join(', ');
         if (result.isEmpty) result = _fallback(lat, lng);
       }
       _cache[key] = result;
@@ -49,5 +57,6 @@ class GeocodingRepository {
     }
   }
 
-  String _fallback(double lat, double lng) => '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}';
+  String _fallback(double lat, double lng) =>
+      '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}';
 }

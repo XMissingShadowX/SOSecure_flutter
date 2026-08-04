@@ -17,10 +17,14 @@ class SosForegroundService {
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: 'sosecure_sos_active',
         channelName: 'Alerta SOS activa',
-        channelDescription: 'Se muestra mientras una alerta SOS está activa, para que la grabación y ubicación sigan funcionando en segundo plano.',
+        channelDescription:
+            'Se muestra mientras una alerta SOS está activa, para que la grabación y ubicación sigan funcionando en segundo plano.',
         onlyAlertOnce: true,
       ),
-      iosNotificationOptions: const IOSNotificationOptions(showNotification: false, playSound: false),
+      iosNotificationOptions: const IOSNotificationOptions(
+        showNotification: false,
+        playSound: false,
+      ),
       foregroundTaskOptions: ForegroundTaskOptions(
         eventAction: ForegroundTaskEventAction.nothing(),
         autoRunOnBoot: false,
@@ -31,7 +35,8 @@ class SosForegroundService {
 
   static Future<void> requestPermissions() async {
     if (!Platform.isAndroid) return;
-    final notificationPermission = await FlutterForegroundTask.checkNotificationPermission();
+    final notificationPermission =
+        await FlutterForegroundTask.checkNotificationPermission();
     if (notificationPermission != NotificationPermission.granted) {
       await FlutterForegroundTask.requestNotificationPermission();
     }
@@ -44,7 +49,8 @@ class SosForegroundService {
     await FlutterForegroundTask.startService(
       serviceId: 501,
       notificationTitle: 'SOSecure — Alerta activa',
-      notificationText: 'Grabando y compartiendo tu ubicación en segundo plano.',
+      notificationText:
+          'Grabando y compartiendo tu ubicación en segundo plano.',
     );
   }
 

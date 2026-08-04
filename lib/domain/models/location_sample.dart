@@ -3,5 +3,9 @@ class LocationSample {
   final double longitude;
   final DateTime timestamp;
 
-  LocationSample({required this.latitude, required this.longitude, required this.timestamp});
+  LocationSample({
+    required this.latitude,
+    required this.longitude,
+    required this.timestamp,
+  });
 }

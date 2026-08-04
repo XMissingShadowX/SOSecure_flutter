@@ -28,7 +28,8 @@ GoRouter buildRouter() {
     initialLocation: '/permission-gate',
     redirect: (context, state) {
       final loggedIn = supabase.auth.currentSession != null;
-      final loggingInRoute = state.matchedLocation == '/login' ||
+      final loggingInRoute =
+          state.matchedLocation == '/login' ||
           state.matchedLocation == '/sign-up' ||
           state.matchedLocation == '/sign-up-success';
 
@@ -40,7 +41,10 @@ GoRouter buildRouter() {
     routes: [
       GoRoute(path: '/', builder: (context, state) => const AppShellScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(path: '/sign-up', builder: (context, state) => const SignUpScreen()),
+      GoRoute(
+        path: '/sign-up',
+        builder: (context, state) => const SignUpScreen(),
+      ),
       GoRoute(
         path: '/sign-up-success',
         builder: (context, state) => const SignUpSuccessScreen(),
@@ -49,8 +53,14 @@ GoRouter buildRouter() {
         path: '/permission-gate',
         builder: (context, state) => const PermissionGateScreen(),
       ),
-      GoRoute(path: '/pin-lock', builder: (context, state) => const PinLockScreen()),
-      GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
+      GoRoute(
+        path: '/pin-lock',
+        builder: (context, state) => const PinLockScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
     ],
   );
 }

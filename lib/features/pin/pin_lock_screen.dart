@@ -119,9 +119,16 @@ class _PinLockScreenState extends State<PinLockScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
+                  Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                   const SizedBox(height: 12),
-                  Text(_error ?? 'No se pudo verificar el estado del PIN.', textAlign: TextAlign.center),
+                  Text(
+                    _error ?? 'No se pudo verificar el estado del PIN.',
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: () => setState(() {
@@ -175,10 +182,16 @@ class _PinLockScreenState extends State<PinLockScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.lock, size: 48, color: Theme.of(context).colorScheme.primary),
+                Icon(
+                  Icons.lock,
+                  size: 48,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 const SizedBox(height: 12),
-                const Text('Ingresa tu PIN',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Ingresa tu PIN',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: 200,
@@ -199,21 +212,30 @@ class _PinLockScreenState extends State<PinLockScreen> {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       'Demasiados intentos. Espera ${_lockedOutSeconds}s.',
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   )
                 else if (_error != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: Text(_error!,
-                        style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    child: Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
                   ),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: (locked || _verifying) ? null : _submit,
                   child: _verifying
                       ? const SizedBox(
-                          height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Text('Desbloquear'),
                 ),
                 const SizedBox(height: 12),

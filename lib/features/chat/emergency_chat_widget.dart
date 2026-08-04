@@ -9,6 +9,14 @@ import '../../state/contacts_provider.dart';
 import '../../state/location_provider.dart';
 import '../../state/premium_provider.dart';
 import '../../state/settings_provider.dart';
+import '../../state/sos_provider.dart';
+import 'live_stream_viewer.dart';
+
+// Puerto del ítem LIVE_ID de emergency-chat.tsx: vista previa de la propia
+// transmisión mientras el SOS está activo (solo aparece con sosActive &&
+// sosAlert, igual que en la web — no es para ver la de un contacto, para eso
+// está el botón "Ver transmisión" en el mensaje de alerta recibido).
+const myLiveContactId = '__my_live__';
 
 // Puerto de components/emergency-chat.tsx (sin LIVE_ID / transmisión en vivo,
 // ver Fase 6b): botón flotante + panel con lista de contactos (SOSecure AI +
@@ -203,12 +211,14 @@ class _EmergencyChatWidgetState extends ConsumerState<EmergencyChatWidget> {
                         aiLoading: _aiLoading,
                       ),
               ),
-              if (_activeId != null)
+              // La vista previa de la propia transmisión no tiene acciones
+              // rápidas ni caja de mensaje — solo el video.
+              if (_activeId != null && _activeId != myLiveContactId)
                 _QuickActions(
                   activeId: _activeId!,
                   onShareLocation: () => _send(type: 'location'),
                 ),
-              if (_activeId != null)
+              if (_activeId != null && _activeId != myLiveContactId)
                 _InputBar(
                   controller: _inputController,
                   activeId: _activeId!,
@@ -240,6 +250,8 @@ class _ChatHeader extends ConsumerWidget {
     String title = 'Chat';
     if (activeId == aiContactId) {
       title = 'SOSecure AI';
+    } else if (activeId == myLiveContactId) {
+      title = 'Mi transmisión en vivo';
     } else if (activeId != null) {
       final contact = contacts
           .where((c) => resolvedIds[c.email] == activeId)
@@ -285,10 +297,26 @@ class _ContactList extends ConsumerWidget {
     final contacts = (contactsAsync.valueOrNull ?? [])
         .where((c) => c.importance == 'primary' || c.importance == 'secondary')
         .toList();
+    final sos = ref.watch(sosProvider);
 
     return ListView(
       padding: const EdgeInsets.all(8),
       children: [
+        if (sos.active && sos.alert != null)
+          ListTile(
+            leading: CircleAvatar(
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.error.withValues(alpha: 0.2),
+              child: Icon(
+                Icons.podcasts,
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+            title: const Text('Mi transmisión en vivo'),
+            subtitle: const Text('Vista previa de lo que ven tus contactos'),
+            onTap: () => onSelect(myLiveContactId),
+          ),
         ListTile(
           leading: CircleAvatar(
             backgroundColor: Theme.of(
@@ -336,6 +364,15 @@ class _Conversation extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (activeId == myLiveContactId) {
+      final alertId = ref.watch(sosProvider).alert?.id;
+      if (alertId == null) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: LiveStreamViewer(alertId: alertId),
+      );
+    }
+
     final chat = ref.watch(emergencyChatProvider);
     final isAi = activeId == aiContactId;
     final isPremiumAsync = ref.watch(isPremiumProvider);
@@ -383,6 +420,15 @@ class _Conversation extends ConsumerWidget {
         final fg = (m.isMe || m.type == 'sos')
             ? Colors.white
             : Theme.of(context).colorScheme.onSurface;
+        // Puerto de Fase 6b: el mensaje de alerta SOS lleva el id de la
+        // alerta en un sufijo invisible (ver _broadcastSos en
+        // emergency_chat_provider.dart) — se extrae acá para mostrar un
+        // botón de "Ver transmisión" y no mostrar el sufijo crudo.
+        final liveMatch = RegExp(r'\nsosecure-live:(.+)$').firstMatch(m.text);
+        final displayText = liveMatch != null
+            ? m.text.substring(0, liveMatch.start)
+            : m.text;
+        final liveAlertId = liveMatch?.group(1);
         return Align(
           alignment: m.isMe ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
@@ -395,7 +441,34 @@ class _Conversation extends ConsumerWidget {
               color: bg,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Text(m.text, style: TextStyle(color: fg, fontSize: 13)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(displayText, style: TextStyle(color: fg, fontSize: 13)),
+                if (liveAlertId != null) ...[
+                  const SizedBox(height: 6),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: fg,
+                      side: BorderSide(color: fg.withValues(alpha: 0.6)),
+                    ),
+                    onPressed: () => showModalBottomSheet(
+                      context: context,
+                      builder: (_) => Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: LiveStreamViewer(alertId: liveAlertId),
+                      ),
+                    ),
+                    icon: const Icon(Icons.podcasts, size: 16),
+                    label: const Text(
+                      'Ver transmisión',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         );
       },

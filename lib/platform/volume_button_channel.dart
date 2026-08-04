@@ -13,8 +13,12 @@ class VolumeButtonEvent {
 // pública de botón de volumen en iOS, ver ios_secondary_gesture equivalente
 // en before_tab/sos_button: el botón flotante).
 class VolumeButtonChannel {
-  static const _method = MethodChannel('com.sosecure.sosecure_flutter/volume_button');
-  static const _events = EventChannel('com.sosecure.sosecure_flutter/volume_button_events');
+  static const _method = MethodChannel(
+    'com.sosecure.sosecure_flutter/volume_button',
+  );
+  static const _events = EventChannel(
+    'com.sosecure.sosecure_flutter/volume_button_events',
+  );
 
   static Future<void> startListening() async {
     if (!Platform.isAndroid) return;
@@ -30,7 +34,10 @@ class VolumeButtonChannel {
     if (!Platform.isAndroid) return const Stream.empty();
     return _events.receiveBroadcastStream().map((event) {
       final map = Map<String, dynamic>.from(event as Map);
-      return VolumeButtonEvent(button: map['button'] as String, timestamp: map['timestamp'] as int);
+      return VolumeButtonEvent(
+        button: map['button'] as String,
+        timestamp: map['timestamp'] as int,
+      );
     });
   }
 }

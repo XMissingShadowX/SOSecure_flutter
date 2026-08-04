@@ -55,11 +55,16 @@ class AlertsRepository {
     return alert;
   }
 
-  Future<void> _notifyContacts({required SosAlert alert, required User user}) async {
-    final contactsWithEmail = await supabase
-        .from('emergency_contacts')
-        .select('*')
-        .eq('user_id', user.id) as List;
+  Future<void> _notifyContacts({
+    required SosAlert alert,
+    required User user,
+  }) async {
+    final contactsWithEmail =
+        await supabase
+                .from('emergency_contacts')
+                .select('*')
+                .eq('user_id', user.id)
+            as List;
 
     if (!contactsWithEmail.any((c) => (c as Map)['email'] != null)) return;
 
@@ -105,13 +110,22 @@ class AlertsRepository {
   Future<void> cancelAlert() async {
     final user = supabase.auth.currentUser;
     if (user == null) return;
-    await supabase.from('sos_alerts').delete().eq('user_id', user.id).eq('status', 'active');
+    await supabase
+        .from('sos_alerts')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('status', 'active');
     await supabase
         .from('incidents')
         .delete()
         .eq('user_id', user.id)
         .eq('title', 'Alerta SOS')
-        .gte('reported_at', DateTime.now().subtract(const Duration(seconds: 60)).toIso8601String());
+        .gte(
+          'reported_at',
+          DateTime.now()
+              .subtract(const Duration(seconds: 60))
+              .toIso8601String(),
+        );
   }
 
   // Puerto de fetchSosHistory() en after-tab.tsx — historial de alertas propias,
@@ -119,19 +133,30 @@ class AlertsRepository {
   Future<List<SosAlert>> listAlertHistory({required int days}) async {
     final user = supabase.auth.currentUser;
     if (user == null) return [];
-    final since = DateTime.now().subtract(Duration(days: days)).toIso8601String();
-    final data = await supabase
-        .from('sos_alerts')
-        .select('id, user_id, latitude, longitude, status, contacts_notified, created_at')
-        .eq('user_id', user.id)
-        .gte('created_at', since)
-        .order('created_at', ascending: false) as List;
-    return data.map((e) => SosAlert.fromJson(e as Map<String, dynamic>)).toList();
+    final since = DateTime.now()
+        .subtract(Duration(days: days))
+        .toIso8601String();
+    final data =
+        await supabase
+                .from('sos_alerts')
+                .select(
+                  'id, user_id, latitude, longitude, status, contacts_notified, created_at',
+                )
+                .eq('user_id', user.id)
+                .gte('created_at', since)
+                .order('created_at', ascending: false)
+            as List;
+    return data
+        .map((e) => SosAlert.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   // Marcar una alerta pasada como resuelta o falsa alarma desde el historial
   // (distinto de cancelAlert(), que borra la alerta activa en curso).
   Future<void> markAlertStatus(String alertId, String status) async {
-    await supabase.from('sos_alerts').update({'status': status}).eq('id', alertId);
+    await supabase
+        .from('sos_alerts')
+        .update({'status': status})
+        .eq('id', alertId);
   }
 }

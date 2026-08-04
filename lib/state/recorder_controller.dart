@@ -12,7 +12,8 @@ class RecorderState {
   final RecorderStatus status;
   final DateTime? startedAt;
   final String? errorMessage;
-  final CameraController? controller; // expuesto solo para el preview, no para start/stop
+  final CameraController?
+  controller; // expuesto solo para el preview, no para start/stop
 
   const RecorderState({
     this.status = RecorderStatus.idle,
@@ -49,19 +50,33 @@ class Recorder extends _$Recorder {
 
   // Protección contra doble-disparo concurrente (ver plan: "if (state != idle) return").
   Future<void> start() async {
-    if (state.status != RecorderStatus.idle && state.status != RecorderStatus.error) return;
-    state = state.copyWith(status: RecorderStatus.initializing, errorMessage: null);
+    if (state.status != RecorderStatus.idle &&
+        state.status != RecorderStatus.error)
+      return;
+    state = state.copyWith(
+      status: RecorderStatus.initializing,
+      errorMessage: null,
+    );
 
     try {
-      final statuses = await [Permission.camera, Permission.microphone].request();
+      final statuses = await [
+        Permission.camera,
+        Permission.microphone,
+      ].request();
       if (statuses[Permission.camera] != PermissionStatus.granted) {
-        state = state.copyWith(status: RecorderStatus.error, errorMessage: 'Permiso de cámara denegado.');
+        state = state.copyWith(
+          status: RecorderStatus.error,
+          errorMessage: 'Permiso de cámara denegado.',
+        );
         return;
       }
 
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
-        state = state.copyWith(status: RecorderStatus.error, errorMessage: 'No hay cámara disponible.');
+        state = state.copyWith(
+          status: RecorderStatus.error,
+          errorMessage: 'No hay cámara disponible.',
+        );
         return;
       }
       final back = cameras.firstWhere(
@@ -84,7 +99,10 @@ class Recorder extends _$Recorder {
         controller: controller,
       );
     } catch (e) {
-      state = state.copyWith(status: RecorderStatus.error, errorMessage: 'No se pudo iniciar la grabación: $e');
+      state = state.copyWith(
+        status: RecorderStatus.error,
+        errorMessage: 'No se pudo iniciar la grabación: $e',
+      );
     }
   }
 
@@ -105,7 +123,10 @@ class Recorder extends _$Recorder {
       return File(xfile.path);
     } catch (e) {
       await _disposeController();
-      state = state.copyWith(status: RecorderStatus.error, errorMessage: 'Error al detener la grabación: $e');
+      state = state.copyWith(
+        status: RecorderStatus.error,
+        errorMessage: 'Error al detener la grabación: $e',
+      );
       return null;
     }
   }
@@ -132,6 +153,30 @@ class Recorder extends _$Recorder {
       } catch (_) {
         /* noop */
       }
+    }
+  }
+
+  // Puerto de Fase 6b (transmisión en vivo): a diferencia de la web, que puede
+  // tener dos MediaRecorder simultáneos sobre el mismo MediaStream (uno para
+  // el archivo de evidencia, otro para los chunks en vivo), el paquete
+  // `camera` solo permite una grabación a la vez por CameraController. En vez
+  // de abrir un segundo CameraController (el hardware de la cámara no lo
+  // permite de forma confiable), "ir en vivo" corta el archivo de evidencia
+  // en segmentos: cada llamada cierra el segmento actual y arranca el
+  // siguiente de inmediato, sin pasar por idle ni soltar la cámara — el
+  // estado sigue siendo `recording` todo el tiempo. LiveBroadcastController
+  // es quien decide cuándo llamar esto y qué hacer con cada archivo
+  // (subirlo y transmitirlo); start()/stop()/discard() no cambian.
+  Future<File?> rotateSegment() async {
+    final controller = state.controller;
+    if (controller == null || state.status != RecorderStatus.recording)
+      return null;
+    try {
+      final xfile = await controller.stopVideoRecording();
+      await controller.startVideoRecording();
+      return File(xfile.path);
+    } catch (_) {
+      return null;
     }
   }
 }

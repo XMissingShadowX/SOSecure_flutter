@@ -6,15 +6,20 @@ class OfflineQueueItem {
   final Map<String, dynamic> payload;
   final DateTime queuedAt;
 
-  OfflineQueueItem({required this.table, required this.payload, required this.queuedAt});
+  OfflineQueueItem({
+    required this.table,
+    required this.payload,
+    required this.queuedAt,
+  });
 
   Map<String, dynamic> toJson() => {
-        'table': table,
-        'payload': payload,
-        'queuedAt': queuedAt.toIso8601String(),
-      };
+    'table': table,
+    'payload': payload,
+    'queuedAt': queuedAt.toIso8601String(),
+  };
 
-  factory OfflineQueueItem.fromJson(Map<String, dynamic> json) => OfflineQueueItem(
+  factory OfflineQueueItem.fromJson(Map<String, dynamic> json) =>
+      OfflineQueueItem(
         table: json['table'] as String,
         payload: Map<String, dynamic>.from(json['payload'] as Map),
         queuedAt: DateTime.parse(json['queuedAt'] as String),

@@ -58,12 +58,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.shield_moon,
-                      size: 64, color: Theme.of(context).colorScheme.primary),
+                  Icon(
+                    Icons.shield_moon,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                   const SizedBox(height: 8),
-                  const Text('SOSecure',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'SOSecure',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 32),
                   TextField(
                     controller: _emailController,
@@ -84,8 +89,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),
-                    Text(_error!,
-                        style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 24),
                   FilledButton(
@@ -94,7 +103,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2))
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Text('Iniciar sesión'),
                   ),
                   const SizedBox(height: 12),

@@ -31,7 +31,10 @@ class FrequentPlaces extends _$FrequentPlaces {
 
   Future<void> _persist() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefsKey, jsonEncode(state.map((p) => p.toJson()).toList()));
+    await prefs.setString(
+      _prefsKey,
+      jsonEncode(state.map((p) => p.toJson()).toList()),
+    );
   }
 
   void add(FrequentPlace place) {

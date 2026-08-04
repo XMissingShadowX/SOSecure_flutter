@@ -25,8 +25,11 @@ class SosAlert {
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
       status: json['status'] as String? ?? 'active',
-      contactsNotified: (json['contacts_notified'] as List?)?.cast<String>() ?? const [],
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : null,
+      contactsNotified:
+          (json['contacts_notified'] as List?)?.cast<String>() ?? const [],
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : null,
     );
   }
 }

@@ -35,7 +35,8 @@ class _PermissionGateScreenState extends State<PermissionGateScreen> {
   }
 
   bool get _hasRequired => _location.isGranted && _notifications.isGranted;
-  bool get _hardDenied => _location.isPermanentlyDenied || _notifications.isPermanentlyDenied;
+  bool get _hardDenied =>
+      _location.isPermanentlyDenied || _notifications.isPermanentlyDenied;
 
   Future<void> _requestAll() async {
     setState(() => _requesting = true);
@@ -70,11 +71,17 @@ class _PermissionGateScreenState extends State<PermissionGateScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.shield_moon, size: 56, color: theme.colorScheme.primary),
+                  Icon(
+                    Icons.shield_moon,
+                    size: 56,
+                    color: theme.colorScheme.primary,
+                  ),
                   const SizedBox(height: 8),
-                  const Text('SOSecure necesita permisos',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'SOSecure necesita permisos',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   const Text(
                     'Para protegerte correctamente necesitamos acceso a tu ubicación y notificaciones.',
@@ -104,24 +111,39 @@ class _PermissionGateScreenState extends State<PermissionGateScreen> {
                     child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('SE PEDIRÁN MÁS ADELANTE',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                        Text(
+                          'SE PEDIRÁN MÁS ADELANTE',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         SizedBox(height: 6),
-                        Row(children: [
-                          Icon(Icons.camera_alt, size: 16),
-                          SizedBox(width: 8),
-                          Expanded(
-                              child: Text('Cámara — se pedirá al activar grabación SOS',
-                                  style: TextStyle(fontSize: 12))),
-                        ]),
+                        Row(
+                          children: [
+                            Icon(Icons.camera_alt, size: 16),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Cámara — se pedirá al activar grabación SOS',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
                         SizedBox(height: 4),
-                        Row(children: [
-                          Icon(Icons.mic, size: 16),
-                          SizedBox(width: 8),
-                          Expanded(
-                              child: Text('Micrófono — se pedirá al activar grabación SOS',
-                                  style: TextStyle(fontSize: 12))),
-                        ]),
+                        Row(
+                          children: [
+                            Icon(Icons.mic, size: 16),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Micrófono — se pedirá al activar grabación SOS',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -142,7 +164,10 @@ class _PermissionGateScreenState extends State<PermissionGateScreen> {
                       onPressed: _requesting ? null : _requestAll,
                       child: _requesting
                           ? const SizedBox(
-                              height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
                           : const Text('Conceder permisos'),
                     ),
                   const SizedBox(height: 8),
@@ -180,7 +205,12 @@ class _PermissionTile extends StatelessWidget {
     // directo en `color:` de Card se compone mal con el tinte/sombra de
     // Material 3 y se ve oscuro en modo claro en vez de un tinte suave.
     return Card(
-      color: granted ? Color.alphaBlend(safe.withValues(alpha: 0.08), Theme.of(context).colorScheme.surface) : null,
+      color: granted
+          ? Color.alphaBlend(
+              safe.withValues(alpha: 0.08),
+              Theme.of(context).colorScheme.surface,
+            )
+          : null,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
@@ -193,22 +223,33 @@ class _PermissionTile extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      Text(
+                        label,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       const SizedBox(width: 6),
                       if (!granted)
-                        Text('requerido',
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: Theme.of(context).colorScheme.error,
-                                fontWeight: FontWeight.w600)),
+                        Text(
+                          'requerido',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Theme.of(context).colorScheme.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                     ],
                   ),
-                  Text(desc, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(
+                    desc,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                 ],
               ),
             ),
-            Icon(granted ? Icons.check_circle : Icons.error_outline,
-                color: granted ? safe : Colors.grey),
+            Icon(
+              granted ? Icons.check_circle : Icons.error_outline,
+              color: granted ? safe : Colors.grey,
+            ),
           ],
         ),
       ),

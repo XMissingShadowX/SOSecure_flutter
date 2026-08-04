@@ -6,7 +6,7 @@ part of 'sos_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$sosHash() => r'174d452994faede5cce3853a935519effd24297f';
+String _$sosHash() => r'49f3958fdbef79c4c8428c898ed881b7de64a1f3';
 
 /// See also [Sos].
 @ProviderFor(Sos)

@@ -33,7 +33,9 @@ class RecordingValidationException implements Exception {
 void validateRecordingFile(File file, String mimeType, int sizeBytes) {
   final baseMime = mimeType.split(';').first.trim();
   if (!allowedRecordingMimeTypes.contains(baseMime)) {
-    throw RecordingValidationException('Tipo de archivo no permitido: $baseMime');
+    throw RecordingValidationException(
+      'Tipo de archivo no permitido: $baseMime',
+    );
   }
   if (sizeBytes > maxRecordingSizeBytes) {
     throw RecordingValidationException(
@@ -60,11 +62,15 @@ class RecordingsRepository {
     final bytes = await file.readAsBytes();
     validateRecordingFile(file, mimeType, bytes.length);
 
-    final ext = mimeType.contains('mp4') ? 'mp4' : (mimeType.contains('quicktime') ? 'mov' : 'webm');
+    final ext = mimeType.contains('mp4')
+        ? 'mp4'
+        : (mimeType.contains('quicktime') ? 'mov' : 'webm');
     final recId = _uuid.v4();
     final path = '${user.id}/$recId.$ext';
 
-    await supabase.storage.from('recordings').uploadBinary(
+    await supabase.storage
+        .from('recordings')
+        .uploadBinary(
           path,
           bytes,
           fileOptions: FileOptions(contentType: mimeType, upsert: false),
@@ -85,7 +91,10 @@ class RecordingsRepository {
 
     // `video_url` guarda el storage_path (bucket privado) — igual que la web, la página
     // pública pide una URL firmada fresca en cada visita vía /api/emergency/[id]/video.
-    await supabase.from('sos_alerts').update({'video_url': path}).eq('id', sosAlertId);
+    await supabase
+        .from('sos_alerts')
+        .update({'video_url': path})
+        .eq('id', sosAlertId);
   }
 
   // Puerto de uploadRecordingToDB() en lib/recordings.ts — grabación libre desde
@@ -105,11 +114,15 @@ class RecordingsRepository {
     final bytes = await file.readAsBytes();
     validateRecordingFile(file, mimeType, bytes.length);
 
-    final ext = mimeType.contains('mp4') ? (recordingType == 'audio' ? 'm4a' : 'mp4') : 'webm';
+    final ext = mimeType.contains('mp4')
+        ? (recordingType == 'audio' ? 'm4a' : 'mp4')
+        : 'webm';
     final recId = _uuid.v4();
     final path = '${user.id}/$recId.$ext';
 
-    await supabase.storage.from('recordings').uploadBinary(
+    await supabase.storage
+        .from('recordings')
+        .uploadBinary(
           path,
           bytes,
           fileOptions: FileOptions(contentType: mimeType, upsert: false),
@@ -128,7 +141,9 @@ class RecordingsRepository {
     });
 
     try {
-      return await supabase.storage.from('recordings').createSignedUrl(path, 3600);
+      return await supabase.storage
+          .from('recordings')
+          .createSignedUrl(path, 3600);
     } catch (_) {
       return null;
     }
@@ -141,12 +156,16 @@ class RecordingsRepository {
   Future<List<StoredRecording>> listMyRecordings({int limit = 20}) async {
     final user = supabase.auth.currentUser;
     if (user == null) return [];
-    final data = await supabase
-        .from('recordings')
-        .select('id, recording_type, storage_path, duration_ms, created_at, latitude, longitude')
-        .eq('user_id', user.id)
-        .order('created_at', ascending: false)
-        .limit(limit) as List;
+    final data =
+        await supabase
+                .from('recordings')
+                .select(
+                  'id, recording_type, storage_path, duration_ms, created_at, latitude, longitude',
+                )
+                .eq('user_id', user.id)
+                .order('created_at', ascending: false)
+                .limit(limit)
+            as List;
 
     final recordings = <StoredRecording>[];
     for (final row in data) {
@@ -154,20 +173,24 @@ class RecordingsRepository {
       final path = map['storage_path'] as String;
       String? url;
       try {
-        url = await supabase.storage.from('recordings').createSignedUrl(path, 3600);
+        url = await supabase.storage
+            .from('recordings')
+            .createSignedUrl(path, 3600);
       } catch (_) {
         url = null;
       }
-      recordings.add(StoredRecording(
-        id: map['id'] as String,
-        recordingType: map['recording_type'] as String,
-        storagePath: path,
-        signedUrl: url,
-        durationMs: map['duration_ms'] as int? ?? 0,
-        createdAt: DateTime.parse(map['created_at'] as String),
-        latitude: (map['latitude'] as num?)?.toDouble(),
-        longitude: (map['longitude'] as num?)?.toDouble(),
-      ));
+      recordings.add(
+        StoredRecording(
+          id: map['id'] as String,
+          recordingType: map['recording_type'] as String,
+          storagePath: path,
+          signedUrl: url,
+          durationMs: map['duration_ms'] as int? ?? 0,
+          createdAt: DateTime.parse(map['created_at'] as String),
+          latitude: (map['latitude'] as num?)?.toDouble(),
+          longitude: (map['longitude'] as num?)?.toDouble(),
+        ),
+      );
     }
     return recordings;
   }
@@ -178,7 +201,9 @@ class RecordingsRepository {
   Future<StoredRecording?> getRecordingForAlert(String alertId) async {
     final data = await supabase
         .from('recordings')
-        .select('id, recording_type, storage_path, duration_ms, created_at, latitude, longitude')
+        .select(
+          'id, recording_type, storage_path, duration_ms, created_at, latitude, longitude',
+        )
         .eq('sos_alert_id', alertId)
         .order('created_at', ascending: false)
         .limit(1)
@@ -187,7 +212,9 @@ class RecordingsRepository {
     final path = data['storage_path'] as String;
     String? url;
     try {
-      url = await supabase.storage.from('recordings').createSignedUrl(path, 3600);
+      url = await supabase.storage
+          .from('recordings')
+          .createSignedUrl(path, 3600);
     } catch (_) {
       url = null;
     }

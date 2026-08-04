@@ -68,7 +68,10 @@ class LiveSharing extends _$LiveSharing {
     try {
       await _repo.broadcast(
         userId: user.id,
-        displayName: (user.userMetadata?['full_name'] as String?) ?? user.email ?? 'Usuario',
+        displayName:
+            (user.userMetadata?['full_name'] as String?) ??
+            user.email ??
+            'Usuario',
         latitude: location.latitude!,
         longitude: location.longitude!,
       );

@@ -27,7 +27,12 @@ class VoiceSosState {
     this.errorMessage,
   });
 
-  VoiceSosState copyWith({bool? enabled, String? keyword, bool? listening, String? errorMessage}) {
+  VoiceSosState copyWith({
+    bool? enabled,
+    String? keyword,
+    bool? listening,
+    String? errorMessage,
+  }) {
     return VoiceSosState(
       enabled: enabled ?? this.enabled,
       keyword: keyword ?? this.keyword,
@@ -100,23 +105,34 @@ class VoiceSos extends _$VoiceSos {
     if (!_initialized) {
       final micStatus = await Permission.microphone.request();
       if (!micStatus.isGranted) {
-        state = state.copyWith(errorMessage: 'Permiso de micrófono denegado.', listening: false);
+        state = state.copyWith(
+          errorMessage: 'Permiso de micrófono denegado.',
+          listening: false,
+        );
         return;
       }
       try {
         _initialized = await _speech.initialize(
           onStatus: _onStatus,
-          onError: (e) => state = state.copyWith(errorMessage: e.errorMsg, listening: false),
+          onError: (e) => state = state.copyWith(
+            errorMessage: e.errorMsg,
+            listening: false,
+          ),
         );
       } catch (e) {
         state = state.copyWith(
-          errorMessage: 'Reconocimiento de voz no disponible en este dispositivo (servicio de Google Speech no instalado/soportado).',
+          errorMessage:
+              'Reconocimiento de voz no disponible en este dispositivo (servicio de Google Speech no instalado/soportado).',
           listening: false,
         );
         return;
       }
       if (!_initialized) {
-        state = state.copyWith(errorMessage: 'Reconocimiento de voz no disponible en este dispositivo.', listening: false);
+        state = state.copyWith(
+          errorMessage:
+              'Reconocimiento de voz no disponible en este dispositivo.',
+          listening: false,
+        );
         return;
       }
     }
@@ -125,11 +141,18 @@ class VoiceSos extends _$VoiceSos {
     try {
       await _speech.listen(
         onResult: _onResult,
-        listenOptions: SpeechListenOptions(listenMode: ListenMode.confirmation, cancelOnError: false, localeId: 'es_MX'),
+        listenOptions: SpeechListenOptions(
+          listenMode: ListenMode.confirmation,
+          cancelOnError: false,
+          localeId: 'es_MX',
+        ),
       );
       state = state.copyWith(listening: true, errorMessage: '');
     } catch (e) {
-      state = state.copyWith(errorMessage: 'No se pudo iniciar la escucha: $e', listening: false);
+      state = state.copyWith(
+        errorMessage: 'No se pudo iniciar la escucha: $e',
+        listening: false,
+      );
     }
   }
 
@@ -146,7 +169,9 @@ class VoiceSos extends _$VoiceSos {
   // no está pausado por un SOS activo).
   void _onStatus(String status) {
     state = state.copyWith(listening: status == 'listening');
-    if ((status == 'done' || status == 'notListening') && state.enabled && !_paused) {
+    if ((status == 'done' || status == 'notListening') &&
+        state.enabled &&
+        !_paused) {
       Future.delayed(const Duration(milliseconds: 300), _listenOnce);
     }
   }

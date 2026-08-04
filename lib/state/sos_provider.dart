@@ -9,6 +9,7 @@ import '../platform/sos_alarm.dart';
 import '../platform/sos_foreground_service.dart';
 import 'auth_provider.dart';
 import 'contacts_provider.dart';
+import 'live_broadcast_provider.dart';
 import 'location_provider.dart';
 import 'offline_queue_provider.dart';
 import 'recorder_controller.dart';
@@ -124,6 +125,7 @@ class Sos extends _$Sos {
   Future<void> cancel() async {
     _locationTimer?.cancel();
     _locationTimer = null;
+    await ref.read(liveBroadcastProvider.notifier).stop();
     await ref.read(recorderProvider.notifier).discard();
     await _alertsRepo.cancelAlert();
     await SosForegroundService.stop();
@@ -134,6 +136,7 @@ class Sos extends _$Sos {
   Future<void> saveAndClose() async {
     _locationTimer?.cancel();
     _locationTimer = null;
+    await ref.read(liveBroadcastProvider.notifier).stop();
     state = state.copyWith(saving: true);
 
     final startedAt = ref.read(recorderProvider).startedAt;

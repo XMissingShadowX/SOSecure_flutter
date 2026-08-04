@@ -23,7 +23,9 @@ class PinApi {
       headers: await _authHeaders(),
     );
     if (res.statusCode != 200) {
-      throw Exception('No se pudo leer la configuración del PIN (${res.statusCode}): ${res.body}');
+      throw Exception(
+        'No se pudo leer la configuración del PIN (${res.statusCode}): ${res.body}',
+      );
     }
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     return PinConfig(
@@ -33,7 +35,11 @@ class PinApi {
     );
   }
 
-  Future<void> savePin({String? pin, bool? pinEnabled, int? pinTimeoutMinutes}) async {
+  Future<void> savePin({
+    String? pin,
+    bool? pinEnabled,
+    int? pinTimeoutMinutes,
+  }) async {
     final res = await http.post(
       Uri.parse('${Env.apiBaseUrl}/api/pin/'),
       headers: await _authHeaders(),
@@ -44,7 +50,9 @@ class PinApi {
       }),
     );
     if (res.statusCode != 200) {
-      throw Exception('No se pudo guardar el PIN (${res.statusCode}): ${res.body}');
+      throw Exception(
+        'No se pudo guardar el PIN (${res.statusCode}): ${res.body}',
+      );
     }
   }
 

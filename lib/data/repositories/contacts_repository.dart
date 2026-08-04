@@ -20,14 +20,17 @@ class ContactsRepository {
     required int priority,
     required String importance,
   }) async {
-    final data = await supabase.rpc('add_emergency_contact', params: {
-      'p_name': name,
-      'p_phone': phone,
-      'p_email': email,
-      'p_relationship': relationship,
-      'p_priority': priority,
-      'p_importance': importance,
-    });
+    final data = await supabase.rpc(
+      'add_emergency_contact',
+      params: {
+        'p_name': name,
+        'p_phone': phone,
+        'p_email': email,
+        'p_relationship': relationship,
+        'p_priority': priority,
+        'p_importance': importance,
+      },
+    );
     return EmergencyContact.fromJson(data as Map<String, dynamic>);
   }
 
@@ -39,14 +42,17 @@ class ContactsRepository {
     String? relationship,
     required String importance,
   }) async {
-    final data = await supabase.rpc('update_emergency_contact', params: {
-      'p_id': id,
-      'p_name': name,
-      'p_phone': phone,
-      'p_email': email,
-      'p_relationship': relationship,
-      'p_importance': importance,
-    });
+    final data = await supabase.rpc(
+      'update_emergency_contact',
+      params: {
+        'p_id': id,
+        'p_name': name,
+        'p_phone': phone,
+        'p_email': email,
+        'p_relationship': relationship,
+        'p_importance': importance,
+      },
+    );
     return EmergencyContact.fromJson(data as Map<String, dynamic>);
   }
 

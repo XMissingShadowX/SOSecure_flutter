@@ -29,11 +29,11 @@ class FrequentPlace {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'label': label,
-        'icon': icon,
-        'address': address,
-        'latitude': latitude,
-        'longitude': longitude,
-      };
+    'id': id,
+    'label': label,
+    'icon': icon,
+    'address': address,
+    'latitude': latitude,
+    'longitude': longitude,
+  };
 }

@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../state/live_broadcast_provider.dart';
 import '../../state/location_provider.dart';
 import '../../state/recorder_controller.dart';
 import '../../state/settings_provider.dart';
@@ -317,6 +318,53 @@ class _IosSecondaryButtonState extends ConsumerState<_IosSecondaryButton> {
   }
 }
 
+// Puerto del toggle de transmisión en vivo (Fase 6b) — ver
+// live_broadcast_provider.dart para la implementación (clips segmentados en
+// vez de chunks WebM, por limitaciones del paquete `camera`). Solo aparece
+// si la grabación ya está activa, ya que reutiliza su CameraController.
+class _LiveBroadcastToggle extends ConsumerWidget {
+  final String? alertId;
+  const _LiveBroadcastToggle({required this.alertId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final live = ref.watch(liveBroadcastProvider);
+    final recorder = ref.watch(recorderProvider);
+    final canGoLive =
+        alertId != null && recorder.status == RecorderStatus.recording;
+    final destructive = Theme.of(context).colorScheme.error;
+
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: live.live ? Colors.white : destructive,
+          backgroundColor: live.live ? destructive : null,
+          side: BorderSide(color: destructive),
+        ),
+        onPressed: !canGoLive
+            ? null
+            : () {
+                if (live.live) {
+                  ref.read(liveBroadcastProvider.notifier).stop();
+                } else {
+                  ref.read(liveBroadcastProvider.notifier).start(alertId!);
+                }
+              },
+        icon: Icon(
+          live.live ? Icons.stop_circle_outlined : Icons.podcasts,
+          size: 18,
+        ),
+        label: Text(
+          live.live
+              ? 'Transmitiendo en vivo — detener'
+              : 'Transmitir en vivo a contactos',
+        ),
+      ),
+    );
+  }
+}
+
 class _SosActivePanel extends ConsumerWidget {
   final SosState sos;
   const _SosActivePanel({required this.sos});
@@ -445,6 +493,8 @@ class _SosActivePanel extends ConsumerWidget {
                               )
                               .toList(),
                         ),
+                      const SizedBox(height: 12),
+                      _LiveBroadcastToggle(alertId: sos.alert?.id),
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
