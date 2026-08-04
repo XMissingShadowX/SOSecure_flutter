@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
@@ -123,9 +124,9 @@ class _LiveStreamViewerState extends State<LiveStreamViewer> {
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Esperando transmisión...',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            Text(
+              'chat_waiting'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
             const Text(
               'Se conectará en cuanto el contacto la active',
@@ -181,7 +182,7 @@ class _LiveStreamViewerState extends State<LiveStreamViewer> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          _live ? 'EN VIVO' : 'FINALIZADO',
+                          _live ? 'chat_live'.tr() : 'FINALIZADO',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10,

@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -247,9 +248,9 @@ class _ChatHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final contacts = ref.watch(contactsProvider).valueOrNull ?? [];
     final resolvedIds = ref.watch(emergencyChatProvider).resolvedIds;
-    String title = 'Chat';
+    String title = 'chat_chat'.tr();
     if (activeId == aiContactId) {
-      title = 'SOSecure AI';
+      title = 'chat_ai'.tr();
     } else if (activeId == myLiveContactId) {
       title = 'Mi transmisión en vivo';
     } else if (activeId != null) {
@@ -327,7 +328,7 @@ class _ContactList extends ConsumerWidget {
               color: Theme.of(context).colorScheme.primary,
             ),
           ),
-          title: const Text('SOSecure AI'),
+          title: Text('chat_ai'.tr()),
           subtitle: const Text('Consejos y apoyo inmediato'),
           onTap: () => onSelect(aiContactId),
         ),
@@ -342,7 +343,7 @@ class _ContactList extends ConsumerWidget {
                   ? 'Sin correo registrado'
                   : (resolvedIds.containsKey(c.email)
                         ? (resolvedIds[c.email] != null
-                              ? 'En SOSecure'
+                              ? 'chat_inSOSecure'.tr()
                               : 'Sin cuenta — usa WhatsApp')
                         : 'Buscando...'),
               style: const TextStyle(fontSize: 12),
@@ -504,13 +505,16 @@ class _QuickActions extends ConsumerWidget {
           if (activeId != aiContactId && contact?.phone != null)
             ActionChip(
               avatar: const Icon(Icons.call_outlined, size: 14),
-              label: const Text('Llamar', style: TextStyle(fontSize: 11)),
+              label: Text('chat_call'.tr(), style: const TextStyle(fontSize: 11)),
               onPressed: () => launchUrl(Uri.parse('tel:${contact!.phone}')),
             ),
           if (activeId != aiContactId && !hasAccount && contact?.phone != null)
             ActionChip(
               avatar: const Icon(Icons.chat_outlined, size: 14),
-              label: const Text('WhatsApp', style: TextStyle(fontSize: 11)),
+              label: Text(
+                'chat_whatsapp'.tr(),
+                style: const TextStyle(fontSize: 11),
+              ),
               onPressed: () => launchUrl(
                 Uri.parse(
                   'https://wa.me/${contact!.phone.replaceAll(RegExp(r'\D'), '')}',
@@ -558,7 +562,7 @@ class _InputBar extends ConsumerWidget {
               decoration: InputDecoration(
                 isDense: true,
                 hintText: hasAccount
-                    ? 'Escribe un mensaje...'
+                    ? 'chat_placeholder'.tr()
                     : 'Este contacto no tiene cuenta',
                 border: const OutlineInputBorder(),
               ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -20,12 +21,12 @@ const _placeIcons = {
   'other': Icons.star,
 };
 
-const _placeTypeLabels = {
-  'home': 'Casa',
-  'work': 'Trabajo',
-  'school': 'Escuela',
-  'gym': 'Gimnasio',
-  'other': 'Otro',
+Map<String, String> get _placeTypeLabels => {
+  'home': 'home_placeHome'.tr(),
+  'work': 'home_placeWork'.tr(),
+  'school': 'home_placeSchool'.tr(),
+  'gym': 'home_placeGym'.tr(),
+  'other': 'home_placeOther'.tr(),
 };
 
 const _importanceLabels = {
@@ -34,13 +35,13 @@ const _importanceLabels = {
   'tertiary': 'Baja',
 };
 
-const _relationshipLabels = {
-  'parent': 'Padre/Madre',
-  'spouse': 'Esposo/a',
-  'sibling': 'Hermano/a',
-  'friend': 'Amigo/a',
-  'partner': 'Pareja',
-  'other': 'Otro',
+Map<String, String> get _relationshipLabels => {
+  'parent': 'home_relation_parent'.tr(),
+  'spouse': 'home_relation_spouse'.tr(),
+  'sibling': 'home_relation_sibling'.tr(),
+  'friend': 'home_relation_friend'.tr(),
+  'partner': 'home_relation_partner'.tr(),
+  'other': 'home_relation_other'.tr(),
 };
 
 // Puerto de components/tabs/home-tab.tsx: ubicación actual, contactos de emergencia
@@ -124,17 +125,17 @@ class _StatusBanner extends StatelessWidget {
                   Text(
                     hasLocation
                         ? 'Zona sin alertas cercanas'
-                        : 'Obteniendo ubicación…',
+                        : 'home_gettingLocation'.tr(),
                     textAlign: TextAlign.center,
                     style: TextStyle(fontWeight: FontWeight.w600, color: color),
                   ),
                   Text(
                     location.loading
-                        ? 'Adquiriendo GPS…'
+                        ? 'home_acquiringGps'.tr()
                         : location.error ??
                               (hasLocation
                                   ? '${location.latitude!.toStringAsFixed(4)}, ${location.longitude!.toStringAsFixed(4)}'
-                                  : 'Activa la ubicación'),
+                                  : 'activate_location'.tr()),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall,
                   ),
@@ -154,10 +155,10 @@ class _StatusBanner extends StatelessWidget {
 class _SafetyTipsCard extends StatelessWidget {
   const _SafetyTipsCard();
 
-  static const _tips = [
-    'Mantén presionado SOS 2 segundos para activar el modo de emergencia',
-    'Revisa el mapa para ver incidentes reportados cerca de ti',
-    'Usa el temporizador de seguridad si sales a un lugar desconocido',
+  List<String> get _tips => [
+    'home_tip1'.tr(),
+    'home_tip2'.tr(),
+    'home_tip3'.tr(),
   ];
 
   @override
@@ -169,9 +170,9 @@ class _SafetyTipsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Consejos de Seguridad',
-              style: TextStyle(fontWeight: FontWeight.w600),
+            Text(
+              'home_tips_title'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
             for (var i = 0; i < _tips.length; i++)
@@ -237,23 +238,23 @@ class _LocationCard extends StatelessWidget {
                   color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Ubicación actual',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  'home_currentLocation'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             if (location.loading)
-              const Row(
+              Row(
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  SizedBox(width: 8),
-                  Text('Adquiriendo GPS…'),
+                  const SizedBox(width: 8),
+                  Text('home_acquiringGps'.tr()),
                 ],
               )
             else if (location.error != null)
@@ -285,11 +286,11 @@ class _LocationCard extends StatelessWidget {
                         ).colorScheme.tertiary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Text(
-                            '✓ Ubicación activa',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                            '✓ ${'home_locationActive'.tr()}',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -327,21 +328,23 @@ class _FrequentPlacesCard extends ConsumerWidget {
                   color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Lugares frecuentes',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  'home_frequentPlaces'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const Spacer(),
                 Text(
-                  '${places.length} guardados',
+                  'home_frequentPlacesSaved'.tr(
+                    namedArgs: {'n': '${places.length}'},
+                  ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
             const SizedBox(height: 12),
             if (places.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Center(child: Text('Sin lugares guardados todavía.')),
               )
             else
@@ -363,7 +366,7 @@ class _FrequentPlacesCard extends ConsumerWidget {
             OutlinedButton.icon(
               onPressed: () => _showAddPlaceDialog(context, ref, location),
               icon: const Icon(Icons.add),
-              label: const Text('Agregar lugar frecuente'),
+              label: Text('home_addFrequentPlace'.tr()),
             ),
           ],
         ),
@@ -390,7 +393,7 @@ class _FrequentPlacesCard extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Agregar lugar frecuente'),
+          title: Text('home_addFrequentPlace'.tr()),
           content: SizedBox(
             width: MediaQuery.of(context).size.width * 0.8,
             child: SingleChildScrollView(
@@ -412,12 +415,14 @@ class _FrequentPlacesCard extends ConsumerWidget {
                   ),
                   TextField(
                     controller: labelController,
-                    decoration: const InputDecoration(labelText: 'Nombre'),
+                    decoration: InputDecoration(
+                      labelText: 'home_addPlace_name'.tr(),
+                    ),
                   ),
                   TextField(
                     controller: addressController,
-                    decoration: const InputDecoration(
-                      labelText: 'Dirección (opcional)',
+                    decoration: InputDecoration(
+                      labelText: 'home_addPlace_address'.tr(),
                     ),
                     onChanged: (value) {
                       geocodedLat = null;
@@ -503,7 +508,7 @@ class _FrequentPlacesCard extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
+              child: Text('cancel'.tr()),
             ),
             FilledButton(
               onPressed:
@@ -530,7 +535,7 @@ class _FrequentPlacesCard extends ConsumerWidget {
                           );
                       Navigator.pop(context);
                     },
-              child: const Text('Guardar'),
+              child: Text('save'.tr()),
             ),
           ],
         ),
@@ -630,9 +635,9 @@ class _ContactsCard extends ConsumerWidget {
               children: [
                 Icon(Icons.people_outline, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
-                const Text(
-                  'Contactos de emergencia',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  'home_contacts'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -674,7 +679,7 @@ class _ContactsCard extends ConsumerWidget {
                   OutlinedButton.icon(
                     onPressed: () => _showContactDialog(context, ref),
                     icon: const Icon(Icons.person_add_alt),
-                    label: const Text('Agregar contacto'),
+                    label: Text('home_addContact'.tr()),
                   ),
                 ],
               ),
@@ -706,7 +711,7 @@ class _ContactsCard extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text(editing == null ? 'Agregar contacto' : 'Editar contacto'),
+          title: Text(editing == null ? 'home_addContact'.tr() : 'home_editContact'.tr()),
           content: SizedBox(
             // Ancho fijo — sin esto el diálogo se ajusta al contenido más angosto
             // (ej. solo nombre+teléfono en modo simple) y los botones de prioridad
@@ -718,12 +723,12 @@ class _ContactsCard extends ConsumerWidget {
                 children: [
                   TextField(
                     controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Nombre'),
+                    decoration: InputDecoration(labelText: 'home_addPlace_name'.tr()),
                   ),
                   TextField(
                     controller: phoneController,
                     keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(labelText: 'Teléfono'),
+                    decoration: InputDecoration(labelText: 'home_phone'.tr()),
                   ),
                   if (!simpleMode) ...[
                     TextField(
@@ -735,7 +740,7 @@ class _ContactsCard extends ConsumerWidget {
                     ),
                     DropdownMenu<String>(
                       initialSelection: relationship,
-                      label: const Text('Relación (opcional)'),
+                      label: Text('home_addContact_relation'.tr()),
                       expandedInsets: EdgeInsets.zero,
                       dropdownMenuEntries: _relationshipLabels.entries
                           .map(
@@ -811,7 +816,7 @@ class _ContactsCard extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
+              child: Text('cancel'.tr()),
             ),
             FilledButton(
               onPressed:
@@ -843,7 +848,7 @@ class _ContactsCard extends ConsumerWidget {
                       }
                       if (context.mounted) Navigator.pop(context);
                     },
-              child: const Text('Guardar'),
+              child: Text('save'.tr()),
             ),
           ],
         ),

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -68,10 +69,10 @@ class _ChatBodyState extends ConsumerState<_ChatBody> {
   final _inputController = TextEditingController();
   final _scrollController = ScrollController();
 
-  static const _quickPrompts = [
+  List<(IconData, String, String)> get _quickPrompts => [
     (
       Icons.favorite_border,
-      'Ansiedad',
+      'medic_anxiety'.tr(),
       'Estoy sintiendo mucha ansiedad ahora mismo, ¿me ayudas?',
     ),
     (
@@ -81,12 +82,12 @@ class _ChatBodyState extends ConsumerState<_ChatBody> {
     ),
     (
       Icons.chat_bubble_outline,
-      'Hablar',
+      'medic_talk'.tr(),
       'Solo necesito hablar con alguien de lo que siento',
     ),
     (
       Icons.emoji_emotions_outlined,
-      'Técnicas',
+      'medic_techniques'.tr(),
       'Dame técnicas rápidas para manejar el estrés',
     ),
   ];
@@ -151,7 +152,7 @@ class _ChatBodyState extends ConsumerState<_ChatBody> {
                         TextSpan(
                           children: [
                             TextSpan(
-                              text: 'SAPTEL: 55 5259-8121',
+                              text: 'medic_saptel'.tr(),
                               style: TextStyle(
                                 color: primary,
                                 fontWeight: FontWeight.bold,
@@ -270,9 +271,9 @@ class _TypingIndicator extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Text(
-              'Escribiendo...',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+            Text(
+              'medic_writing'.tr(),
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
         ),

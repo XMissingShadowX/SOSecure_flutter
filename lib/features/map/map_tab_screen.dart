@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -243,7 +244,7 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
                 left: 12,
                 child: _MapChip(
                   icon: _heatMode ? '🔥' : '📍',
-                  label: _heatMode ? 'Calor' : 'Marcadores',
+                  label: _heatMode ? 'map_heat'.tr() : 'map_markers'.tr(),
                   onTap: () => setState(() => _heatMode = !_heatMode),
                 ),
               ),
@@ -276,7 +277,7 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
                 child: FloatingActionButton.extended(
                   onPressed: _openReportSheet,
                   icon: const Icon(Icons.add),
-                  label: const Text('Reportar'),
+                  label: Text('map_report'.tr()),
                 ),
               ),
             ],
@@ -292,14 +293,14 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
               DropdownButtonFormField<String>(
                 initialValue: _filterType,
                 isExpanded: true,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   isDense: true,
-                  labelText: 'Tipo de incidente',
+                  labelText: 'map_incidentType'.tr(),
                 ),
                 items: [
-                  const DropdownMenuItem(
+                  DropdownMenuItem(
                     value: 'all',
-                    child: Text('Todos los tipos'),
+                    child: Text('map_allTypes'.tr()),
                   ),
                   ..._incidentTypeLabels.entries.map(
                     (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
@@ -314,15 +315,27 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _filterSeverity,
                       isExpanded: true,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         isDense: true,
-                        labelText: 'Severidad',
+                        labelText: 'map_severityLabel'.tr(),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('Todas')),
-                        DropdownMenuItem(value: 'high', child: Text('Alta')),
-                        DropdownMenuItem(value: 'medium', child: Text('Media')),
-                        DropdownMenuItem(value: 'low', child: Text('Baja')),
+                      items: [
+                        const DropdownMenuItem(
+                          value: 'all',
+                          child: Text('Todas'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'high',
+                          child: Text('map_sevHigh'.tr()),
+                        ),
+                        DropdownMenuItem(
+                          value: 'medium',
+                          child: Text('map_sevMedium'.tr()),
+                        ),
+                        DropdownMenuItem(
+                          value: 'low',
+                          child: Text('map_sevLow'.tr()),
+                        ),
                       ],
                       onChanged: (v) =>
                           setState(() => _filterSeverity = v ?? 'all'),
@@ -366,9 +379,9 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Incidentes recientes',
-                        style: TextStyle(
+                      Text(
+                        'map_recentIncidents'.tr(),
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -534,17 +547,23 @@ class _LegendCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Severidad',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            Text(
+              'map_severity'.tr(),
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
-            _legendRow(_severityColors['high']!, 'Alta (${counts['high']})'),
+            _legendRow(
+              _severityColors['high']!,
+              'map_high'.tr(namedArgs: {'n': '${counts['high']}'}),
+            ),
             _legendRow(
               _severityColors['medium']!,
-              'Media (${counts['medium']})',
+              'map_medium'.tr(namedArgs: {'n': '${counts['medium']}'}),
             ),
-            _legendRow(_severityColors['low']!, 'Baja (${counts['low']})'),
+            _legendRow(
+              _severityColors['low']!,
+              'map_low'.tr(namedArgs: {'n': '${counts['low']}'}),
+            ),
           ],
         ),
       ),
@@ -722,8 +741,8 @@ class _ReportIncidentSheetState extends ConsumerState<_ReportIncidentSheet> {
                             }),
                             child: Text(
                               opt == 'si'
-                                  ? 'Sí'
-                                  : (opt == 'no' ? 'No' : 'No sé'),
+                                  ? 'yes'.tr()
+                                  : (opt == 'no' ? 'no'.tr() : 'map_dontKnow'.tr()),
                             ),
                           ),
                         ),
@@ -761,7 +780,7 @@ class _ReportIncidentSheetState extends ConsumerState<_ReportIncidentSheet> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Enviar reporte'),
+                      : Text('map_submitReport'.tr()),
                 ),
               ),
             ],
@@ -832,14 +851,14 @@ class _IncidentDetailSheetState extends ConsumerState<_IncidentDetailSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text('cancel'.tr()),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Eliminar'),
+            child: Text('delete'.tr()),
           ),
         ],
       ),
@@ -908,7 +927,7 @@ class _IncidentDetailSheetState extends ConsumerState<_IncidentDetailSheet> {
               child: OutlinedButton.icon(
                 onPressed: () => setState(() => _editing = true),
                 icon: const Icon(Icons.edit, size: 16),
-                label: const Text('Editar'),
+                label: Text('edit'.tr()),
               ),
             ),
             const SizedBox(width: 8),
@@ -919,7 +938,7 @@ class _IncidentDetailSheetState extends ConsumerState<_IncidentDetailSheet> {
                 ),
                 onPressed: _delete,
                 icon: const Icon(Icons.delete, size: 16),
-                label: const Text('Eliminar'),
+                label: Text('delete'.tr()),
               ),
             ),
           ],
@@ -930,14 +949,14 @@ class _IncidentDetailSheetState extends ConsumerState<_IncidentDetailSheet> {
 
   List<Widget> _buildEditForm() {
     return [
-      const Text(
-        'Editar incidente',
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      Text(
+        'map_editIncident'.tr(),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
       ),
       const SizedBox(height: 12),
       TextField(
         controller: _titleController,
-        decoration: const InputDecoration(labelText: 'Título'),
+        decoration: InputDecoration(labelText: 'map_incidentTitle'.tr()),
       ),
       const SizedBox(height: 12),
       DropdownButtonFormField<String>(
@@ -965,8 +984,10 @@ class _IncidentDetailSheetState extends ConsumerState<_IncidentDetailSheet> {
                   onPressed: () => setState(() => _severity = level),
                   child: Text(
                     level == 'high'
-                        ? 'Alta'
-                        : (level == 'medium' ? 'Media' : 'Baja'),
+                        ? 'map_sevHigh'.tr()
+                        : (level == 'medium'
+                              ? 'map_sevMedium'.tr()
+                              : 'map_sevLow'.tr()),
                   ),
                 ),
               ),
@@ -976,9 +997,9 @@ class _IncidentDetailSheetState extends ConsumerState<_IncidentDetailSheet> {
       const SizedBox(height: 12),
       TextField(
         controller: _descriptionController,
-        decoration: const InputDecoration(
-          labelText: 'Detalles',
-          border: OutlineInputBorder(),
+        decoration: InputDecoration(
+          labelText: 'map_incidentDetails'.tr(),
+          border: const OutlineInputBorder(),
         ),
         maxLines: 3,
       ),
@@ -988,7 +1009,7 @@ class _IncidentDetailSheetState extends ConsumerState<_IncidentDetailSheet> {
           Expanded(
             child: OutlinedButton(
               onPressed: () => setState(() => _editing = false),
-              child: const Text('Cancelar'),
+              child: Text('cancel'.tr()),
             ),
           ),
           const SizedBox(width: 8),
@@ -1001,7 +1022,7 @@ class _IncidentDetailSheetState extends ConsumerState<_IncidentDetailSheet> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Guardar'),
+                  : Text('save'.tr()),
             ),
           ),
         ],

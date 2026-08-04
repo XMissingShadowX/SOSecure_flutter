@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:camera/camera.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -439,7 +440,7 @@ class _SosActivePanel extends ConsumerWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'SOS ACTIVO',
+                            'sos_active'.tr(),
                             style: TextStyle(
                               color: destructive,
                               fontWeight: FontWeight.bold,
@@ -527,7 +528,7 @@ class _SosActivePanel extends ConsumerWidget {
                                 )
                               : const Icon(Icons.check),
                           label: Text(
-                            sos.saving ? 'Guardando...' : 'Guardar y cerrar',
+                            sos.saving ? 'sos_saving'.tr() : 'Guardar y cerrar',
                           ),
                         ),
                       ),
@@ -568,7 +569,7 @@ class _SosActivePanel extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Mantener activo'),
+            child: Text('sos_keepActive'.tr()),
           ),
           FilledButton(
             style: FilledButton.styleFrom(

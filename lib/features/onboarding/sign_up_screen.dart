@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -65,7 +66,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Crear cuenta')),
+      appBar: AppBar(title: Text('auth_createAccount'.tr())),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -78,9 +79,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 children: [
                   TextField(
                     controller: _fullNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre completo',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: 'auth_fullName'.tr(),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -96,9 +97,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   TextField(
                     controller: _passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Contraseña',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: 'auth_password'.tr(),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   if (_error != null) ...[

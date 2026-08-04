@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gal/gal.dart';
@@ -113,7 +114,12 @@ class _DangerZonesSectionState extends ConsumerState<_DangerZonesSection> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${z.count} incidente${z.count > 1 ? 's' : ''} reportado${z.count > 1 ? 's' : ''}',
+                            'after_incidents'.tr(
+                              namedArgs: {
+                                'n': '${z.count}',
+                                's': z.count > 1 ? 's' : '',
+                              },
+                            ),
                             style: const TextStyle(fontSize: 13),
                           ),
                           Text(
@@ -128,9 +134,9 @@ class _DangerZonesSectionState extends ConsumerState<_DangerZonesSection> {
                       ),
                     ),
                     Chip(
-                      label: const Text(
-                        'Evitar',
-                        style: TextStyle(fontSize: 10),
+                      label: Text(
+                        'after_avoid'.tr(),
+                        style: const TextStyle(fontSize: 10),
                       ),
                       backgroundColor: Theme.of(
                         context,
@@ -168,15 +174,18 @@ class _AfterStatusCard extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Column(
-                children: const [
+                children: [
                   Text(
-                    'Modo DESPUÉS',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    'after_title'.tr(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   Text(
-                    'Seguimiento y protección post-incidente',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    'after_subtitle'.tr(),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -293,7 +302,7 @@ class _ArrivedWellCardState extends ConsumerState<_ArrivedWellCard> {
                         )
                       : const Icon(Icons.check),
                   label: Text(
-                    _sending ? 'Enviando...' : 'Notificar que llegué bien',
+                    _sending ? 'sending'.tr() : 'Notificar que llegué bien',
                   ),
                 ),
               ),
@@ -336,10 +345,10 @@ class _AlertHistorySection extends ConsumerWidget {
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Historial de alertas SOS',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                    'after_sosHistory'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
                 DropdownButton<String>(
@@ -444,11 +453,11 @@ class _AlertTile extends ConsumerWidget {
   String _statusLabel(String status) {
     switch (status) {
       case 'active':
-        return 'Activa';
+        return 'after_active'.tr();
       case 'false_alarm':
-        return 'Falsa alarma';
+        return 'sos_falseAlarm'.tr();
       default:
-        return 'Resuelta';
+        return 'after_resolved'.tr();
     }
   }
 
@@ -524,9 +533,9 @@ class _AlertDetailSheetState extends ConsumerState<_AlertDetailSheet> {
               '${alert.latitude.toStringAsFixed(6)}, ${alert.longitude.toStringAsFixed(6)}',
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Contactos notificados',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            Text(
+              'sos_contactsNotified'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
             const SizedBox(height: 6),
             alert.contactsNotified.isEmpty

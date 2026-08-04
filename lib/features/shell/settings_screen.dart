@@ -583,7 +583,7 @@ class _PlanCard extends StatelessWidget {
               style: TextButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.error,
               ),
-              child: Text(cancelling ? 'Cancelando...' : 'Cancelar'),
+              child: Text(cancelling ? 'Cancelando...' : 'cancel'.tr()),
             ),
         ],
       ),

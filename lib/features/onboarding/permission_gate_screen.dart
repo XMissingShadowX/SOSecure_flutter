@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -230,7 +231,7 @@ class _PermissionTile extends StatelessWidget {
                       const SizedBox(width: 6),
                       if (!granted)
                         Text(
-                          'requerido',
+                          'perm_required'.tr(),
                           style: TextStyle(
                             fontSize: 11,
                             color: Theme.of(context).colorScheme.error,

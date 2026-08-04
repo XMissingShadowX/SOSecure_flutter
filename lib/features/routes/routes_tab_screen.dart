@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -281,7 +282,7 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
               enabled: routes.options.isEmpty,
               decoration: InputDecoration(
                 labelText: 'Destino',
-                hintText: '¿A dónde vas?',
+                hintText: 'routes_where'.tr(),
                 border: const OutlineInputBorder(),
                 isDense: true,
                 suffixIcon: _searching
@@ -383,7 +384,7 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _reset,
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Reiniciar'),
+                  label: Text('routes_reset'.tr()),
                 ),
               ),
             if (routes.loading) ...[
@@ -647,7 +648,14 @@ class _RouteOptionCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  '${route.incidentsOnRoute} incidente${route.incidentsOnRoute > 1 ? 's' : ''} cerca',
+                                  'routes_incidents'.tr(
+                                    namedArgs: {
+                                      'n': '${route.incidentsOnRoute}',
+                                      's': route.incidentsOnRoute > 1
+                                          ? 's'
+                                          : '',
+                                    },
+                                  ),
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Color(0xFFF59E0B),
@@ -707,9 +715,9 @@ class _RouteOptionCard extends StatelessWidget {
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(width: 6),
-                    const Text(
-                      'Plan Premium',
-                      style: TextStyle(
+                    Text(
+                      'premium'.tr(),
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),

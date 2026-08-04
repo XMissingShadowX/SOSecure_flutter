@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gal/gal.dart';
@@ -228,8 +229,8 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
             const SizedBox(height: 12),
             DropdownButtonFormField<IncidentType>(
               value: _type,
-              decoration: const InputDecoration(
-                labelText: 'Tipo de incidente',
+              decoration: InputDecoration(
+                labelText: 'during_incidentType'.tr(),
                 isDense: true,
               ),
               items: _typeLabels.entries
@@ -274,10 +275,10 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
                                     setState(() => _answers[idx] = opt),
                                 child: Text(
                                   opt == 'si'
-                                      ? 'Sí'
+                                      ? 'yes'.tr()
                                       : opt == 'no'
-                                      ? 'No'
-                                      : 'No sé',
+                                      ? 'no'.tr()
+                                      : 'during_dontKnow'.tr(),
                                   style: const TextStyle(fontSize: 12),
                                 ),
                               ),
@@ -336,7 +337,9 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
                   onPressed: _sending || !location.hasCoordinates
                       ? null
                       : _submit,
-                  child: Text(_sending ? 'Enviando...' : 'Enviar reporte'),
+                  child: Text(
+                    _sending ? 'sending'.tr() : 'during_sendReport'.tr(),
+                  ),
                 ),
               ),
             if (!location.hasCoordinates)
@@ -413,9 +416,11 @@ class _AltActivationCardState extends ConsumerState<_AltActivationCard> {
             ),
             _altRow(
               '🎙️',
-              'Activación por voz',
+              'during_voiceActivation'.tr(),
               voice.enabled
-                  ? 'Di "${voice.keyword}" para activar'
+                  ? 'during_voiceSayKeyword'.tr(
+                      namedArgs: {'kw': voice.keyword},
+                    )
                   : 'Configúrala en la pestaña Antes',
               trailing: voice.enabled && voice.listening && !sos.active
                   ? const Text(
@@ -430,7 +435,7 @@ class _AltActivationCardState extends ConsumerState<_AltActivationCard> {
             ),
             _altRow(
               '⏱️',
-              'Temporizador expirado',
+              'during_timerExpired'.tr(),
               'Si no confirmas a tiempo, se activa solo',
             ),
             const SizedBox(height: 8),
@@ -442,7 +447,7 @@ class _AltActivationCardState extends ConsumerState<_AltActivationCard> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('👆 Toque secreto'),
+                  Text('👆${'during_secretTap'.tr()}'),
                   const Spacer(),
                   CircleAvatar(
                     radius: 11,
@@ -687,8 +692,8 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
                     ),
                     label: Text(
                       recorder.mode == StandaloneRecMode.audio
-                          ? 'Detener audio'
-                          : 'Grabar audio',
+                          ? 'during_stopAudio'.tr()
+                          : 'during_audioRec'.tr(),
                     ),
                     style: recorder.mode == StandaloneRecMode.audio
                         ? OutlinedButton.styleFrom(foregroundColor: destructive)
@@ -708,8 +713,8 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
                     ),
                     label: Text(
                       recorder.mode == StandaloneRecMode.video
-                          ? 'Detener video'
-                          : 'Grabar video',
+                          ? 'during_stopVideo'.tr()
+                          : 'during_videoRec'.tr(),
                     ),
                     style: recorder.mode == StandaloneRecMode.video
                         ? OutlinedButton.styleFrom(foregroundColor: destructive)
@@ -739,7 +744,7 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
                     child: OutlinedButton.icon(
                       onPressed: _busy ? null : _saveToGallery,
                       icon: const Icon(Icons.save_outlined, size: 18),
-                      label: const Text('Guardar en el dispositivo'),
+                      label: Text('during_saveDevice'.tr()),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -763,7 +768,7 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
                     child: OutlinedButton.icon(
                       onPressed: _busy ? null : _uploadToCloud,
                       icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-                      label: const Text('Guardar en la nube'),
+                      label: Text('during_saveCloud'.tr()),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -850,7 +855,11 @@ class _LocationHistoryCardState extends ConsumerState<_LocationHistoryCard> {
                     children: [
                       Chip(
                         label: Text(
-                          i == 0 ? 'Ahora' : 'Hace ${minutesAgo}min',
+                          i == 0
+                              ? 'now'.tr()
+                              : 'minutes_ago'.tr(
+                                  namedArgs: {'n': '$minutesAgo'},
+                                ),
                           style: const TextStyle(fontSize: 10),
                         ),
                         visualDensity: VisualDensity.compact,
@@ -858,7 +867,7 @@ class _LocationHistoryCardState extends ConsumerState<_LocationHistoryCard> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          _names[key] ?? '📍 Cargando...',
+                          _names[key] ?? '📍 ${'loading'.tr()}',
                           style: const TextStyle(fontSize: 12),
                           overflow: TextOverflow.ellipsis,
                         ),

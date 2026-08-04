@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -28,7 +29,13 @@ class AppShellScreen extends ConsumerStatefulWidget {
 class _AppShellScreenState extends ConsumerState<AppShellScreen> {
   int _index = 0;
 
-  static const _titles = ['Inicio', 'Antes', 'Durante', 'Después', 'Apoyo'];
+  List<String> get _titles => [
+    'nav_home'.tr(),
+    'nav_before'.tr(),
+    'nav_during'.tr(),
+    'nav_after'.tr(),
+    'nav_support'.tr(),
+  ];
 
   static const _tabs = [
     HomeTabScreen(),
@@ -69,7 +76,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
             ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Ajustes',
+            tooltip: 'settings_title'.tr(),
             onPressed: () => context.push('/settings'),
           ),
         ],
@@ -84,8 +91,8 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                   width: double.infinity,
                   color: Colors.amber.withValues(alpha: 0.2),
                   padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: const Text(
-                    'Modo simple activo',
+                  child: Text(
+                    'settings_simpleModeActive'.tr(),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
@@ -147,31 +154,31 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
         child: NavigationBar(
           selectedIndex: _index,
           onDestinationSelected: (i) => setState(() => _index = i),
-          destinations: const [
+          destinations: [
             NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Inicio',
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home),
+              label: 'nav_home'.tr(),
             ),
             NavigationDestination(
-              icon: Icon(Icons.route_outlined),
-              selectedIcon: Icon(Icons.route),
-              label: 'Antes',
+              icon: const Icon(Icons.route_outlined),
+              selectedIcon: const Icon(Icons.route),
+              label: 'nav_before'.tr(),
             ),
             NavigationDestination(
-              icon: Icon(Icons.videocam_outlined),
-              selectedIcon: Icon(Icons.videocam),
-              label: 'Durante',
+              icon: const Icon(Icons.videocam_outlined),
+              selectedIcon: const Icon(Icons.videocam),
+              label: 'nav_during'.tr(),
             ),
             NavigationDestination(
-              icon: Icon(Icons.history_outlined),
-              selectedIcon: Icon(Icons.history),
-              label: 'Después',
+              icon: const Icon(Icons.history_outlined),
+              selectedIcon: const Icon(Icons.history),
+              label: 'nav_after'.tr(),
             ),
             NavigationDestination(
-              icon: Icon(Icons.favorite_outline),
-              selectedIcon: Icon(Icons.favorite),
-              label: 'Apoyo',
+              icon: const Icon(Icons.favorite_outline),
+              selectedIcon: const Icon(Icons.favorite),
+              label: 'nav_support'.tr(),
             ),
           ],
         ),

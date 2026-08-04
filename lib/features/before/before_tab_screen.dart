@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,28 +66,28 @@ class _BeforeTabScreenState extends ConsumerState<BeforeTabScreen> {
     // seguras, ubicación en vivo y palabra clave — en ese orden exacto.
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-      children: const [
-        _BeforeStatusCard(),
-        SizedBox(height: 16),
+      children: [
+        const _BeforeStatusCard(),
+        const SizedBox(height: 16),
         _CollapsibleSection(
           icon: Icons.navigation_outlined,
           title: 'Ruta segura',
-          child: RoutesTabScreen(),
+          child: const RoutesTabScreen(),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         _CollapsibleSection(
           icon: Icons.map_outlined,
-          title: 'Mapa de incidentes',
-          child: MapTabScreen(),
+          title: 'before_mapIncidents'.tr(),
+          child: const MapTabScreen(),
         ),
-        SizedBox(height: 16),
-        _SecurityTimerCard(),
-        SizedBox(height: 16),
-        _SafeZonesCard(),
-        SizedBox(height: 16),
-        _LiveSharingCard(),
-        SizedBox(height: 16),
-        _VoiceKeywordCard(),
+        const SizedBox(height: 16),
+        const _SecurityTimerCard(),
+        const SizedBox(height: 16),
+        const _SafeZonesCard(),
+        const SizedBox(height: 16),
+        const _LiveSharingCard(),
+        const SizedBox(height: 16),
+        const _VoiceKeywordCard(),
       ],
     );
   }
@@ -169,15 +170,18 @@ class _BeforeStatusCard extends StatelessWidget {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
-                children: const [
+                children: [
                   Text(
-                    'Modo ANTES',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    'before_title'.tr(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   Text(
-                    'Prepárate antes de salir',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    'before_subtitle'.tr(),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -222,9 +226,9 @@ class _SecurityTimerCardState extends ConsumerState<_SecurityTimerCard> {
               children: [
                 Icon(Icons.timer_outlined, color: destructive, size: 20),
                 const SizedBox(width: 8),
-                const Text(
-                  'Temporizador de seguridad',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  'before_timer'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -266,8 +270,8 @@ class _SecurityTimerCardState extends ConsumerState<_SecurityTimerCard> {
                     child: TextField(
                       controller: _minutesController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Minutos',
+                      decoration: InputDecoration(
+                        labelText: 'before_timerMinutes'.tr(),
                         isDense: true,
                       ),
                     ),
@@ -280,7 +284,7 @@ class _SecurityTimerCardState extends ConsumerState<_SecurityTimerCard> {
                           .read(securityTimerProvider.notifier)
                           .start(Duration(minutes: mins));
                     },
-                    child: const Text('Iniciar'),
+                    child: Text('before_timerStart'.tr()),
                   ),
                 ],
               ),
@@ -560,9 +564,9 @@ class _SafeZonesCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Zonas seguras cercanas',
-              style: TextStyle(fontWeight: FontWeight.w600),
+            Text(
+              'before_safeZones'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
             if (!location.hasCoordinates)
@@ -624,10 +628,10 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
               children: [
                 Icon(Icons.mic_none_outlined, color: primary, size: 20),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Palabra clave de voz',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                    'before_voiceKeyword'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
                 Switch(
@@ -690,16 +694,18 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(hintText: 'ej. socorro'),
+          decoration: InputDecoration(
+            hintText: 'before_voiceKeywordPlaceholder'.tr(),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
+            child: Text('cancel'.tr()),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Guardar'),
+            child: Text('save'.tr()),
           ),
         ],
       ),
