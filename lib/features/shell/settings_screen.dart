@@ -2,8 +2,12 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/env.dart';
 import '../../data/api/pin_api.dart';
+import '../../data/api/plan_api.dart';
+import '../../data/repositories/plan_repository.dart';
 import '../../data/supabase_client.dart';
 import '../../state/settings_provider.dart';
 import '../../state/volume_sos_provider.dart';
@@ -19,14 +23,116 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _pinApi = PinApi();
+  final _planApi = PlanApi();
+  final _planRepo = PlanRepository();
   bool _loadingPin = true;
   bool _pinConfigured = false;
   bool _pinEnabled = false;
+
+  bool _loadingPlans = true;
+  PremiumSubscription? _premium;
+  FamilyGroup? _family;
+  bool _cancellingPremium = false;
+  bool _cancellingFamily = false;
+  bool _deletingAccount = false;
 
   @override
   void initState() {
     super.initState();
     _loadPinConfig();
+    _loadPlans();
+  }
+
+  Future<void> _loadPlans() async {
+    try {
+      final results = await Future.wait([
+        _planRepo.getPremiumSubscription(),
+        _planRepo.getFamilyGroup(),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _premium = results[0] as PremiumSubscription?;
+        _family = results[1] as FamilyGroup?;
+        _loadingPlans = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingPlans = false);
+    }
+  }
+
+  Future<void> _openWebPayment(String path) async {
+    final uri = Uri.parse('${Env.apiBaseUrl}$path');
+    // El pago (Mercado Pago/PayPal) siempre es un flujo de navegador, igual
+    // que en la web — pero esta app usa el cliente Supabase nativo, no
+    // cookies, así que el navegador externo NO comparte sesión: el usuario
+    // deberá iniciar sesión ahí de nuevo con la misma cuenta.
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _cancelPremium() async {
+    setState(() => _cancellingPremium = true);
+    try {
+      await _planApi.cancelPremium();
+      await _loadPlans();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No se pudo cancelar: $e')));
+    } finally {
+      if (mounted) setState(() => _cancellingPremium = false);
+    }
+  }
+
+  Future<void> _cancelFamily() async {
+    setState(() => _cancellingFamily = true);
+    try {
+      await _planApi.cancelFamily();
+      await _loadPlans();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No se pudo cancelar: $e')));
+    } finally {
+      if (mounted) setState(() => _cancellingFamily = false);
+    }
+  }
+
+  Future<void> _confirmDeleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('settings_deleteAccountTitle'.tr()),
+        content: Text('settings_deleteAccountDesc'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('cancel'.tr()),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('settings_deleteAccountConfirm'.tr()),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _deletingAccount = true);
+    try {
+      await _planApi.deleteAccount();
+      await supabase.auth.signOut();
+      if (mounted) context.go('/login');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _deletingAccount = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo eliminar la cuenta: $e')),
+      );
+    }
   }
 
   Future<void> _loadPinConfig() async {
@@ -75,11 +181,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text('cancel'.tr()),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Guardar'),
+            child: Text('save'.tr()),
           ),
         ],
       ),
@@ -112,27 +218,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final themeMode = ref.watch(appThemeModeProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ajustes')),
+      appBar: AppBar(title: Text('settings_title'.tr())),
       body: ListView(
         children: [
-          const _SectionLabel('Apariencia'),
+          _SectionLabel('settings_appearance'.tr()),
           SwitchListTile(
-            title: const Text('Tema oscuro'),
+            title: Text('settings_darkTheme'.tr()),
             value: themeMode == ThemeMode.dark,
             onChanged: (value) => ref
                 .read(appThemeModeProvider.notifier)
                 .set(value ? ThemeMode.dark : ThemeMode.light),
           ),
           ListTile(
-            title: const Text('Idioma'),
+            title: Text('settings_language'.tr()),
             subtitle: Text(context.locale.languageCode.toUpperCase()),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _pickLanguage(context),
           ),
           SwitchListTile(
-            title: const Text('Modo simple'),
-            subtitle: const Text(
-              'Interfaz simplificada, textos e íconos más grandes',
+            title: Text('settings_simpleMode'.tr()),
+            subtitle: Text(
+              'settings_simpleModeDesc'.tr(),
             ),
             value: simpleMode,
             onChanged: (value) =>
@@ -158,7 +264,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onChanged: _pinConfigured ? _togglePinEnabled : null,
             ),
             ListTile(
-              title: Text(_pinConfigured ? 'Cambiar PIN' : 'Configurar PIN'),
+              title: Text(
+                _pinConfigured ? 'settings_pinChange'.tr() : 'Configurar PIN',
+              ),
               trailing: const Icon(Icons.chevron_right),
               onTap: _setPin,
             ),
@@ -167,13 +275,65 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const _SectionLabel('Botón de volumen (SOS)'),
           const _VolumeSosCard(),
           const Divider(),
+          _SectionLabel('plan_premiumNameLabel'.tr()),
+          if (_loadingPlans)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else
+            _PlanCard(
+              active: _premium?.isActive ?? false,
+              activeLabel: 'family_active'.tr(),
+              inactiveLabel: 'family_inactive'.tr(),
+              onActivate: () => _openWebPayment('/plan-premium/pago'),
+              onCancel: _cancelPremium,
+              cancelling: _cancellingPremium,
+            ),
+          const Divider(),
+          _SectionLabel('plan_familiarNameLabel'.tr()),
+          if (_loadingPlans)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else
+            _PlanCard(
+              active: _family?.isActive ?? false,
+              activeLabel: _family?.role == 'owner'
+                  ? 'family_owner'.tr()
+                  : 'family_active'.tr(),
+              inactiveLabel: 'family_inactive'.tr(),
+              onActivate: () => _openWebPayment('/plan-familiar'),
+              // Solo el dueño puede cancelar el plan familiar — un miembro
+              // invitado no tiene esa opción (misma regla que la web, ver
+              // CLAUDE.md: "la gestión de miembros solo se muestra al dueño").
+              onCancel: _family?.role == 'owner' ? _cancelFamily : null,
+              cancelling: _cancellingFamily,
+            ),
+          const Divider(),
+          _SectionLabel('settings_account'.tr()),
+          ListTile(
+            leading: Icon(
+              Icons.delete_forever,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            title: Text(
+              _deletingAccount
+                  ? 'settings_deleteAccountDeleting'.tr()
+                  : 'settings_deleteAccount'.tr(),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+            subtitle: Text('settings_deleteAccountNote'.tr()),
+            onTap: _deletingAccount ? null : _confirmDeleteAccount,
+          ),
           ListTile(
             leading: Icon(
               Icons.logout,
               color: Theme.of(context).colorScheme.error,
             ),
             title: Text(
-              'Cerrar sesión',
+              'header_signout'.tr(),
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
             onTap: _signOut,
@@ -325,9 +485,9 @@ class _VolumeSosCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Ventana de tiempo',
-                style: TextStyle(color: Colors.grey),
+              Text(
+                'settings_volumeWindow'.tr(),
+                style: const TextStyle(color: Colors.grey),
               ),
               Text(
                 '${volume.windowMs / 1000}s',
@@ -357,9 +517,74 @@ class _VolumeSosCard extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Presiona el botón de volumen ${volume.pressesRequired} veces en ${volume.windowMs / 1000} segundos para activar el SOS.',
+            'settings_volumeHint'.tr(
+              namedArgs: {
+                'n': '${volume.pressesRequired}',
+                's': '${volume.windowMs / 1000}',
+              },
+            ),
             style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// Tarjeta compacta de estado de un plan (Premium o Familiar) — versión
+// simplificada de PremiumPlanSection/FamilyPlanSection de la web: solo
+// muestra estado + botón de activar (abre el pago en el navegador, ya que
+// Mercado Pago/PayPal son flujos web) o cancelar (vía plan_api.dart, que sí
+// puede llamarse directo con el access token de Supabase).
+class _PlanCard extends StatelessWidget {
+  final bool active;
+  final String activeLabel;
+  final String inactiveLabel;
+  final VoidCallback onActivate;
+  final VoidCallback? onCancel;
+  final bool cancelling;
+
+  const _PlanCard({
+    required this.active,
+    required this.activeLabel,
+    required this.inactiveLabel,
+    required this.onActivate,
+    required this.onCancel,
+    required this.cancelling,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Icon(
+            active ? Icons.check_circle : Icons.circle_outlined,
+            color: active ? primary : Colors.grey,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              active ? activeLabel : inactiveLabel,
+              style: TextStyle(
+                color: active ? primary : Colors.grey,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          if (!active)
+            OutlinedButton(onPressed: onActivate, child: const Text('Activar'))
+          else if (onCancel != null)
+            TextButton(
+              onPressed: cancelling ? null : onCancel,
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: Text(cancelling ? 'Cancelando...' : 'Cancelar'),
+            ),
         ],
       ),
     );
