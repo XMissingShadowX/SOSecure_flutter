@@ -30,6 +30,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
         data: {'full_name': _fullNameController.text.trim()},
+        // Trabajo opcional #6: sin esto, Supabase usa el emailRedirectTo por
+        // defecto (la web) y el link de confirmación abre el navegador en vez
+        // de esta app. Requiere agregar 'sosecure://login-callback' a
+        // Authentication → URL Configuration → Redirect URLs en el dashboard
+        // de Supabase — si no está en la allowlist, Supabase ignora este valor
+        // y cae de vuelta a la Site URL por defecto.
+        emailRedirectTo: 'sosecure://login-callback',
       );
       if (!mounted) return;
       if (res.session != null) {

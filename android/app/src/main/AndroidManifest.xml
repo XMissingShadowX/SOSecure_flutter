@@ -48,6 +48,19 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Trabajo opcional #6 (TRABAJOS_OPCIONALES.md): captura el link de
+                 confirmación de registro/reset de PIN cuando el usuario se registró
+                 desde la app, para que abra la app en vez del navegador.
+                 supabase_flutter ya escucha deep links automáticamente (PKCE) y
+                 completa la sesión al recibir esta URI — no hace falta código extra
+                 de manejo, solo que Android lo enrute aquí. Esquema custom (no
+                 requiere verificación de dominio como los App Links https). -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="sosecure" android:host="login-callback"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
