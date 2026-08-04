@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -47,6 +48,10 @@ class LiveBroadcast extends _$LiveBroadcast {
   Timer? _timer;
   int _seq = 0;
   bool _capturing = false;
+  // Encadena las subidas para mandarlas en orden (seq creciente) sin que una
+  // subida lenta bloquee el siguiente corte de cámara — ver la nota en
+  // _captureAndSend sobre por qué esto se separó del guard de captura.
+  Future<void> _uploadChain = Future.value();
 
   @override
   LiveBroadcastState build() {
@@ -90,50 +95,67 @@ class LiveBroadcast extends _$LiveBroadcast {
   Future<void> _captureAndSend(String alertId) async {
     // Bug real encontrado en pruebas: Timer.periodic dispara cada
     // segmentDuration SIN esperar a que el ciclo anterior (detener +
-    // reiniciar grabación + subir) termine. Si ese ciclo tardaba más que el
-    // intervalo (upload lento, red mala), el siguiente tick llamaba
-    // rotateSegment() -> stopVideoRecording() mientras el encoder de video de
-    // CameraX del startVideoRecording() anterior todavía no terminaba de
-    // inicializarse, crasheando con NullPointerException nativo
-    // ("Encoder.stop on a null object reference") y dejando rotateSegment()
-    // devolviendo null para siempre. Este candado evita ticks superpuestos.
+    // reiniciar grabación) termine. Si ese ciclo tardaba más que el
+    // intervalo, el siguiente tick llamaba rotateSegment() ->
+    // stopVideoRecording() mientras el encoder de video de CameraX del
+    // startVideoRecording() anterior todavía no terminaba de inicializarse,
+    // crasheando con NullPointerException nativo ("Encoder.stop on a null
+    // object reference") y dejando rotateSegment() devolviendo null para
+    // siempre. Este candado evita ticks superpuestos.
     if (_capturing) {
       debugPrint('[LiveBroadcast] tick ignorado — el anterior sigue en curso');
       return;
     }
     _capturing = true;
+    File? file;
     try {
-      final file = await ref.read(recorderProvider.notifier).rotateSegment();
-      if (file == null) {
-        debugPrint(
-          '[LiveBroadcast] rotateSegment() devolvió null (seq=$_seq) — no se manda nada',
-        );
-        return;
-      }
-      if (_channel == null) return;
-      final url = await _repo.uploadSegment(
-        file: file,
-        alertId: alertId,
-        seq: _seq,
-      );
-      debugPrint('[LiveBroadcast] segmento $_seq subido: $url');
-      await _repo.sendSegment(
-        _channel!,
-        VideoSegmentPayload(
-          url: url,
-          seq: _seq,
-          ts: DateTime.now().millisecondsSinceEpoch,
-        ),
-      );
-      debugPrint('[LiveBroadcast] segmento $_seq transmitido por broadcast');
-      _seq++;
-      state = state.copyWith(segmentsSent: _seq);
+      file = await ref.read(recorderProvider.notifier).rotateSegment();
     } catch (e, st) {
-      debugPrint('[LiveBroadcast] ERROR en segmento $_seq: $e\n$st');
-      state = state.copyWith(error: 'Error al transmitir: $e');
-    } finally {
+      debugPrint('[LiveBroadcast] ERROR en rotateSegment (seq=$_seq): $e\n$st');
       _capturing = false;
+      return;
     }
+    // El guard de captura se libera ANTES de subir el archivo — la subida es
+    // lenta (red) y NO debe demorar el corte del siguiente segmento de
+    // cámara, que es instantáneo. Antes esto estaba en el mismo try/finally
+    // y cada segmento real terminaba durando "2s + lo que tardara subir el
+    // anterior", generando las pausas visibles en el receptor entre clips.
+    _capturing = false;
+    if (file == null) {
+      debugPrint(
+        '[LiveBroadcast] rotateSegment() devolvió null (seq=$_seq) — no se manda nada',
+      );
+      return;
+    }
+    if (_channel == null) return;
+    final seq = _seq++;
+    final capturedFile = file;
+    // Encadenado (no unawaited) para preservar el orden de seq al mandar el
+    // broadcast, aunque una subida sea más lenta que la siguiente.
+    _uploadChain = _uploadChain.then((_) async {
+      try {
+        final url = await _repo.uploadSegment(
+          file: capturedFile,
+          alertId: alertId,
+          seq: seq,
+        );
+        debugPrint('[LiveBroadcast] segmento $seq subido: $url');
+        if (_channel == null) return;
+        await _repo.sendSegment(
+          _channel!,
+          VideoSegmentPayload(
+            url: url,
+            seq: seq,
+            ts: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
+        debugPrint('[LiveBroadcast] segmento $seq transmitido por broadcast');
+        state = state.copyWith(segmentsSent: seq + 1);
+      } catch (e, st) {
+        debugPrint('[LiveBroadcast] ERROR en segmento $seq: $e\n$st');
+        state = state.copyWith(error: 'Error al transmitir: $e');
+      }
+    });
   }
 
   Future<void> stop() async {
