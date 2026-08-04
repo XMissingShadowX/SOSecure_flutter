@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../state/emergency_chat_provider.dart';
 import '../../state/offline_queue_provider.dart';
 import '../../state/settings_provider.dart';
 import '../../state/volume_sos_provider.dart';
 import '../after/after_tab_screen.dart';
 import '../before/before_tab_screen.dart';
+import '../chat/emergency_chat_widget.dart';
 import '../during/during_tab_screen.dart';
 import '../during/sos_button.dart';
 import '../home/home_tab_screen.dart';
@@ -109,10 +111,18 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
               ),
             ],
           ),
-          // Oculto en Apoyo (índice 4): el botón flotante idle tapa la caja de
-          // mensajes del chat — el panel de alerta activa igual se muestra si hay
-          // un SOS en curso (ver SosButton.hideIdleButton).
-          SosButton(hideIdleButton: _index == 4),
+          // Puerto de EmergencyChat (chat de contactos + IA de emergencia,
+          // Fase 6a) — antes del SosButton en el Stack para que el panel de
+          // alerta activa (pantalla completa) lo tape automáticamente durante
+          // un SOS en curso, igual que en la web.
+          const EmergencyChatWidget(),
+          // Oculto en Apoyo (índice 4) o mientras el panel del chat de
+          // contactos está abierto (su input queda en la misma esquina
+          // inferior) — el panel de alerta activa igual se muestra si hay un
+          // SOS en curso (ver SosButton.hideIdleButton).
+          SosButton(
+            hideIdleButton: _index == 4 || ref.watch(emergencyChatOpenProvider),
+          ),
         ],
       ),
       bottomNavigationBar: Theme(

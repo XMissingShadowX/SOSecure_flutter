@@ -21,11 +21,14 @@ class SosAlarm {
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings();
     await _plugin.initialize(
-      settings: const InitializationSettings(android: androidInit, iOS: iosInit),
+      settings: const InitializationSettings(
+        android: androidInit,
+        iOS: iosInit,
+      ),
     );
 
     if (Platform.isAndroid) {
-      const channel = AndroidNotificationChannel(
+      const sosChannel = AndroidNotificationChannel(
         'sosecure_sos',
         'Alertas SOS',
         description: 'Notificaciones de alerta SOS activada',
@@ -33,12 +36,50 @@ class SosAlarm {
         playSound: true,
         enableVibration: true,
       );
-      await _plugin
+      const chatChannel = AndroidNotificationChannel(
+        'sosecure_chat',
+        'Mensajes',
+        description: 'Mensajes nuevos del chat de contactos de emergencia',
+        importance: Importance.high,
+        playSound: true,
+      );
+      final androidImpl = _plugin
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
-          >()
-          ?.createNotificationChannel(channel);
+          >();
+      await androidImpl?.createNotificationChannel(sosChannel);
+      await androidImpl?.createNotificationChannel(chatChannel);
     }
+  }
+
+  // No existe en la web (emergency-chat.tsx no dispara ninguna notificación al
+  // recibir un mensaje) — se agrega a pedido, reutilizando la infraestructura
+  // de notificaciones locales ya montada para el SOS. Un id fijo por
+  // remitente para que Android reemplace la notificación anterior de esa
+  // misma conversación en vez de acumular una por mensaje.
+  static Future<void> notifyMessage({
+    required String senderId,
+    required String title,
+    required String body,
+  }) async {
+    await init();
+    await _plugin.show(
+      id: senderId.hashCode,
+      title: title,
+      body: body,
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails(
+          'sosecure_chat',
+          'Mensajes',
+          channelDescription:
+              'Mensajes nuevos del chat de contactos de emergencia',
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: true,
+        ),
+        iOS: const DarwinNotificationDetails(presentSound: true),
+      ),
+    );
   }
 
   // Equivalente a sendAlarmNotification(title, body, urgent=true) + playAlarmSound()
