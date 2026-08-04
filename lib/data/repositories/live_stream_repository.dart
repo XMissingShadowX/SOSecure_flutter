@@ -81,7 +81,13 @@ class LiveStreamRepository {
     final user = supabase.auth.currentUser;
     if (user == null) throw Exception('No autenticado');
     final bytes = await file.readAsBytes();
-    final path = 'live/${user.id}/$alertId/$seq.mp4';
+    // El primer segmento de la ruta DEBE ser el user.id — la política RLS
+    // "storage recordings: owner insert" exige
+    // (storage.foldername(name))[1] = auth.uid(). Con 'live/' primero (como
+    // estaba antes) el INSERT fallaba por RLS en silencio: uploadSegment()
+    // lanzaba, el catch de _captureAndSend lo atrapaba, y nunca se mandaba
+    // ningún video_segment — el visor se quedaba esperando para siempre.
+    final path = '${user.id}/live/$alertId/$seq.mp4';
     await supabase.storage
         .from('recordings')
         .uploadBinary(
