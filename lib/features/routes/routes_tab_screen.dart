@@ -182,9 +182,9 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Rutas seguras',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  'routes_title'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -198,14 +198,14 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
                   controller: _originController,
                   autofocus: true,
                   decoration: InputDecoration(
-                    labelText: 'Origen',
-                    hintText: '¿Desde dónde sales?',
+                    labelText: 'routes_originLabel'.tr(),
+                    hintText: 'routes_originHint'.tr(),
                     border: const OutlineInputBorder(),
                     isDense: true,
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.close, size: 18),
                       onPressed: _resetOrigin,
-                      tooltip: 'Usar ubicación actual',
+                      tooltip: 'routes_useCurrentLocation'.tr(),
                     ),
                     prefixIcon: _searchingOrigin
                         ? const Padding(
@@ -281,7 +281,7 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
               controller: _destinationController,
               enabled: routes.options.isEmpty,
               decoration: InputDecoration(
-                labelText: 'Destino',
+                labelText: 'routes_destinationLabel'.tr(),
                 hintText: 'routes_where'.tr(),
                 border: const OutlineInputBorder(),
                 isDense: true,

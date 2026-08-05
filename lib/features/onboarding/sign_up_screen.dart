@@ -49,7 +49,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } on AuthException catch (e) {
       setState(() => _error = e.message);
     } catch (e) {
-      setState(() => _error = 'Error inesperado: $e');
+      setState(() => _error = 'auth_unexpectedError'.tr(namedArgs: {'error': '$e'}));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -88,9 +88,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Correo',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: 'auth_email'.tr(),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -120,7 +120,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Registrarme'),
+                        : Text('auth_signUpBtn'.tr()),
                   ),
                 ],
               ),

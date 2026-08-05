@@ -113,11 +113,11 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
   bool _sending = false;
   bool _done = false;
 
-  static const _typeLabels = {
-    IncidentType.theftAssaultViolence: 'Robo/asalto/violencia',
-    IncidentType.harassmentSuspicious: 'Acoso/sospechoso',
-    IncidentType.accident: 'Accidente',
-    IncidentType.sos: 'SOS',
+  static Map<IncidentType, String> get _typeLabels => {
+    IncidentType.theftAssaultViolence: 'during_incidentTheft'.tr(),
+    IncidentType.harassmentSuspicious: 'during_incidentHarassment'.tr(),
+    IncidentType.accident: 'during_incidentAccident'.tr(),
+    IncidentType.sos: 'during_incidentSOS'.tr(),
   };
 
   @override
@@ -133,11 +133,11 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
     final allAnswered =
         questions.isEmpty || _answers.every((a) => a.isNotEmpty);
     if (!location.hasCoordinates) {
-      setState(() => _error = 'Activa la ubicación para reportar.');
+      setState(() => _error = 'map_activateLocationToReport'.tr());
       return;
     }
     if (!allAnswered) {
-      setState(() => _error = 'Responde todas las preguntas.');
+      setState(() => _error = 'map_answerAllQuestions'.tr());
       return;
     }
     setState(() => _sending = true);
@@ -194,7 +194,9 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
           if (mounted) setState(() => _done = false);
         });
       } else {
-        setState(() => _error = 'Error al enviar el reporte: $e');
+        setState(
+          () => _error = 'map_reportSendError'.tr(namedArgs: {'e': '$e'}),
+        );
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -220,9 +222,9 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Reportar incidente',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  'map_reportTitle'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -294,8 +296,8 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
             TextField(
               controller: _descriptionController,
               maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Detalles adicionales',
+              decoration: InputDecoration(
+                labelText: 'during_detailsLabel'.tr(),
                 isDense: true,
               ),
             ),
@@ -321,12 +323,12 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
                   ).colorScheme.tertiary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.check_circle, size: 16),
-                    SizedBox(width: 6),
-                    Text('Reporte enviado'),
+                    const Icon(Icons.check_circle, size: 16),
+                    const SizedBox(width: 6),
+                    Text('during_reportSentShort'.tr()),
                   ],
                 ),
               )
@@ -343,11 +345,11 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
                 ),
               ),
             if (!location.hasCoordinates)
-              const Padding(
-                padding: EdgeInsets.only(top: 6),
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  'Se necesita ubicación para reportar.',
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                  'during_locationNeededShort'.tr(),
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
                 ),
               ),
           ],
@@ -399,20 +401,20 @@ class _AltActivationCardState extends ConsumerState<_AltActivationCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Activación alternativa',
-              style: TextStyle(fontWeight: FontWeight.w600),
+            Text(
+              'during_altActivation'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Formas de activar el SOS si no puedes usar el botón principal.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+            Text(
+              'during_altMethodsDesc'.tr(),
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(height: 12),
             _altRow(
               '👆',
-              '3 toques rápidos',
-              'Toca 3 veces seguidas el botón de abajo',
+              'during_tapSeq'.tr(),
+              'during_tapSeqDesc'.tr(),
             ),
             _altRow(
               '🎙️',
@@ -421,11 +423,11 @@ class _AltActivationCardState extends ConsumerState<_AltActivationCard> {
                   ? 'during_voiceSayKeyword'.tr(
                       namedArgs: {'kw': voice.keyword},
                     )
-                  : 'Configúrala en la pestaña Antes',
+                  : 'during_voiceNoKeyword'.tr(),
               trailing: voice.enabled && voice.listening && !sos.active
-                  ? const Text(
-                      '● escuchando',
-                      style: TextStyle(
+                  ? Text(
+                      'during_listeningDot'.tr(),
+                      style: const TextStyle(
                         fontSize: 10,
                         color: Colors.green,
                         fontWeight: FontWeight.w600,
@@ -436,7 +438,7 @@ class _AltActivationCardState extends ConsumerState<_AltActivationCard> {
             _altRow(
               '⏱️',
               'during_timerExpired'.tr(),
-              'Si no confirmas a tiempo, se activa solo',
+              'during_timerExpiredDesc'.tr(),
             ),
             const SizedBox(height: 8),
             OutlinedButton(
@@ -532,7 +534,7 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
       setState(() {
         _lastFile = file;
         _lastType = 'audio';
-        _statusMsg = file != null ? 'Audio listo' : '';
+        _statusMsg = file != null ? 'during_audioReady'.tr() : '';
       });
     } else {
       setState(() {
@@ -550,7 +552,7 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
       setState(() {
         _lastFile = file;
         _lastType = 'video';
-        _statusMsg = file != null ? 'Video listo' : '';
+        _statusMsg = file != null ? 'during_videoReady'.tr() : '';
       });
     } else {
       setState(() {
@@ -567,7 +569,7 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
     try {
       if (_lastType == 'video') {
         await Gal.putVideo(_lastFile!.path, album: 'SOSecure');
-        setState(() => _statusMsg = 'Guardado en la galería');
+        setState(() => _statusMsg = 'during_savedGallery'.tr());
       } else {
         // El audio no aplica a la Galería (Gal solo maneja fotos/videos) —
         // se guarda en el almacenamiento propio de la app.
@@ -575,10 +577,16 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
         final saved = await _lastFile!.copy(
           '${docsDir.path}/${_lastFile!.uri.pathSegments.last}',
         );
-        setState(() => _statusMsg = 'Audio guardado en ${saved.path}');
+        setState(
+          () => _statusMsg = 'during_audioSavedAt'.tr(
+            namedArgs: {'path': saved.path},
+          ),
+        );
       }
     } catch (e) {
-      setState(() => _statusMsg = 'Error al guardar: $e');
+      setState(
+        () => _statusMsg = 'during_saveError'.tr(namedArgs: {'e': '$e'}),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -594,9 +602,11 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
       await Share.shareXFiles([
         XFile(_lastFile!.path),
       ], text: '🚨 Grabación SOSecure');
-      setState(() => _statusMsg = 'Compartido');
+      setState(() => _statusMsg = 'during_shared'.tr());
     } catch (e) {
-      setState(() => _statusMsg = 'Error al compartir: $e');
+      setState(
+        () => _statusMsg = 'during_shareError'.tr(namedArgs: {'e': '$e'}),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -606,7 +616,7 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
     if (_lastFile == null || _lastType == null) return;
     setState(() {
       _busy = true;
-      _statusMsg = 'Subiendo a la nube...';
+      _statusMsg = 'during_uploadingCloud'.tr();
     });
     final location = ref.read(locationWatcherProvider);
     try {
@@ -619,9 +629,11 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
         latitude: location.latitude,
         longitude: location.longitude,
       );
-      setState(() => _statusMsg = 'Guardado en la nube');
+      setState(() => _statusMsg = 'during_savedCloud'.tr());
     } catch (e) {
-      setState(() => _statusMsg = 'Error al subir: $e');
+      setState(
+        () => _statusMsg = 'during_uploadError'.tr(namedArgs: {'e': '$e'}),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -652,9 +664,9 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
               children: [
                 Icon(Icons.videocam_outlined, color: primary, size: 20),
                 const SizedBox(width: 8),
-                const Text(
-                  'Grabar evidencia',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  'during_recordEvidence'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -757,8 +769,8 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
                       icon: const Icon(Icons.send_outlined, size: 18),
                       label: Text(
                         contacts.isEmpty
-                            ? 'Enviar a contactos (sin contactos)'
-                            : 'Enviar a contactos',
+                            ? 'during_sendToContactsBtnEmpty'.tr()
+                            : 'during_sendToContactsBtn'.tr(),
                       ),
                     ),
                   ),
@@ -772,15 +784,15 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  TextButton(onPressed: _clear, child: const Text('Descartar')),
+                  TextButton(onPressed: _clear, child: Text('discard'.tr())),
                 ],
               ),
             ] else
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'La grabación queda lista para guardar, enviar o subir cuando la detengas.',
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                  'during_recHint'.tr(),
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
                 ),
               ),
           ],
@@ -830,15 +842,15 @@ class _LocationHistoryCardState extends ConsumerState<_LocationHistoryCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Historial de ubicación',
-              style: TextStyle(fontWeight: FontWeight.w600),
+            Text(
+              'during_locationHistory'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             if (reversed.isEmpty)
-              const Text(
-                'Aún no hay historial de ubicación reciente.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+              Text(
+                'during_noLocationHistory'.tr(),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               )
             else
               ...reversed.asMap().entries.map((entry) {

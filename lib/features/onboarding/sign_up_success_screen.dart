@@ -26,14 +26,14 @@ class SignUpSuccessScreen extends StatelessWidget {
                   style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Te enviamos un enlace de confirmación. Ábrelo para activar tu cuenta.',
+                Text(
+                  'auth_confirmationLinkSent'.tr(),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
                 TextButton(
                   onPressed: () => context.go('/login'),
-                  child: const Text('Volver a iniciar sesión'),
+                  child: Text('auth_backToLogin'.tr()),
                 ),
               ],
             ),

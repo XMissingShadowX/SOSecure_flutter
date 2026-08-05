@@ -78,7 +78,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('No se pudo cancelar: $e')));
+      ).showSnackBar(SnackBar(content: Text('${'settings_cancelError'.tr()}$e')));
     } finally {
       if (mounted) setState(() => _cancellingPremium = false);
     }
@@ -93,7 +93,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('No se pudo cancelar: $e')));
+      ).showSnackBar(SnackBar(content: Text('${'settings_cancelError'.tr()}$e')));
     } finally {
       if (mounted) setState(() => _cancellingFamily = false);
     }
@@ -130,7 +130,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (!mounted) return;
       setState(() => _deletingAccount = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo eliminar la cuenta: $e')),
+        SnackBar(content: Text('${'settings_deleteAccountError'.tr()}$e')),
       );
     }
   }
@@ -159,7 +159,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       setState(() => _pinEnabled = previous);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+      ).showSnackBar(SnackBar(content: Text('${'settings_saveError'.tr()}$e')));
     }
   }
 
@@ -168,14 +168,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final pin = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Configurar PIN'),
+        title: Text('settings_pinDialogTitle'.tr()),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
           obscureText: true,
           maxLength: 8,
-          decoration: const InputDecoration(
-            hintText: 'Nuevo PIN (mínimo 4 dígitos)',
+          decoration: InputDecoration(
+            hintText: 'settings_pinEnterNew'.tr(),
           ),
         ),
         actions: [
@@ -197,7 +197,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('No se pudo guardar el PIN: $e')));
+      ).showSnackBar(SnackBar(content: Text('${'settings_savePinError'.tr()}$e')));
       return;
     }
     if (!mounted) return;
@@ -246,7 +246,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const _ChatFontSizeTile(),
           const Divider(),
-          const _SectionLabel('Seguridad'),
+          _SectionLabel('settings_security'.tr()),
           if (_loadingPin)
             const Padding(
               padding: EdgeInsets.all(16),
@@ -254,25 +254,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             )
           else ...[
             SwitchListTile(
-              title: const Text('Bloqueo por PIN'),
+              title: Text('settings_pinLockSwitch'.tr()),
               subtitle: Text(
                 _pinConfigured
-                    ? 'Protege contactos, ubicación e historial'
-                    : 'Configura un PIN para activarlo',
+                    ? 'settings_pinProtects'.tr()
+                    : 'settings_pinSetupHint'.tr(),
               ),
               value: _pinEnabled && _pinConfigured,
               onChanged: _pinConfigured ? _togglePinEnabled : null,
             ),
             ListTile(
               title: Text(
-                _pinConfigured ? 'settings_pinChange'.tr() : 'Configurar PIN',
+                _pinConfigured
+                    ? 'settings_pinChange'.tr()
+                    : 'settings_pinDialogTitle'.tr(),
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: _setPin,
             ),
           ],
           const Divider(),
-          const _SectionLabel('Botón de volumen (SOS)'),
+          _SectionLabel('settings_volumeSos'.tr()),
           const _VolumeSosCard(),
           const Divider(),
           _SectionLabel('plan_premiumNameLabel'.tr()),
@@ -451,9 +453,9 @@ class _VolumeSosCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Pulsaciones necesarias',
-                style: TextStyle(color: Colors.grey),
+              Text(
+                'settings_volumePresses'.tr(),
+                style: const TextStyle(color: Colors.grey),
               ),
               Text(
                 '${volume.pressesRequired}×',
@@ -576,14 +578,14 @@ class _PlanCard extends StatelessWidget {
             ),
           ),
           if (!active)
-            OutlinedButton(onPressed: onActivate, child: const Text('Activar'))
+            OutlinedButton(onPressed: onActivate, child: Text('settings_activate'.tr()))
           else if (onCancel != null)
             TextButton(
               onPressed: cancelling ? null : onCancel,
               style: TextButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.error,
               ),
-              child: Text(cancelling ? 'Cancelando...' : 'cancel'.tr()),
+              child: Text(cancelling ? 'cancelling'.tr() : 'cancel'.tr()),
             ),
         ],
       ),

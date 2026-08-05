@@ -30,11 +30,11 @@ const _severityColors = {
   'low': Color(0xFF3B82F6),
 };
 
-const _incidentTypeLabels = {
-  'theft-assault-violence': 'Robo / Asalto / Violencia',
-  'harassment-suspicious': 'Acoso / Sospechoso',
-  'accident': 'Accidente',
-  'SOS': 'SOS',
+Map<String, String> get _incidentTypeLabels => {
+  'theft-assault-violence': 'during_incidentTheft'.tr(),
+  'harassment-suspicious': 'during_incidentHarassment'.tr(),
+  'accident': 'during_incidentAccident'.tr(),
+  'SOS': 'during_incidentSOS'.tr(),
 };
 
 // Puerto embebido (no es un tab propio — igual que en la web, donde MapTab se
@@ -320,9 +320,9 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
                         labelText: 'map_severityLabel'.tr(),
                       ),
                       items: [
-                        const DropdownMenuItem(
+                        DropdownMenuItem(
                           value: 'all',
-                          child: Text('Todas'),
+                          child: Text('map_allSeverities'.tr()),
                         ),
                         DropdownMenuItem(
                           value: 'high',
@@ -346,18 +346,27 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _filterTime,
                       isExpanded: true,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         isDense: true,
-                        labelText: 'Cuándo',
+                        labelText: 'map_whenLabel'.tr(),
                       ),
-                      items: const [
+                      items: [
                         DropdownMenuItem(
                           value: 'all',
-                          child: Text('Cualquiera'),
+                          child: Text('map_anyTime'.tr()),
                         ),
-                        DropdownMenuItem(value: '1d', child: Text('24 horas')),
-                        DropdownMenuItem(value: '7d', child: Text('7 días')),
-                        DropdownMenuItem(value: '30d', child: Text('30 días')),
+                        DropdownMenuItem(
+                          value: '1d',
+                          child: Text('map_time24h'.tr()),
+                        ),
+                        DropdownMenuItem(
+                          value: '7d',
+                          child: Text('map_time7d'.tr()),
+                        ),
+                        DropdownMenuItem(
+                          value: '30d',
+                          child: Text('map_time30d'.tr()),
+                        ),
                       ],
                       onChanged: (v) => setState(() => _filterTime = v ?? '7d'),
                     ),
@@ -396,10 +405,13 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
                 SizedBox(
                   height: 130,
                   child: filtered.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Text(
-                            'Sin incidentes',
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                            'map_noIncidentsShort'.tr(),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
                           ),
                         )
                       : ListView.builder(
@@ -607,11 +619,11 @@ class _ReportIncidentSheetState extends ConsumerState<_ReportIncidentSheet> {
   String? _error;
   bool _sending = false;
 
-  static const _typeLabels = {
-    IncidentType.theftAssaultViolence: 'Robo / Asalto / Violencia',
-    IncidentType.harassmentSuspicious: 'Acoso / Sospechoso',
-    IncidentType.accident: 'Accidente',
-    IncidentType.sos: 'SOS',
+  static Map<IncidentType, String> get _typeLabels => {
+    IncidentType.theftAssaultViolence: 'during_incidentTheft'.tr(),
+    IncidentType.harassmentSuspicious: 'during_incidentHarassment'.tr(),
+    IncidentType.accident: 'during_incidentAccident'.tr(),
+    IncidentType.sos: 'during_incidentSOS'.tr(),
   };
 
   @override
@@ -627,11 +639,11 @@ class _ReportIncidentSheetState extends ConsumerState<_ReportIncidentSheet> {
     final allAnswered =
         questions.isEmpty || _answers.every((a) => a.isNotEmpty);
     if (!location.hasCoordinates) {
-      setState(() => _error = 'Activa tu ubicación para reportar.');
+      setState(() => _error = 'map_activateLocationToReport'.tr());
       return;
     }
     if (!allAnswered) {
-      setState(() => _error = 'Responde todas las preguntas.');
+      setState(() => _error = 'map_answerAllQuestions'.tr());
       return;
     }
     setState(() => _sending = true);
@@ -673,7 +685,9 @@ class _ReportIncidentSheetState extends ConsumerState<_ReportIncidentSheet> {
             );
         if (mounted) Navigator.pop(context);
       } else {
-        setState(() => _error = 'Error al enviar el reporte: $e');
+        setState(
+          () => _error = 'map_reportSendError'.tr(namedArgs: {'e': '$e'}),
+        );
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -694,15 +708,15 @@ class _ReportIncidentSheetState extends ConsumerState<_ReportIncidentSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Reportar incidente',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              Text(
+                'map_reportTitle'.tr(),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<IncidentType>(
                 initialValue: _type,
-                decoration: const InputDecoration(
-                  labelText: 'Tipo de incidente',
+                decoration: InputDecoration(
+                  labelText: 'map_incidentType'.tr(),
                 ),
                 items: _typeLabels.entries
                     .map(
@@ -753,9 +767,9 @@ class _ReportIncidentSheetState extends ConsumerState<_ReportIncidentSheet> {
               const SizedBox(height: 12),
               TextField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Detalles (opcional)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'map_detailsOptional'.tr(),
+                  border: const OutlineInputBorder(),
                 ),
                 maxLines: 3,
               ),
@@ -846,8 +860,8 @@ class _IncidentDetailSheetState extends ConsumerState<_IncidentDetailSheet> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('¿Eliminar incidente?'),
-        content: const Text('Esta acción no se puede deshacer.'),
+        title: Text('map_deleteIncidentTitle'.tr()),
+        content: Text('common_actionCannotUndo'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -961,7 +975,7 @@ class _IncidentDetailSheetState extends ConsumerState<_IncidentDetailSheet> {
       const SizedBox(height: 12),
       DropdownButtonFormField<String>(
         initialValue: _incidentType,
-        decoration: const InputDecoration(labelText: 'Tipo'),
+        decoration: InputDecoration(labelText: 'home_type'.tr()),
         items: _incidentTypeLabels.entries
             .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
             .toList(),

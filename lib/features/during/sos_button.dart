@@ -210,8 +210,8 @@ class _SosButtonState extends ConsumerState<SosButton> {
                     ),
                     child: Text(
                       _holding
-                          ? 'Manteniendo...'
-                          : 'Mantén presionado para SOS',
+                          ? 'sos_holdingLabel'.tr()
+                          : 'sos_holdToActivateShort'.tr(),
                       style: TextStyle(
                         fontSize: simpleMode ? 14 : 12,
                         fontWeight: FontWeight.w500,
@@ -360,8 +360,10 @@ class _LiveBroadcastToggle extends ConsumerWidget {
             ),
             label: Text(
               live.live
-                  ? 'Transmitiendo en vivo (${live.segmentsSent} clips) — detener'
-                  : 'Transmitir en vivo a contactos',
+                  ? 'sos_liveBroadcasting'.tr(
+                      namedArgs: {'n': '${live.segmentsSent}'},
+                    )
+                  : 'sos_liveBroadcastStart'.tr(),
             ),
           ),
         ),
@@ -476,9 +478,9 @@ class _SosActivePanel extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Ubicación',
-                                style: TextStyle(fontSize: 12),
+                              Text(
+                                'sos_locationLabel'.tr(),
+                                style: const TextStyle(fontSize: 12),
                               ),
                               Text(
                                 '${location.latitude!.toStringAsFixed(6)}, ${location.longitude!.toStringAsFixed(6)}',
@@ -528,7 +530,7 @@ class _SosActivePanel extends ConsumerWidget {
                                 )
                               : const Icon(Icons.check),
                           label: Text(
-                            sos.saving ? 'sos_saving'.tr() : 'Guardar y cerrar',
+                            sos.saving ? 'sos_saving'.tr() : 'sos_save'.tr(),
                           ),
                         ),
                       ),
@@ -544,7 +546,7 @@ class _SosActivePanel extends ConsumerWidget {
                               ? null
                               : () => _confirmCancel(context, ref),
                           icon: const Icon(Icons.close),
-                          label: const Text('Fue una falsa alarma'),
+                          label: Text('sos_falseAlarm'.tr()),
                         ),
                       ),
                     ],
@@ -562,10 +564,8 @@ class _SosActivePanel extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('¿Confirmar falsa alarma?'),
-        content: const Text(
-          'Se detendrá la grabación y se eliminará la alerta.',
-        ),
+        title: Text('sos_falseAlarmTitle'.tr()),
+        content: Text('sos_stopRecordingDesc'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -579,7 +579,7 @@ class _SosActivePanel extends ConsumerWidget {
               Navigator.pop(ctx);
               ref.read(sosProvider.notifier).cancel();
             },
-            child: const Text('Sí, cancelar'),
+            child: Text('sos_confirmFalse'.tr()),
           ),
         ],
       ),
@@ -603,7 +603,7 @@ class _CameraPreview extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Text(
-            recorder.errorMessage ?? 'Grabación no disponible',
+            recorder.errorMessage ?? 'sos_recordingUnavailable'.tr(),
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white70),
           ),

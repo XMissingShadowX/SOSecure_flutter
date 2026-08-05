@@ -252,12 +252,12 @@ class _ChatHeader extends ConsumerWidget {
     if (activeId == aiContactId) {
       title = 'chat_ai'.tr();
     } else if (activeId == myLiveContactId) {
-      title = 'Mi transmisión en vivo';
+      title = 'chat_myLiveStream'.tr();
     } else if (activeId != null) {
       final contact = contacts
           .where((c) => resolvedIds[c.email] == activeId)
           .firstOrNull;
-      title = contact?.name ?? 'Contacto';
+      title = contact?.name ?? 'chat_contactFallback'.tr();
     }
     return Container(
       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
@@ -314,8 +314,8 @@ class _ContactList extends ConsumerWidget {
                 color: Theme.of(context).colorScheme.error,
               ),
             ),
-            title: const Text('Mi transmisión en vivo'),
-            subtitle: const Text('Vista previa de lo que ven tus contactos'),
+            title: Text('chat_myLiveStream'.tr()),
+            subtitle: Text('chat_myLiveStreamDesc'.tr()),
             onTap: () => onSelect(myLiveContactId),
           ),
         ListTile(
@@ -329,7 +329,7 @@ class _ContactList extends ConsumerWidget {
             ),
           ),
           title: Text('chat_ai'.tr()),
-          subtitle: const Text('Consejos y apoyo inmediato'),
+          subtitle: Text('chat_aiSubtitle'.tr()),
           onTap: () => onSelect(aiContactId),
         ),
         for (final c in contacts)
@@ -340,7 +340,7 @@ class _ContactList extends ConsumerWidget {
             title: Text(c.name),
             subtitle: Text(
               c.email == null
-                  ? 'Sin correo registrado'
+                  ? 'chat_noEmail'.tr()
                   : (resolvedIds.containsKey(c.email)
                         ? (resolvedIds[c.email] != null
                               ? 'chat_inSOSecure'.tr()
@@ -462,9 +462,9 @@ class _Conversation extends ConsumerWidget {
                       ),
                     ),
                     icon: const Icon(Icons.podcasts, size: 16),
-                    label: const Text(
-                      'Ver transmisión',
-                      style: TextStyle(fontSize: 12),
+                    label: Text(
+                      'chat_viewStream'.tr(),
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ),
                 ],
@@ -499,7 +499,7 @@ class _QuickActions extends ConsumerWidget {
         children: [
           ActionChip(
             avatar: const Icon(Icons.location_on_outlined, size: 14),
-            label: const Text('Ubicación', style: TextStyle(fontSize: 11)),
+            label: Text('chat_shareLocation'.tr(), style: const TextStyle(fontSize: 11)),
             onPressed: onShareLocation,
           ),
           if (activeId != aiContactId && contact?.phone != null)
@@ -563,7 +563,7 @@ class _InputBar extends ConsumerWidget {
                 isDense: true,
                 hintText: hasAccount
                     ? 'chat_placeholder'.tr()
-                    : 'Este contacto no tiene cuenta',
+                    : 'chat_noAccountShort'.tr(),
                 border: const OutlineInputBorder(),
               ),
               onSubmitted: hasAccount ? (_) => onSend() : null,

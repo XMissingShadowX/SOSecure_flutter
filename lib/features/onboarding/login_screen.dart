@@ -33,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } on AuthException catch (e) {
       setState(() => _error = e.message);
     } catch (e) {
-      setState(() => _error = 'Error inesperado: $e');
+      setState(() => _error = 'auth_unexpectedError'.tr(namedArgs: {'error': '$e'}));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -74,9 +74,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Correo',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: 'auth_email'.tr(),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -111,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () => context.push('/sign-up'),
-                    child: const Text('¿No tienes cuenta? Regístrate'),
+                    child: Text('auth_noAccountSignUp'.tr()),
                   ),
                 ],
               ),

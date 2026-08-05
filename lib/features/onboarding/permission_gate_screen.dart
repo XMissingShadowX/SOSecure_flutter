@@ -78,28 +78,28 @@ class _PermissionGateScreenState extends State<PermissionGateScreen> {
                     color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'SOSecure necesita permisos',
+                  Text(
+                    'perm_gateTitle'.tr(),
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Para protegerte correctamente necesitamos acceso a tu ubicación y notificaciones.',
+                  Text(
+                    'perm_gateSubtitle'.tr(),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
                   _PermissionTile(
                     icon: Icons.location_on,
-                    label: 'Ubicación',
-                    desc: 'Para rastrearte y alertarte de zonas peligrosas',
+                    label: 'perm_locationLabel'.tr(),
+                    desc: 'perm_locationDesc'.tr(),
                     granted: _location.isGranted,
                   ),
                   const SizedBox(height: 8),
                   _PermissionTile(
                     icon: Icons.notifications,
-                    label: 'Notificaciones',
-                    desc: 'Para alertas de seguridad y emergencias',
+                    label: 'perm_notificationsLabel'.tr(),
+                    desc: 'perm_notificationsDesc'.tr(),
                     granted: _notifications.isGranted,
                   ),
                   const SizedBox(height: 16),
@@ -109,38 +109,38 @@ class _PermissionGateScreenState extends State<PermissionGateScreen> {
                       color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'SE PEDIRÁN MÁS ADELANTE',
-                          style: TextStyle(
+                          'perm_askedLater'.tr(),
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        SizedBox(height: 6),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
-                            Icon(Icons.camera_alt, size: 16),
-                            SizedBox(width: 8),
+                            const Icon(Icons.camera_alt, size: 16),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Cámara — se pedirá al activar grabación SOS',
-                                style: TextStyle(fontSize: 12),
+                                'perm_cameraDesc'.tr(),
+                                style: const TextStyle(fontSize: 12),
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.mic, size: 16),
-                            SizedBox(width: 8),
+                            const Icon(Icons.mic, size: 16),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Micrófono — se pedirá al activar grabación SOS',
-                                style: TextStyle(fontSize: 12),
+                                'perm_micDesc'.tr(),
+                                style: const TextStyle(fontSize: 12),
                               ),
                             ),
                           ],
@@ -151,14 +151,14 @@ class _PermissionGateScreenState extends State<PermissionGateScreen> {
                   const SizedBox(height: 24),
                   if (_hardDenied) ...[
                     Text(
-                      'Permisos bloqueados. Ve a Configuración del sistema para habilitarlos.',
+                      'perm_blockedMessage'.tr(),
                       textAlign: TextAlign.center,
                       style: TextStyle(color: theme.colorScheme.error),
                     ),
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: () => openAppSettings(),
-                      child: const Text('Abrir configuración'),
+                      child: Text('perm_openSettings'.tr()),
                     ),
                   ] else
                     FilledButton(
@@ -169,12 +169,12 @@ class _PermissionGateScreenState extends State<PermissionGateScreen> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Conceder permisos'),
+                          : Text('perm_grantBtn'.tr()),
                     ),
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: _continueAnyway,
-                    child: const Text('Continuar sin todos los permisos'),
+                    child: Text('perm_continueWithout'.tr()),
                   ),
                 ],
               ),

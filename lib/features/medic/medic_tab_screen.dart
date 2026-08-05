@@ -73,22 +73,22 @@ class _ChatBodyState extends ConsumerState<_ChatBody> {
     (
       Icons.favorite_border,
       'medic_anxiety'.tr(),
-      'Estoy sintiendo mucha ansiedad ahora mismo, ¿me ayudas?',
+      'medic_anxietyMsg'.tr(),
     ),
     (
       Icons.air,
-      'Respirar',
-      'Enséñame una técnica de respiración para calmarme',
+      'medic_breathing'.tr(),
+      'medic_breathingMsg'.tr(),
     ),
     (
       Icons.chat_bubble_outline,
       'medic_talk'.tr(),
-      'Solo necesito hablar con alguien de lo que siento',
+      'medic_talkMsg'.tr(),
     ),
     (
       Icons.emoji_emotions_outlined,
       'medic_techniques'.tr(),
-      'Dame técnicas rápidas para manejar el estrés',
+      'medic_techniquesMsg'.tr(),
     ),
   ];
 
@@ -222,9 +222,9 @@ class _ChatBodyState extends ConsumerState<_ChatBody> {
                   maxLines: 5,
                   textInputAction: TextInputAction.send,
                   style: TextStyle(fontSize: fontSize),
-                  decoration: const InputDecoration(
-                    hintText: 'Escribe cómo te sientes...',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    hintText: 'medic_placeholder'.tr(),
+                    border: const OutlineInputBorder(),
                     isDense: true,
                   ),
                   onSubmitted: chat.loading ? null : _send,

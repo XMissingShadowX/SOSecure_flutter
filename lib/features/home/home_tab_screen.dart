@@ -29,10 +29,10 @@ Map<String, String> get _placeTypeLabels => {
   'other': 'home_placeOther'.tr(),
 };
 
-const _importanceLabels = {
-  'primary': 'Alta',
-  'secondary': 'Media',
-  'tertiary': 'Baja',
+Map<String, String> get _importanceLabels => {
+  'primary': 'map_sevHigh'.tr(),
+  'secondary': 'map_sevMedium'.tr(),
+  'tertiary': 'map_sevLow'.tr(),
 };
 
 Map<String, String> get _relationshipLabels => {
@@ -124,7 +124,7 @@ class _StatusBanner extends StatelessWidget {
                 children: [
                   Text(
                     hasLocation
-                        ? 'Zona sin alertas cercanas'
+                        ? 'home_noAlertsZone'.tr()
                         : 'home_gettingLocation'.tr(),
                     textAlign: TextAlign.center,
                     style: TextStyle(fontWeight: FontWeight.w600, color: color),
@@ -300,7 +300,7 @@ class _LocationCard extends StatelessWidget {
                       style: const TextStyle(fontFamily: 'monospace'),
                     )
             else
-              const Text('Sin ubicación disponible todavía.'),
+              Text('home_noLocationYet'.tr()),
           ],
         ),
       ),
@@ -345,7 +345,7 @@ class _FrequentPlacesCard extends ConsumerWidget {
             if (places.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Center(child: Text('Sin lugares guardados todavía.')),
+                child: Center(child: Text('home_noPlacesYet'.tr())),
               )
             else
               Wrap(
@@ -403,7 +403,7 @@ class _FrequentPlacesCard extends ConsumerWidget {
                 children: [
                   DropdownMenu<String>(
                     initialSelection: type,
-                    label: const Text('Tipo'),
+                    label: Text('home_type'.tr()),
                     expandedInsets: EdgeInsets.zero,
                     dropdownMenuEntries: _placeTypeLabels.entries
                         .map(
@@ -477,28 +477,32 @@ class _FrequentPlacesCard extends ConsumerWidget {
                       ),
                     ),
                   if (geocodedLat != null)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        '✓ Dirección geocodificada correctamente',
-                        style: TextStyle(fontSize: 12),
+                        '✓ ${'home_addressGeocoded'.tr()}',
+                        style: const TextStyle(fontSize: 12),
                       ),
                     )
                   else if (location.hasCoordinates)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        'Sin dirección seleccionada se usará tu ubicación actual: '
-                        '${location.latitude!.toStringAsFixed(5)}, ${location.longitude!.toStringAsFixed(5)}',
+                        'home_noAddressUseCurrent'.tr(
+                          namedArgs: {
+                            'coords':
+                                '${location.latitude!.toStringAsFixed(5)}, ${location.longitude!.toStringAsFixed(5)}',
+                          },
+                        ),
                         style: const TextStyle(fontSize: 12),
                       ),
                     )
                   else
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        'Sin ubicación disponible — espera a que se obtenga el GPS.',
-                        style: TextStyle(fontSize: 12),
+                        'home_noLocationWaitGps'.tr(),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                 ],
@@ -650,16 +654,16 @@ class _ContactsCard extends ConsumerWidget {
                 ),
               ),
               error: (err, _) => Text(
-                'Error al cargar contactos: $err',
+                'home_contactsLoadError'.tr(namedArgs: {'err': '$err'}),
                 style: TextStyle(color: theme.colorScheme.error),
               ),
               data: (contacts) => Column(
                 children: [
                   if (contacts.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       child: Center(
-                        child: Text('Sin contactos agregados todavía.'),
+                        child: Text('home_noContactsAdded'.tr()),
                       ),
                     )
                   else
@@ -734,8 +738,8 @@ class _ContactsCard extends ConsumerWidget {
                     TextField(
                       controller: emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Correo (opcional)',
+                      decoration: InputDecoration(
+                        labelText: 'home_emailOptional'.tr(),
                       ),
                     ),
                     DropdownMenu<String>(
@@ -754,7 +758,7 @@ class _ContactsCard extends ConsumerWidget {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Prioridad',
+                        'home_priorityLabel'.tr(),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

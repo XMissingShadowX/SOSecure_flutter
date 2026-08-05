@@ -71,7 +71,7 @@ class _BeforeTabScreenState extends ConsumerState<BeforeTabScreen> {
         const SizedBox(height: 16),
         _CollapsibleSection(
           icon: Icons.navigation_outlined,
-          title: 'Ruta segura',
+          title: 'before_safeRoute'.tr(),
           child: const RoutesTabScreen(),
         ),
         const SizedBox(height: 16),
@@ -260,7 +260,7 @@ class _SecurityTimerCardState extends ConsumerState<_SecurityTimerCard> {
                   onPressed: () =>
                       ref.read(securityTimerProvider.notifier).cancel(),
                   icon: const Icon(Icons.check),
-                  label: const Text('Llegué bien'),
+                  label: Text('before_timerArrived'.tr()),
                 ),
               ),
             ] else ...[
@@ -367,10 +367,10 @@ class _LiveSharingCard extends ConsumerWidget {
               children: [
                 Icon(Icons.share_location_outlined, color: primary, size: 20),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Compartir mi ubicación en vivo',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                    'before_shareMyLocation'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
                 Switch(
@@ -381,15 +381,15 @@ class _LiveSharingCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Tus contactos con cuenta SOSecure podrán ver tu ubicación mientras esté activo.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+            Text(
+              'before_liveShareDesc'.tr(),
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
             if (contacts.isNotEmpty) ...[
               const SizedBox(height: 12),
-              const Text(
-                'Compartiendo contigo ahora',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              Text(
+                'before_sharingWithYouNow'.tr(),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 4),
               ...contacts.map(
@@ -541,11 +541,11 @@ class _LiveMarkerLabel extends StatelessWidget {
   }
 }
 
-const _safeZoneQueries = {
-  'Farmacia': ('farmacia', Icons.local_pharmacy_outlined),
-  'Policía': ('ministerio+publico', Icons.local_police_outlined),
-  'Hospital': ('hospital', Icons.local_hospital_outlined),
-  'Tienda 24h': ('tienda+24+horas', Icons.storefront_outlined),
+Map<String, (String, IconData)> get _safeZoneQueries => {
+  'before_sz_pharmacy'.tr(): ('farmacia', Icons.local_pharmacy_outlined),
+  'before_sz_police'.tr(): ('ministerio+publico', Icons.local_police_outlined),
+  'before_sz_hospital'.tr(): ('hospital', Icons.local_hospital_outlined),
+  'before_sz_store'.tr(): ('tienda+24+horas', Icons.storefront_outlined),
 };
 
 // Puerto fiel de la sección "Zonas Seguras" de before-tab.tsx — son 4 botones
@@ -570,9 +570,9 @@ class _SafeZonesCard extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             if (!location.hasCoordinates)
-              const Text(
-                'Activa tu ubicación para buscar zonas cercanas',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+              Text(
+                'before_activateForZones'.tr(),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             const SizedBox(height: 8),
             GridView.count(
@@ -665,13 +665,13 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
               children: [
                 Expanded(
                   child: Text(
-                    'Palabra: "${voice.keyword}"',
+                    'before_voiceKeywordLabel'.tr(namedArgs: {'word': voice.keyword}),
                     style: const TextStyle(fontSize: 13),
                   ),
                 ),
                 TextButton(
                   onPressed: () => _editKeyword(context, ref, voice.keyword),
-                  child: const Text('Cambiar'),
+                  child: Text('before_voiceKeywordChange'.tr()),
                 ),
               ],
             ),
@@ -690,7 +690,7 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Palabra clave de SOS'),
+        title: Text('before_voiceKeyword'.tr()),
         content: TextField(
           controller: controller,
           autofocus: true,

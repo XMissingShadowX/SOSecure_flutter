@@ -128,9 +128,9 @@ class _LiveStreamViewerState extends State<LiveStreamViewer> {
               'chat_waiting'.tr(),
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
-            const Text(
-              'Se conectará en cuanto el contacto la active',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
+            Text(
+              'chat_waitingDesc'.tr(),
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
             ),
           ],
         ),

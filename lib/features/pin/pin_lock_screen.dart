@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -45,7 +46,7 @@ class _PinLockScreenState extends State<PinLockScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudo verificar el estado del PIN: $e';
+        _error = '${'pin_statusError'.tr()} $e';
         _loading = false;
       });
     }
@@ -73,11 +74,11 @@ class _PinLockScreenState extends State<PinLockScreen> {
       if (result.lockedOutSeconds != null) {
         setState(() => _lockedOutSeconds = result.lockedOutSeconds);
       } else {
-        setState(() => _error = 'PIN incorrecto');
+        setState(() => _error = 'pin_incorrectSimple'.tr());
       }
       _pinController.clear();
     } catch (e) {
-      setState(() => _error = 'Error al verificar: $e');
+      setState(() => _error = '${'pin_verifyError'.tr()}$e');
     } finally {
       if (mounted) setState(() => _verifying = false);
     }
@@ -126,7 +127,7 @@ class _PinLockScreenState extends State<PinLockScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    _error ?? 'No se pudo verificar el estado del PIN.',
+                    _error ?? 'pin_statusError'.tr(),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -136,7 +137,7 @@ class _PinLockScreenState extends State<PinLockScreen> {
                       _error = null;
                       _loadConfig();
                     }),
-                    child: const Text('Reintentar'),
+                    child: Text('retry'.tr()),
                   ),
                 ],
               ),
@@ -160,8 +161,8 @@ class _PinLockScreenState extends State<PinLockScreen> {
                 children: [
                   const Icon(Icons.mark_email_read_outlined, size: 56),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Te enviamos un enlace a tu correo para confirmar el reseteo del PIN.',
+                  Text(
+                    'pin_resetLinkSent'.tr(),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -188,9 +189,9 @@ class _PinLockScreenState extends State<PinLockScreen> {
                   color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Ingresa tu PIN',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                Text(
+                  'pin_enter'.tr(),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -211,7 +212,9 @@ class _PinLockScreenState extends State<PinLockScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      'Demasiados intentos. Espera ${_lockedOutSeconds}s.',
+                      'pin_lockedOutFor'.tr(
+                        namedArgs: {'seconds': '$_lockedOutSeconds'},
+                      ),
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.error,
                       ),
@@ -236,12 +239,12 @@ class _PinLockScreenState extends State<PinLockScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Desbloquear'),
+                      : Text('unlock'.tr()),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: _verifying ? null : _forgotPin,
-                  child: const Text('Olvidé mi PIN'),
+                  child: Text('pin_forgot'.tr()),
                 ),
               ],
             ),

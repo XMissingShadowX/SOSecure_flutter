@@ -95,9 +95,9 @@ class _DangerZonesSectionState extends ConsumerState<_DangerZonesSection> {
               children: [
                 Icon(Icons.warning_amber_rounded, color: warning, size: 20),
                 const SizedBox(width: 8),
-                const Text(
-                  'Zonas de peligro cercanas',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  'after_dangerZones'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -258,16 +258,16 @@ class _ArrivedWellCardState extends ConsumerState<_ArrivedWellCard> {
               children: [
                 Icon(Icons.home_outlined, color: safe, size: 20),
                 const SizedBox(width: 8),
-                const Text(
-                  'Llegué bien',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  'after_arrivedBtn'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Avisa a tus contactos que llegaste seguro a tu destino.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+            Text(
+              'after_arrivedDesc'.tr(),
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(height: 12),
             if (_sentCount != null)
@@ -279,7 +279,12 @@ class _ArrivedWellCardState extends ConsumerState<_ArrivedWellCard> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '$_sentCount contacto${_sentCount == 1 ? '' : 's'} notificado${_sentCount == 1 ? '' : 's'} por WhatsApp',
+                  'after_notifiedCount'.tr(
+                    namedArgs: {
+                      'n': '$_sentCount',
+                      's': _sentCount == 1 ? '' : 's',
+                    },
+                  ),
                   style: TextStyle(color: safe, fontSize: 13),
                 ),
               )
@@ -302,16 +307,16 @@ class _ArrivedWellCardState extends ConsumerState<_ArrivedWellCard> {
                         )
                       : const Icon(Icons.check),
                   label: Text(
-                    _sending ? 'sending'.tr() : 'Notificar que llegué bien',
+                    _sending ? 'sending'.tr() : 'after_notifyArrivedBtn'.tr(),
                   ),
                 ),
               ),
             if (contacts.isEmpty)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'No tienes contactos de emergencia guardados.',
-                  style: TextStyle(fontSize: 11, color: Colors.red),
+                  'after_noContactsSaved'.tr(),
+                  style: const TextStyle(fontSize: 11, color: Colors.red),
                 ),
               ),
           ],
@@ -379,16 +384,16 @@ class _AlertHistorySection extends ConsumerWidget {
               ),
               error: (e, _) => Padding(
                 padding: const EdgeInsets.all(12),
-                child: Text('Error: $e'),
+                child: Text('error_withDetail'.tr(namedArgs: {'e': '$e'})),
               ),
               data: (alerts) {
                 if (alerts.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Center(
                       child: Text(
-                        'No hay alertas en este período',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        'after_noAlerts'.tr(),
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ),
                   );
@@ -439,11 +444,14 @@ class _AlertTile extends ConsumerWidget {
         onSelected: (status) => ref
             .read(alertHistoryProvider.notifier)
             .markStatus(alert.id, status),
-        itemBuilder: (_) => const [
-          PopupMenuItem(value: 'resolved', child: Text('Marcar como resuelta')),
+        itemBuilder: (_) => [
+          PopupMenuItem(
+            value: 'resolved',
+            child: Text('after_markResolved'.tr()),
+          ),
           PopupMenuItem(
             value: 'false_alarm',
-            child: Text('Marcar como falsa alarma'),
+            child: Text('after_markFalseAlarm'.tr()),
           ),
         ],
       ),
@@ -514,7 +522,9 @@ class _AlertDetailSheetState extends ConsumerState<_AlertDetailSheet> {
                 Icon(Icons.warning_amber_rounded, color: destructive, size: 22),
                 const SizedBox(width: 8),
                 Text(
-                  'Alerta #${alert.id.substring(0, 8)}',
+                  'after_alertNumber'.tr(
+                    namedArgs: {'id': alert.id.substring(0, 8)},
+                  ),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -524,12 +534,12 @@ class _AlertDetailSheetState extends ConsumerState<_AlertDetailSheet> {
             ),
             const SizedBox(height: 16),
             _row(
-              'Fecha',
+              'date_label'.tr(),
               alert.createdAt?.toLocal().toString().substring(0, 19) ?? '—',
             ),
-            _row('Estado', alert.status),
+            _row('status_label'.tr(), alert.status),
             _row(
-              'Ubicación',
+              'sos_locationLabel'.tr(),
               '${alert.latitude.toStringAsFixed(6)}, ${alert.longitude.toStringAsFixed(6)}',
             ),
             const SizedBox(height: 8),
@@ -539,9 +549,9 @@ class _AlertDetailSheetState extends ConsumerState<_AlertDetailSheet> {
             ),
             const SizedBox(height: 6),
             alert.contactsNotified.isEmpty
-                ? const Text(
-                    'Ninguno',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                ? Text(
+                    'none_label'.tr(),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   )
                 : Wrap(
                     spacing: 6,
@@ -558,9 +568,9 @@ class _AlertDetailSheetState extends ConsumerState<_AlertDetailSheet> {
                         .toList(),
                   ),
             const SizedBox(height: 16),
-            const Text(
-              'Grabación',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            Text(
+              'after_recordingLabel'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
             const SizedBox(height: 6),
             if (_loadingRecording)
@@ -571,9 +581,9 @@ class _AlertDetailSheetState extends ConsumerState<_AlertDetailSheet> {
                 ),
               )
             else if (_recording == null)
-              const Text(
-                'No hay grabación vinculada a esta alerta.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+              Text(
+                'after_noRecordingLinked'.tr(),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               )
             else
               _RecordingTile(rec: _recording!),
@@ -622,9 +632,9 @@ class _RecordingsSection extends ConsumerWidget {
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Grabaciones',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  'after_recordings'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -636,16 +646,16 @@ class _RecordingsSection extends ConsumerWidget {
               ),
               error: (e, _) => Padding(
                 padding: const EdgeInsets.all(12),
-                child: Text('Error: $e'),
+                child: Text('error_withDetail'.tr(namedArgs: {'e': '$e'})),
               ),
               data: (list) {
                 if (list.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Center(
                       child: Text(
-                        'No hay grabaciones',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        'after_noRecordings'.tr(),
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ),
                   );
@@ -691,7 +701,7 @@ class _RecordingTileState extends ConsumerState<_RecordingTile> {
       final hasAccess =
           await Gal.hasAccess(toAlbum: true) ||
           await Gal.requestAccess(toAlbum: true);
-      if (!hasAccess) throw Exception('Permiso de galería denegado');
+      if (!hasAccess) throw Exception('after_galleryPermDenied'.tr());
 
       final tempDir = await getTemporaryDirectory();
       final ext = widget.rec.storagePath.split('.').last;
@@ -702,9 +712,7 @@ class _RecordingTileState extends ConsumerState<_RecordingTile> {
         await Gal.putVideo(tempFile.path, album: 'SOSecure');
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Guardado en la galería (álbum SOSecure)'),
-          ),
+          SnackBar(content: Text('after_savedGalleryAlbum'.tr())),
         );
       } else {
         // El audio no aplica a la Galería (Gal solo maneja fotos/videos) —
@@ -715,14 +723,20 @@ class _RecordingTileState extends ConsumerState<_RecordingTile> {
         );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Audio guardado en ${saved.path}')),
+          SnackBar(
+            content: Text(
+              'during_audioSavedAt'.tr(namedArgs: {'path': saved.path}),
+            ),
+          ),
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error al descargar: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('after_downloadError'.tr(namedArgs: {'e': '$e'})),
+        ),
+      );
     } finally {
       if (tempFile != null && await tempFile.exists()) await tempFile.delete();
       if (mounted) setState(() => _downloading = false);
