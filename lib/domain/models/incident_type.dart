@@ -1,3 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
+
 // Espeja IncidentType/IncidentSeverity en lib/types.ts. Estos valores viajan
 // tal cual a la BD — nunca se traducen (ver CLAUDE.md, "Strings que NO se
 // traducen"), solo la UI los muestra localizados.
@@ -14,21 +16,23 @@ enum IncidentType {
 typedef IncidentSeverity = String; // 'high' | 'medium' | 'low'
 
 // Puerto de incidentQuestionKeys + calculateSeverity() en during-tab.tsx.
-const Map<IncidentType, List<String>> incidentQuestions = {
+// Getter (no const) porque .tr() no es una expresión constante — llamarlo a
+// nivel de módulo/const congelaría las preguntas en el idioma de compilación.
+Map<IncidentType, List<String>> get incidentQuestions => {
   IncidentType.theftAssaultViolence: [
-    '¿El agresor tenía un arma?',
-    '¿Hubo violencia física?',
-    '¿Hay alguien herido?',
+    'during_q_weapon'.tr(),
+    'during_q_violence'.tr(),
+    'during_q_injured'.tr(),
   ],
   IncidentType.harassmentSuspicious: [
-    '¿Te está siguiendo?',
-    '¿Hubo amenazas?',
-    '¿Hay alguien en situación vulnerable?',
+    'during_q_following'.tr(),
+    'during_q_threats'.tr(),
+    'during_q_vulnerable'.tr(),
   ],
   IncidentType.accident: [
-    '¿Hay heridos?',
-    '¿Hay fuego?',
-    '¿Está bloqueando el paso?',
+    'during_q_injuredAcc'.tr(),
+    'during_q_fire'.tr(),
+    'during_q_blocked'.tr(),
   ],
 };
 

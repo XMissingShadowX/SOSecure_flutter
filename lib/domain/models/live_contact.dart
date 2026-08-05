@@ -1,3 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
+
 // Espeja LiveContact en hooks/use-live-location.ts.
 class LiveContact {
   final String userId;
@@ -17,7 +19,7 @@ class LiveContact {
   factory LiveContact.fromJson(Map<String, dynamic> json) {
     return LiveContact(
       userId: json['user_id'] as String,
-      displayName: json['display_name'] as String? ?? 'Contacto',
+      displayName: json['display_name'] as String? ?? 'chat_contactFallback'.tr(),
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
       updatedAt: DateTime.parse(json['updated_at'] as String),

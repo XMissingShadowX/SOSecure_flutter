@@ -36,22 +36,20 @@ class _BeforeTabScreenState extends ConsumerState<BeforeTabScreen> {
     timerNotifier.onFiveMinuteWarning = () {
       SosAlarm.triggerWarning(
         '⏱️ SOSecure',
-        'Quedan 5 minutos para que expire tu temporizador de seguridad',
+        'before_timerFiveMinWarning'.tr(),
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            '⏱️ Quedan 5 minutos para que expire tu temporizador de seguridad',
-          ),
+        SnackBar(
+          content: Text('⏱️ ${'before_timerFiveMinWarning'.tr()}'),
         ),
       );
     };
     timerNotifier.onExpired = () {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('⏰ Temporizador expirado — se activó una alerta SOS'),
+        SnackBar(
+          content: Text('⏰ ${'before_timerExpiredAlert'.tr()}'),
           backgroundColor: Colors.red,
         ),
       );

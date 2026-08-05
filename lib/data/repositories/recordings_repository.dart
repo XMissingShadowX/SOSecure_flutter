@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -34,12 +35,14 @@ void validateRecordingFile(File file, String mimeType, int sizeBytes) {
   final baseMime = mimeType.split(';').first.trim();
   if (!allowedRecordingMimeTypes.contains(baseMime)) {
     throw RecordingValidationException(
-      'Tipo de archivo no permitido: $baseMime',
+      'rec_fileTypeNotAllowed'.tr(namedArgs: {'mime': baseMime}),
     );
   }
   if (sizeBytes > maxRecordingSizeBytes) {
     throw RecordingValidationException(
-      'El archivo excede el tamaño máximo de ${maxRecordingSizeBytes ~/ (1024 * 1024)} MB',
+      'rec_fileTooLarge'.tr(
+        namedArgs: {'mb': '${maxRecordingSizeBytes ~/ (1024 * 1024)}'},
+      ),
     );
   }
 }

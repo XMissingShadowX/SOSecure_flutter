@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/env.dart';
@@ -25,7 +26,10 @@ class PlanApi {
     );
     if (res.statusCode != 200) {
       final body = jsonDecode(res.body) as Map<String, dynamic>?;
-      throw Exception(body?['error'] ?? 'No se pudo cancelar (${res.statusCode})');
+      throw Exception(
+        body?['error'] ??
+            'plan_cancelError'.tr(namedArgs: {'code': '${res.statusCode}'}),
+      );
     }
   }
 
@@ -36,7 +40,10 @@ class PlanApi {
     );
     if (res.statusCode != 200) {
       final body = jsonDecode(res.body) as Map<String, dynamic>?;
-      throw Exception(body?['error'] ?? 'No se pudo cancelar (${res.statusCode})');
+      throw Exception(
+        body?['error'] ??
+            'plan_cancelError'.tr(namedArgs: {'code': '${res.statusCode}'}),
+      );
     }
   }
 
@@ -47,7 +54,12 @@ class PlanApi {
     );
     if (res.statusCode != 200) {
       final body = jsonDecode(res.body) as Map<String, dynamic>?;
-      throw Exception(body?['error'] ?? 'No se pudo eliminar la cuenta (${res.statusCode})');
+      throw Exception(
+        body?['error'] ??
+            'plan_deleteAccountApiError'.tr(
+              namedArgs: {'code': '${res.statusCode}'},
+            ),
+      );
     }
   }
 }

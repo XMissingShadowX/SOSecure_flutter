@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/env.dart';
@@ -24,7 +25,9 @@ class PinApi {
     );
     if (res.statusCode != 200) {
       throw Exception(
-        'No se pudo leer la configuración del PIN (${res.statusCode}): ${res.body}',
+        'pin_readConfigError'.tr(
+          namedArgs: {'code': '${res.statusCode}', 'body': res.body},
+        ),
       );
     }
     final body = jsonDecode(res.body) as Map<String, dynamic>;
@@ -51,7 +54,9 @@ class PinApi {
     );
     if (res.statusCode != 200) {
       throw Exception(
-        'No se pudo guardar el PIN (${res.statusCode}): ${res.body}',
+        'pin_saveConfigError'.tr(
+          namedArgs: {'code': '${res.statusCode}', 'body': res.body},
+        ),
       );
     }
   }
