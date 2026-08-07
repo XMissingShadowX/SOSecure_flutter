@@ -239,9 +239,9 @@ class _SecurityTimerCardState extends ConsumerState<_SecurityTimerCard> {
               ],
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Si no confirmas que llegaste bien antes de que expire, se activa una alerta SOS automáticamente.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+            Text(
+              'before_timerHint'.tr(),
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(height: 12),
             if (timer.active && timer.remaining != null) ...[

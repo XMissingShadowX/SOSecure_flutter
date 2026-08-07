@@ -244,7 +244,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onChanged: (value) =>
                 ref.read(simpleModeProvider.notifier).set(value),
           ),
-          const _ChatFontSizeTile(),
+          _ChatFontSizeTile(),
           const Divider(),
           _SectionLabel('settings_security'.tr()),
           if (_loadingPin)
@@ -275,7 +275,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
           const Divider(),
           _SectionLabel('settings_volumeSos'.tr()),
-          const _VolumeSosCard(),
+          _VolumeSosCard(),
           const Divider(),
           _SectionLabel('plan_premiumNameLabel'.tr()),
           if (_loadingPlans)
