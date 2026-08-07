@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
@@ -63,7 +64,9 @@ class StandaloneRecorder extends _$StandaloneRecorder {
   Future<void> startAudio() async {
     if (state.mode != StandaloneRecMode.idle) return;
     if (!await _audioRecorder.hasPermission()) {
-      state = state.copyWith(errorMessage: 'Permiso de micrófono denegado.');
+      state = state.copyWith(
+        errorMessage: 'recorder_micPermissionDenied'.tr(),
+      );
       return;
     }
     final dir = await getTemporaryDirectory();
@@ -90,16 +93,22 @@ class StandaloneRecorder extends _$StandaloneRecorder {
     final micStatus = await Permission.microphone.request();
     final camStatus = await Permission.camera.request();
     if (!camStatus.isGranted) {
-      state = state.copyWith(errorMessage: 'Permiso de cámara denegado.');
+      state = state.copyWith(
+        errorMessage: 'recorder_cameraPermissionDenied'.tr(),
+      );
       return;
     }
     if (!micStatus.isGranted) {
-      state = state.copyWith(errorMessage: 'Permiso de micrófono denegado.');
+      state = state.copyWith(
+        errorMessage: 'recorder_micPermissionDenied'.tr(),
+      );
     }
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
-        state = state.copyWith(errorMessage: 'No hay cámara disponible.');
+        state = state.copyWith(
+          errorMessage: 'recorder_noCameraAvailable'.tr(),
+        );
         return;
       }
       final back = cameras.firstWhere(
@@ -121,7 +130,7 @@ class StandaloneRecorder extends _$StandaloneRecorder {
       );
     } catch (e) {
       state = state.copyWith(
-        errorMessage: 'No se pudo iniciar la grabación: $e',
+        errorMessage: 'recorder_startError'.tr(namedArgs: {'e': '$e'}),
       );
     }
   }

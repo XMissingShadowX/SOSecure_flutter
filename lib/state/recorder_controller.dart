@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -68,7 +69,7 @@ class Recorder extends _$Recorder {
       if (statuses[Permission.camera] != PermissionStatus.granted) {
         state = state.copyWith(
           status: RecorderStatus.error,
-          errorMessage: 'Permiso de cámara denegado.',
+          errorMessage: 'recorder_cameraPermissionDenied'.tr(),
         );
         return;
       }
@@ -77,7 +78,7 @@ class Recorder extends _$Recorder {
       if (cameras.isEmpty) {
         state = state.copyWith(
           status: RecorderStatus.error,
-          errorMessage: 'No hay cámara disponible.',
+          errorMessage: 'recorder_noCameraAvailable'.tr(),
         );
         return;
       }
@@ -103,7 +104,7 @@ class Recorder extends _$Recorder {
     } catch (e) {
       state = state.copyWith(
         status: RecorderStatus.error,
-        errorMessage: 'No se pudo iniciar la grabación: $e',
+        errorMessage: 'recorder_startError'.tr(namedArgs: {'e': '$e'}),
       );
     }
   }
@@ -127,7 +128,7 @@ class Recorder extends _$Recorder {
       await _disposeController();
       state = state.copyWith(
         status: RecorderStatus.error,
-        errorMessage: 'Error al detener la grabación: $e',
+        errorMessage: 'recorder_stopError'.tr(namedArgs: {'e': '$e'}),
       );
       return null;
     }

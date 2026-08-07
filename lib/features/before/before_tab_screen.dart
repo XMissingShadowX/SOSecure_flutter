@@ -643,9 +643,11 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
             Text(
               voice.enabled
                   ? (voice.listening
-                        ? 'Escuchando: "${voice.keyword}"'
-                        : 'Activando micrófono...')
-                  : 'Di la palabra clave para activar el SOS con las manos libres.',
+                        ? 'before_voiceListening'.tr(
+                            namedArgs: {'keyword': voice.keyword},
+                          )
+                        : 'before_voiceActivating'.tr())
+                  : 'before_voiceIdle'.tr(),
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
             if (voice.errorMessage != null) ...[

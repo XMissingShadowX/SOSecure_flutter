@@ -260,8 +260,8 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
                         Expanded(
                           child: Text(
                             _originOverride == null
-                                ? 'Origen: ubicación actual'
-                                : 'Origen: ${_originController.text}',
+                                ? 'routes_originCurrentLocation'.tr()
+                                : '${'routes_originLabel'.tr()}: ${_originController.text}',
                             style: const TextStyle(fontSize: 13),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -361,9 +361,9 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
                   ).colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'Alcanzaste el límite de 1 búsqueda de ruta al día en el plan gratuito. Actualiza a Premium para búsquedas ilimitadas.',
-                  style: TextStyle(fontSize: 12),
+                child: Text(
+                  'routes_dailyLimitReached'.tr(),
+                  style: const TextStyle(fontSize: 12),
                 ),
               ),
             ],

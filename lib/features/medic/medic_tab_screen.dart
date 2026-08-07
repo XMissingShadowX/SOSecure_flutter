@@ -40,15 +40,15 @@ class _UpgradeBanner extends StatelessWidget {
           children: [
             Icon(Icons.workspace_premium_outlined, size: 48, color: primary),
             const SizedBox(height: 16),
-            const Text(
-              'Chat de Apoyo Psicológico',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            Text(
+              'medic_premiumGateTitle'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            const Text(
-              'El acompañante de bienestar con IA está disponible solo en planes Premium y Familiar.',
-              style: TextStyle(color: Colors.grey),
+            Text(
+              'medic_premiumGateDesc'.tr(),
+              style: const TextStyle(color: Colors.grey),
               textAlign: TextAlign.center,
             ),
           ],
@@ -144,9 +144,9 @@ class _ChatBodyState extends ConsumerState<_ChatBody> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Si estás en crisis, no estás solo/a',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                      Text(
+                        'medic_crisisTitle'.tr(),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       Text.rich(
                         TextSpan(

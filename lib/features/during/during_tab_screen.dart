@@ -740,7 +740,7 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
               const Divider(),
               Text(
                 _statusMsg.isEmpty
-                    ? 'Grabación lista — ¿qué quieres hacer?'
+                    ? 'during_recordingReady'.tr()
                     : _statusMsg,
                 textAlign: TextAlign.center,
                 style: const TextStyle(

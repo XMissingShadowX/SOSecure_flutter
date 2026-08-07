@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -106,7 +107,7 @@ class VoiceSos extends _$VoiceSos {
       final micStatus = await Permission.microphone.request();
       if (!micStatus.isGranted) {
         state = state.copyWith(
-          errorMessage: 'Permiso de micrófono denegado.',
+          errorMessage: 'recorder_micPermissionDenied'.tr(),
           listening: false,
         );
         return;

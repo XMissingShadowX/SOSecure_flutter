@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -58,7 +59,7 @@ class LocationWatcher extends _$LocationWatcher {
           permission == LocationPermission.deniedForever) {
         state = state.copyWith(
           loading: false,
-          error: 'Acceso a ubicación denegado. Actívalo en Ajustes.',
+          error: 'location_permissionDenied'.tr(),
         );
         return;
       }
@@ -66,7 +67,7 @@ class LocationWatcher extends _$LocationWatcher {
       if (!await Geolocator.isLocationServiceEnabled()) {
         state = state.copyWith(
           loading: false,
-          error: 'El GPS está desactivado.',
+          error: 'location_gpsDisabled'.tr(),
         );
         return;
       }
@@ -89,13 +90,16 @@ class LocationWatcher extends _$LocationWatcher {
             onError: (_) {
               state = state.copyWith(
                 loading: false,
-                error: 'No se pudo obtener la ubicación.',
+                error: 'location_fetchFailed'.tr(),
               );
             },
           );
       ref.onDispose(subscription.cancel);
     } catch (e) {
-      state = state.copyWith(loading: false, error: 'Error de ubicación: $e');
+      state = state.copyWith(
+        loading: false,
+        error: 'location_genericError'.tr(namedArgs: {'e': '$e'}),
+      );
     }
   }
 }

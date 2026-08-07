@@ -58,8 +58,7 @@ class _EmergencyChatWidgetState extends ConsumerState<EmergencyChatWidget> {
             EmergencyChatMessage(
               id: 'ai-welcome',
               contactId: aiContactId,
-              text:
-                  'Hola, soy SOSecure AI. Cuéntame qué está pasando y te ayudo con lo que pueda.',
+              text: 'chat_welcome'.tr(),
               timestamp: DateTime.now(),
               isMe: false,
               type: 'ai',
@@ -118,7 +117,7 @@ class _EmergencyChatWidgetState extends ConsumerState<EmergencyChatWidget> {
           EmergencyChatMessage(
             id: 'ai-err-${DateTime.now().microsecondsSinceEpoch}',
             contactId: aiContactId,
-            text: 'Sin conexión al asistente. Verifica tu internet.',
+            text: 'chat_aiConnectionError'.tr(),
             timestamp: DateTime.now(),
             isMe: false,
             type: 'ai',
@@ -344,8 +343,8 @@ class _ContactList extends ConsumerWidget {
                   : (resolvedIds.containsKey(c.email)
                         ? (resolvedIds[c.email] != null
                               ? 'chat_inSOSecure'.tr()
-                              : 'Sin cuenta — usa WhatsApp')
-                        : 'Buscando...'),
+                              : '${'chat_noAccountLabel'.tr()} — ${'chat_useWhatsapp'.tr()}')
+                        : 'routes_searching'.tr()),
               style: const TextStyle(fontSize: 12),
             ),
             onTap: () {
@@ -381,11 +380,11 @@ class _Conversation extends ConsumerWidget {
     if (isAi &&
         !(isPremiumAsync.valueOrNull ?? false) &&
         !isPremiumAsync.isLoading) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Text(
-            'SOSecure AI está disponible solo en planes Premium y Familiar.',
+            'chat_aiPremiumGateDesc'.tr(),
             textAlign: TextAlign.center,
           ),
         ),

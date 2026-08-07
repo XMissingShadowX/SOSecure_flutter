@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -159,11 +160,11 @@ class EmergencyChat extends _$EmergencyChat {
     );
     final senderName = matches.isNotEmpty
         ? matches.first.name
-        : 'Nuevo mensaje';
+        : 'chat_newMessage'.tr();
     final body = switch (msg.type) {
-      'sos' => '🚨 Alerta SOS',
-      'location' => '📍 Compartió su ubicación',
-      'media' => '🎥 Envió una grabación',
+      'sos' => 'chat_sosAlertShort'.tr(),
+      'location' => 'chat_locationShared'.tr(),
+      'media' => 'chat_mediaShared'.tr(),
       _ => msg.text,
     };
     SosAlarm.notifyMessage(

@@ -390,9 +390,9 @@ class _ChatFontSizeTile extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Tamaño de letra en Apoyo',
-                style: TextStyle(color: Colors.grey),
+              Text(
+                'settings_chatFontSize'.tr(),
+                style: const TextStyle(color: Colors.grey),
               ),
               Text(
                 '${fontSize.toInt()}pt',

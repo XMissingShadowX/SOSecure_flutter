@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/repositories/chat_repository.dart';
@@ -5,23 +6,19 @@ import '../domain/models/chat_message.dart';
 
 part 'medic_chat_provider.g.dart';
 
-const _welcome =
-    'Hola, soy tu acompañante de bienestar. Puedes contarme cómo te sientes '
-    'o pedirme técnicas para manejar ansiedad, estrés o una crisis emocional. '
-    'Si estás en peligro físico inmediato, usa el botón SOS de la app.';
+String get _welcome => 'medic_welcome'.tr();
 
 // Respuestas enlatadas de getOfflineResponse() en medic-tab.tsx — se usan cuando
 // /api/chat falla (sin conexión, error del servidor), para no dejar al usuario
-// sin ninguna respuesta en un momento de crisis.
-const _offlineResponses = {
-  'ansiedad':
-      '**Técnica 5-4-3-2-1 para ansiedad:**\nNombra en voz alta:\n• 5 cosas que puedes VER\n• 4 cosas que puedes TOCAR\n• 3 cosas que puedes OÍR\n• 2 cosas que puedes OLER\n• 1 cosa que puedes SABOREAR\n\nEsto ancla tu mente al presente. 💙',
-  'respiracion':
-      '**Respiración cuadrada (Box Breathing):**\n1. Inhala contando 4 segundos\n2. Retén el aire 4 segundos\n3. Exhala contando 4 segundos\n4. Pausa 4 segundos\n\nRepite 4-6 veces. Usado por fuerzas de élite para calmarse. 🌬️',
-  'crisis':
-      '**Si estás en crisis emocional:**\n\n🆘 Líneas de apoyo México:\n• SAPTEL: 55 5259-8121 (24h)\n• CONASAMA: 800 290-0024\n• Cruz Roja: 065\n\nNo estás solo/a. Hay personas que quieren ayudarte. 💙',
-  'estres':
-      '**Técnicas rápidas anti-estrés:**\n• Mueve los hombros en círculos\n• Agua fría en muñecas\n• Cuenta hacia atrás desde 10\n• Haz una lista de 3 cosas por las que estás agradecido/a\n• Estira el cuello suavemente',
+// sin ninguna respuesta en un momento de crisis. Las palabras clave de
+// detección se quedan en español (coinciden con lo que el usuario escribe,
+// que hoy siempre es español/lo que sea que escriba) — solo el contenido
+// mostrado se traduce.
+Map<String, String> get _offlineResponses => {
+  'ansiedad': 'medic_tip5432'.tr(),
+  'respiracion': 'medic_tipBoxBreathing'.tr(),
+  'crisis': 'medic_tipCrisisLines'.tr(),
+  'estres': 'medic_tipAntiStress'.tr(),
 };
 
 String? _offlineResponse(String prompt) {
@@ -107,9 +104,7 @@ class MedicChat extends _$MedicChat {
     try {
       content = await _repo.sendMessage(history);
     } catch (_) {
-      content =
-          _offlineResponse(trimmed) ??
-          '💙 Sin conexión. Si necesitas ayuda:\n• **SAPTEL:** 55 5259-8121';
+      content = _offlineResponse(trimmed) ?? 'medic_offlineHelp'.tr();
     }
 
     state = state.copyWith(

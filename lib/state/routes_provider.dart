@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -52,13 +53,13 @@ class RoutesState {
     );
   }
 
-  static const _names = {
-    'safest': 'Ruta más segura',
-    'fastest': 'Ruta más rápida',
-    'alternate': 'Ruta alternativa',
+  static Map<String, String> get _names => {
+    'safest': 'routes_safest'.tr(),
+    'fastest': 'routes_fastest'.tr(),
+    'alternate': 'routes_alternate'.tr(),
   };
   static String nameFor(String id, int index) =>
-      _names[id] ?? 'Ruta ${index + 1}';
+      _names[id] ?? 'routes_routeN'.tr(namedArgs: {'n': '${index + 1}'});
 }
 
 // Puerto de la orquestación de routes-tab.tsx (handleSearch/resetRoute +
