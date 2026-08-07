@@ -68,7 +68,7 @@ class HomeTabScreen extends ConsumerWidget {
           _StatusBanner(location: location),
           const SizedBox(height: 16),
           if (!simpleMode) ...[
-            const _SafetyTipsCard(),
+            _SafetyTipsCard(),
             const SizedBox(height: 16),
           ],
           _LocationCard(location: location, simpleMode: simpleMode),

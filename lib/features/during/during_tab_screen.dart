@@ -35,15 +35,20 @@ class DuringTabScreen extends ConsumerWidget {
       // Bottom extra para que la última tarjeta no quede tapada por el botón
       // flotante SOS — mismo ajuste que en before_tab_screen.dart.
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-      children: const [
+      // Sin `const` en la lista: `children: const [...]` propaga const a
+      // cada elemento, canonicalizándolos — Flutter entonces salta su
+      // reconstrucción por completo en rebuilds posteriores (los trata como
+      // "sin cambios" por identidad de objeto), congelando el texto .tr()
+      // de cada card en el idioma con el que se montaron la primera vez.
+      children: [
         _StatusCard(),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         _IncidentReportCard(),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         _AltActivationCard(),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         _RecordingCard(),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         _LocationHistoryCard(),
       ],
     );

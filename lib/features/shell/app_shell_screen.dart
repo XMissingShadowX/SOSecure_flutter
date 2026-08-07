@@ -37,7 +37,18 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
     'nav_support'.tr(),
   ];
 
-  static const _tabs = [
+  // Getter (no `final`/`static const`) para que cada build() de
+  // AppShellScreen construya instancias NUEVAS de las 5 pantallas. Un widget
+  // const (o una misma instancia reutilizada vía `final`) es tratado por
+  // Flutter como "sin cambios" en `updateChild` (compara por identidad de
+  // objeto) y salta por completo su reconstrucción — con la lista
+  // cacheada en un `final`/`static const` aquí, TODO el contenido de las 5
+  // pestañas (no solo el título del AppBar, que sí usa un getter fresco en
+  // _titles) quedaba congelado en el idioma con el que se montó la app la
+  // primera vez, sin reaccionar a cambios de idioma posteriores — esto era
+  // la causa raíz de la mayoría de los textos reportados como
+  // "hardcodeados" en Home/Durante/Después/etc.
+  List<Widget> get _tabs => [
     HomeTabScreen(),
     BeforeTabScreen(),
     DuringTabScreen(),
@@ -122,7 +133,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
           // Fase 6a) — antes del SosButton en el Stack para que el panel de
           // alerta activa (pantalla completa) lo tape automáticamente durante
           // un SOS en curso, igual que en la web.
-          const EmergencyChatWidget(),
+          EmergencyChatWidget(),
           // Oculto en Apoyo (índice 4) o mientras el panel del chat de
           // contactos está abierto (su input queda en la misma esquina
           // inferior) — el panel de alerta activa igual se muestra si hay un

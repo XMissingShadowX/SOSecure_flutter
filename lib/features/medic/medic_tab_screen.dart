@@ -19,9 +19,8 @@ class MedicTabScreen extends ConsumerWidget {
 
     return premiumAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => const _UpgradeBanner(),
-      data: (isPremium) =>
-          isPremium ? const _ChatBody() : const _UpgradeBanner(),
+      error: (_, _) => _UpgradeBanner(),
+      data: (isPremium) => isPremium ? _ChatBody() : _UpgradeBanner(),
     );
   }
 }

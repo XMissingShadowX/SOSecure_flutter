@@ -65,27 +65,35 @@ class _BeforeTabScreenState extends ConsumerState<BeforeTabScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: [
-        const _BeforeStatusCard(),
+        // Nota general para esta lista: NINGUNA de las cards de abajo puede
+        // ser `const` — cada una muestra texto vía .tr(), y un hijo const es
+        // canonicalizado por Flutter (misma identidad de objeto entre
+        // builds), lo que hace que Flutter salte por completo su
+        // reconstrucción vía el fast-path de `updateChild` aunque este
+        // ListView se reconstruya. Con `const` aquí, el contenido de estas
+        // cards quedaba congelado en el idioma con el que se montó la
+        // primera vez.
+        _BeforeStatusCard(),
         const SizedBox(height: 16),
         _CollapsibleSection(
           icon: Icons.navigation_outlined,
           title: 'before_safeRoute'.tr(),
-          child: const RoutesTabScreen(),
+          child: RoutesTabScreen(),
         ),
         const SizedBox(height: 16),
         _CollapsibleSection(
           icon: Icons.map_outlined,
           title: 'before_mapIncidents'.tr(),
-          child: const MapTabScreen(),
+          child: MapTabScreen(),
         ),
         const SizedBox(height: 16),
-        const _SecurityTimerCard(),
+        _SecurityTimerCard(),
         const SizedBox(height: 16),
-        const _SafeZonesCard(),
+        _SafeZonesCard(),
         const SizedBox(height: 16),
-        const _LiveSharingCard(),
+        _LiveSharingCard(),
         const SizedBox(height: 16),
-        const _VoiceKeywordCard(),
+        _VoiceKeywordCard(),
       ],
     );
   }

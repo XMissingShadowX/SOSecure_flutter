@@ -30,15 +30,16 @@ class AfterTabScreen extends ConsumerWidget {
       // Bottom extra para que la última tarjeta no quede tapada por el botón
       // flotante SOS — mismo ajuste que en before_tab_screen.dart.
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-      children: const [
+      // Sin `const` en la lista — ver la misma nota en during_tab_screen.dart.
+      children: [
         _AfterStatusCard(),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         _ArrivedWellCard(),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         _AlertHistorySection(),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         _RecordingsSection(),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         _DangerZonesSection(),
       ],
     );
