@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../core/glass.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart' as ll;
@@ -376,7 +377,7 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
             ],
           ),
         ),
-        Card(
+        GlassCard(
           margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           child: Padding(
             padding: const EdgeInsets.all(8),
@@ -551,7 +552,7 @@ class _LegendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return GlassCard(
       color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
       child: Padding(
         padding: const EdgeInsets.all(10),

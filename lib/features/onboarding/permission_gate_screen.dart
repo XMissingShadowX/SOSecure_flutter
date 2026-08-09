@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../core/glass.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -205,7 +206,7 @@ class _PermissionTile extends StatelessWidget {
     // Color.alphaBlend contra la superficie real — un color translúcido
     // directo en `color:` de Card se compone mal con el tinte/sombra de
     // Material 3 y se ve oscuro en modo claro en vez de un tinte suave.
-    return Card(
+    return GlassCard(
       color: granted
           ? Color.alphaBlend(
               safe.withValues(alpha: 0.08),

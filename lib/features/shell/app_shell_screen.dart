@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/glass.dart';
 import '../../core/theme.dart';
 import '../../data/supabase_client.dart';
 import '../../state/auth_provider.dart';
@@ -91,182 +92,196 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
     ref.watch(volumeSosProvider);
 
     final theme = Theme.of(context);
-    return Scaffold(
-      // Puerto del <header> de app-shell.tsx: marca (escudo + "SOSecure") a la
-      // izquierda, badges de estado a su lado, y el menú de cuenta a la
-      // derecha. NO lleva el nombre de la pestaña activa — de eso ya se encarga
-      // la barra inferior, igual que en la web.
-      appBar: AppBar(
-        // h-14 (56px) + px-4 del header web.
-        toolbarHeight: 56,
-        titleSpacing: 16,
-        // glass-nav: sin sombra ni tinte al hacer scroll; solo el borde inferior.
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        shape: Border(bottom: BorderSide(color: theme.colorScheme.outline)),
-        title: Row(
-          children: [
-            Icon(
-              Icons.verified_user,
-              size: 24,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'SOSecure',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            // Los dos badges son excluyentes entre sí, igual que en la web: el
-            // de sincronización solo tiene sentido con conexión (si no hay red,
-            // la cola no se puede vaciar y lo relevante es "sin internet").
-            if (!_isOnline) ...[
-              const SizedBox(width: 8),
-              Flexible(
-                child: _HeaderBadge(
-                  icon: Icons.wifi_off,
-                  label: 'header_offline'.tr(),
-                  color: AppColors.warning,
-                ),
-              ),
-            ] else if (pendingCount > 0) ...[
-              const SizedBox(width: 8),
-              // Cuántos elementos (alertas SOS, en esta fase) están esperando
-              // reconexión para subirse.
-              Flexible(
-                child: _HeaderBadge(
-                  icon: Icons.notifications_active_outlined,
-                  label: 'header_sync'.tr(namedArgs: {'n': '$pendingCount'}),
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ],
-          ],
-        ),
-        actions: const [_AccountMenuButton(), SizedBox(width: 4)],
-      ),
-      body: Stack(
-        children: [
-          Column(
+    // Puerto de `<div className="min-h-screen bg-background ambient-bg">` en
+    // app-shell.tsx: las manchas radiales van detrás de TODO (header y nav
+    // incluidos), y esas dos superficies se vuelven translúcidas para dejarlas
+    // ver — igual que `.glass-nav` sobre `.ambient-bg` en la web.
+    return AmbientBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        // Puerto del <header> de app-shell.tsx: marca (escudo + "SOSecure") a la
+        // izquierda, badges de estado a su lado, y el menú de cuenta a la
+        // derecha. NO lleva el nombre de la pestaña activa — de eso ya se encarga
+        // la barra inferior, igual que en la web.
+        appBar: AppBar(
+          // h-14 (56px) + px-4 del header web.
+          toolbarHeight: 56,
+          titleSpacing: 16,
+          // glass-nav: sin sombra ni tinte al hacer scroll; solo el borde inferior.
+          backgroundColor: AppGlass.bgStrong(theme.brightness),
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          shape: Border(bottom: BorderSide(color: theme.colorScheme.outline)),
+          title: Row(
             children: [
-              // Puerto del banner amarillo de app-shell.tsx (simpleMode && ...).
-              if (simpleMode)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
+              Icon(
+                Icons.verified_user,
+                size: 24,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'SOSecure',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              // Los dos badges son excluyentes entre sí, igual que en la web: el
+              // de sincronización solo tiene sentido con conexión (si no hay red,
+              // la cola no se puede vaciar y lo relevante es "sin internet").
+              if (!_isOnline) ...[
+                const SizedBox(width: 8),
+                Flexible(
+                  child: _HeaderBadge(
+                    icon: Icons.wifi_off,
+                    label: 'header_offline'.tr(),
+                    color: AppColors.warning,
                   ),
-                  decoration: BoxDecoration(
-                    color: AppColors.warning.withValues(alpha: 0.2),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: AppColors.warning.withValues(alpha: 0.3),
-                      ),
+                ),
+              ] else if (pendingCount > 0) ...[
+                const SizedBox(width: 8),
+                // Cuántos elementos (alertas SOS, en esta fase) están esperando
+                // reconexión para subirse.
+                Flexible(
+                  child: _HeaderBadge(
+                    icon: Icons.notifications_active_outlined,
+                    label: 'header_sync'.tr(namedArgs: {'n': '$pendingCount'}),
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: const [_AccountMenuButton(), SizedBox(width: 4)],
+        ),
+        body: Stack(
+          children: [
+            Column(
+              children: [
+                // Puerto del banner amarillo de app-shell.tsx (simpleMode && ...).
+                if (simpleMode)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
                     ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.extension,
-                        size: 14,
-                        color: AppColors.warning,
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          'settings_simpleModeActive'.tr(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.warning,
-                          ),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withValues(alpha: 0.2),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppColors.warning.withValues(alpha: 0.3),
                         ),
                       ),
-                    ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.extension,
+                          size: 14,
+                          color: AppColors.warning,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'settings_simpleModeActive'.tr(),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.warning,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Expanded(
+                  // Puerto de className={cn('flex-1 overflow-y-auto', simpleMode && 'text-lg')}
+                  // — escala el texto base de todas las tabs ~12.5% (equivalente a
+                  // text-lg de Tailwind sobre el 1rem base) sin tocar cada widget.
+                  child: Theme(
+                    data: simpleMode
+                        ? theme.copyWith(
+                            textTheme: theme.textTheme.apply(
+                              fontSizeFactor: 1.125,
+                            ),
+                          )
+                        : theme,
+                    child: IndexedStack(index: _index, children: _tabs),
                   ),
                 ),
-              Expanded(
-                // Puerto de className={cn('flex-1 overflow-y-auto', simpleMode && 'text-lg')}
-                // — escala el texto base de todas las tabs ~12.5% (equivalente a
-                // text-lg de Tailwind sobre el 1rem base) sin tocar cada widget.
-                child: Theme(
-                  data: simpleMode
-                      ? theme.copyWith(
-                          textTheme: theme.textTheme.apply(
-                            fontSizeFactor: 1.125,
-                          ),
-                        )
-                      : theme,
-                  child: IndexedStack(index: _index, children: _tabs),
+              ],
+            ),
+            // Puerto de EmergencyChat (chat de contactos + IA de emergencia,
+            // Fase 6a) — antes del SosButton en el Stack para que el panel de
+            // alerta activa (pantalla completa) lo tape automáticamente durante
+            // un SOS en curso, igual que en la web.
+            EmergencyChatWidget(),
+            // Oculto en Apoyo (índice 4) o mientras el panel del chat de
+            // contactos está abierto (su input queda en la misma esquina
+            // inferior) — el panel de alerta activa igual se muestra si hay un
+            // SOS en curso (ver SosButton.hideIdleButton).
+            SosButton(
+              hideIdleButton:
+                  _index == 4 || ref.watch(emergencyChatOpenProvider),
+            ),
+          ],
+        ),
+        bottomNavigationBar: Theme(
+          // Puerto de bottom-navigation.tsx: barra e íconos más grandes en modo
+          // simple (h-20 vs h-16, íconos w-7 h-7 vs w-5 h-5, label text-xs vs
+          // text-[10px]) — NavigationBarThemeData es la única forma de tocar
+          // tamaño de ícono/label sin reconstruir NavigationDestination a mano.
+          data: theme.copyWith(
+            navigationBarTheme: theme.navigationBarTheme.copyWith(
+              height: simpleMode ? 80 : 64,
+              iconTheme: WidgetStateProperty.resolveWith(
+                (states) => IconThemeData(size: simpleMode ? 28 : 24),
+              ),
+              labelTextStyle: WidgetStateProperty.resolveWith(
+                (states) => TextStyle(
+                  fontSize: simpleMode ? 13 : 11,
+                  fontWeight: FontWeight.w600,
                 ),
+              ),
+            ),
+          ),
+          child: NavigationBar(
+            // glass-strong en bottom-navigation.tsx.
+            backgroundColor: AppGlass.bgStrong(theme.brightness),
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            selectedIndex: _index,
+            onDestinationSelected: (i) => setState(() => _index = i),
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.home_outlined),
+                selectedIcon: const Icon(Icons.home),
+                label: 'nav_home'.tr(),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.route_outlined),
+                selectedIcon: const Icon(Icons.route),
+                label: 'nav_before'.tr(),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.videocam_outlined),
+                selectedIcon: const Icon(Icons.videocam),
+                label: 'nav_during'.tr(),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.history_outlined),
+                selectedIcon: const Icon(Icons.history),
+                label: 'nav_after'.tr(),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.favorite_outline),
+                selectedIcon: const Icon(Icons.favorite),
+                label: 'nav_support'.tr(),
               ),
             ],
           ),
-          // Puerto de EmergencyChat (chat de contactos + IA de emergencia,
-          // Fase 6a) — antes del SosButton en el Stack para que el panel de
-          // alerta activa (pantalla completa) lo tape automáticamente durante
-          // un SOS en curso, igual que en la web.
-          EmergencyChatWidget(),
-          // Oculto en Apoyo (índice 4) o mientras el panel del chat de
-          // contactos está abierto (su input queda en la misma esquina
-          // inferior) — el panel de alerta activa igual se muestra si hay un
-          // SOS en curso (ver SosButton.hideIdleButton).
-          SosButton(
-            hideIdleButton: _index == 4 || ref.watch(emergencyChatOpenProvider),
-          ),
-        ],
-      ),
-      bottomNavigationBar: Theme(
-        // Puerto de bottom-navigation.tsx: barra e íconos más grandes en modo
-        // simple (h-20 vs h-16, íconos w-7 h-7 vs w-5 h-5, label text-xs vs
-        // text-[10px]) — NavigationBarThemeData es la única forma de tocar
-        // tamaño de ícono/label sin reconstruir NavigationDestination a mano.
-        data: theme.copyWith(
-          navigationBarTheme: theme.navigationBarTheme.copyWith(
-            height: simpleMode ? 80 : 64,
-            iconTheme: WidgetStateProperty.resolveWith(
-              (states) => IconThemeData(size: simpleMode ? 28 : 24),
-            ),
-            labelTextStyle: WidgetStateProperty.resolveWith(
-              (states) => TextStyle(
-                fontSize: simpleMode ? 13 : 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-        child: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: (i) => setState(() => _index = i),
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.home_outlined),
-              selectedIcon: const Icon(Icons.home),
-              label: 'nav_home'.tr(),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.route_outlined),
-              selectedIcon: const Icon(Icons.route),
-              label: 'nav_before'.tr(),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.videocam_outlined),
-              selectedIcon: const Icon(Icons.videocam),
-              label: 'nav_during'.tr(),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.history_outlined),
-              selectedIcon: const Icon(Icons.history),
-              label: 'nav_after'.tr(),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.favorite_outline),
-              selectedIcon: const Icon(Icons.favorite),
-              label: 'nav_support'.tr(),
-            ),
-          ],
         ),
       ),
     );

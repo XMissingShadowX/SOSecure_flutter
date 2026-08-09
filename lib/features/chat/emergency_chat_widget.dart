@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../core/glass.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -191,7 +192,13 @@ class _EmergencyChatWidgetState extends ConsumerState<EmergencyChatWidget> {
       bottom: 80,
       child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.7,
-        child: Card(
+        child: GlassCard(
+          // El panel del chat es la única superficie grande que en la web NO es
+          // glass: emergency-chat.tsx usa `bg-card` opaco, no <Card>. Tiene
+          // sentido — es una conversación larga que se lee sobre el mapa y el
+          // resto del contenido, y translúcida se vuelve ilegible.
+          color: Theme.of(context).colorScheme.surface,
+          strong: true,
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
@@ -498,13 +505,19 @@ class _QuickActions extends ConsumerWidget {
         children: [
           ActionChip(
             avatar: const Icon(Icons.location_on_outlined, size: 14),
-            label: Text('chat_shareLocation'.tr(), style: const TextStyle(fontSize: 11)),
+            label: Text(
+              'chat_shareLocation'.tr(),
+              style: const TextStyle(fontSize: 11),
+            ),
             onPressed: onShareLocation,
           ),
           if (activeId != aiContactId && contact?.phone != null)
             ActionChip(
               avatar: const Icon(Icons.call_outlined, size: 14),
-              label: Text('chat_call'.tr(), style: const TextStyle(fontSize: 11)),
+              label: Text(
+                'chat_call'.tr(),
+                style: const TextStyle(fontSize: 11),
+              ),
               onPressed: () => launchUrl(Uri.parse('tel:${contact!.phone}')),
             ),
           if (activeId != aiContactId && !hasAccount && contact?.phone != null)

@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../core/glass.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart' as ll;
@@ -162,7 +163,7 @@ class _BeforeStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
-    return Card(
+    return GlassCard(
       color: Color.alphaBlend(
         primary.withValues(alpha: 0.05),
         Theme.of(context).colorScheme.surface,
@@ -222,7 +223,7 @@ class _SecurityTimerCardState extends ConsumerState<_SecurityTimerCard> {
     final timer = ref.watch(securityTimerProvider);
     final destructive = Theme.of(context).colorScheme.error;
 
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -363,7 +364,7 @@ class _LiveSharingCard extends ConsumerWidget {
     final location = ref.watch(locationWatcherProvider);
     final primary = Theme.of(context).colorScheme.primary;
 
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -564,7 +565,7 @@ class _SafeZonesCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final location = ref.watch(locationWatcherProvider);
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -624,7 +625,7 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
     final voice = ref.watch(voiceSosProvider);
     final primary = Theme.of(context).colorScheme.primary;
 
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

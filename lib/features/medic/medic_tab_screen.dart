@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../core/glass.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/chat_message.dart';
@@ -127,7 +128,7 @@ class _ChatBodyState extends ConsumerState<_ChatBody> {
 
     return Column(
       children: [
-        Card(
+        GlassCard(
           margin: const EdgeInsets.fromLTRB(12, 12, 12, 8),
           color: Color.alphaBlend(
             primary.withValues(alpha: 0.05),
