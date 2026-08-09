@@ -1,4 +1,4 @@
-﻿{
+{
   "yes": "Yes",
   "no": "No",
   "cancel": "Cancel",
@@ -112,6 +112,9 @@
   "sos_locationLabel": "Location",
   "sos_stopRecordingDesc": "Recording will stop and the alert will be deleted.",
   "sos_recordingUnavailable": "Recording unavailable",
+  "voice_errorUnavailable": "Voice recognition is not available on this device.",
+  "voice_errorNetwork": "No connection: voice recognition needs internet.",
+  "voice_errorGeneric": "Could not listen. It will retry automatically.",
   "sos_locationPending": "Looking for your location… The alarm and recording are already running. The alert will be sent to your contacts automatically as soon as your location is available. If this is urgent, call emergency services.",
   "pin_title": "SOSecure",
   "pin_enter": "Enter your security PIN",

@@ -696,29 +696,37 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
     String current,
   ) async {
     final controller = TextEditingController(text: current);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('before_voiceKeyword'.tr()),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: 'before_voiceKeywordPlaceholder'.tr(),
+    final String? result;
+    try {
+      result = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('before_voiceKeyword'.tr()),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'before_voiceKeywordPlaceholder'.tr(),
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('cancel'.tr()),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, controller.text),
+              child: Text('save'.tr()),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('cancel'.tr()),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: Text('save'.tr()),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      // El controller se crea en cada apertura del diálogo; sin esto queda
+      // colgando una instancia por cada vez que se cambia la palabra clave.
+      controller.dispose();
+    }
+
     if (result != null && result.trim().isNotEmpty) {
       await ref
           .read(voiceSosProvider.notifier)
