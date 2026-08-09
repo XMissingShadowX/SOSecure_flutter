@@ -1,8 +1,14 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme.dart';
+import '../../data/supabase_client.dart';
+import '../../state/auth_provider.dart';
 import '../../state/emergency_chat_provider.dart';
 import '../../state/offline_queue_provider.dart';
 import '../../state/settings_provider.dart';
@@ -29,13 +35,33 @@ class AppShellScreen extends ConsumerStatefulWidget {
 class _AppShellScreenState extends ConsumerState<AppShellScreen> {
   int _index = 0;
 
-  List<String> get _titles => [
-    'nav_home'.tr(),
-    'nav_before'.tr(),
-    'nav_during'.tr(),
-    'nav_after'.tr(),
-    'nav_support'.tr(),
-  ];
+  // Espeja el `isOnline` de app-shell.tsx (useState + listeners window
+  // online/offline). Vive como estado local del shell —igual que en la web—
+  // en vez de como provider: solo el badge del header lo consume. La cola
+  // offline tiene su propia suscripción porque necesita seguir viva aunque
+  // el shell no esté montado (ver offline_queue_provider.dart).
+  bool _isOnline = true;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+
+  @override
+  void initState() {
+    super.initState();
+    Connectivity().checkConnectivity().then(_updateOnline);
+    _connectivitySub = Connectivity().onConnectivityChanged.listen(
+      _updateOnline,
+    );
+  }
+
+  @override
+  void dispose() {
+    _connectivitySub?.cancel();
+    super.dispose();
+  }
+
+  void _updateOnline(List<ConnectivityResult> results) {
+    final online = !results.contains(ConnectivityResult.none);
+    if (mounted && online != _isOnline) setState(() => _isOnline = online);
+  }
 
   // Getter (no `final`/`static const`) para que cada build() de
   // AppShellScreen construya instancias NUEVAS de las 5 pantallas. Un widget
@@ -43,8 +69,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
   // Flutter como "sin cambios" en `updateChild` (compara por identidad de
   // objeto) y salta por completo su reconstrucción — con la lista
   // cacheada en un `final`/`static const` aquí, TODO el contenido de las 5
-  // pestañas (no solo el título del AppBar, que sí usa un getter fresco en
-  // _titles) quedaba congelado en el idioma con el que se montó la app la
+  // pestañas quedaba congelado en el idioma con el que se montó la app la
   // primera vez, sin reaccionar a cambios de idioma posteriores — esto era
   // la causa raíz de la mayoría de los textos reportados como
   // "hardcodeados" en Home/Durante/Después/etc.
@@ -67,30 +92,57 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
 
     final theme = Theme.of(context);
     return Scaffold(
+      // Puerto del <header> de app-shell.tsx: marca (escudo + "SOSecure") a la
+      // izquierda, badges de estado a su lado, y el menú de cuenta a la
+      // derecha. NO lleva el nombre de la pestaña activa — de eso ya se encarga
+      // la barra inferior, igual que en la web.
       appBar: AppBar(
-        title: Text(_titles[_index]),
-        actions: [
-          // Espeja el badge de header_sync en app-shell.tsx — cuántos elementos
-          // (alertas SOS, en esta fase) están esperando reconexión para subirse.
-          if (pendingCount > 0)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Center(
-                child: Chip(
-                  avatar: const Icon(Icons.cloud_off, size: 16),
-                  label: Text(
-                    '$pendingCount pendiente${pendingCount > 1 ? 's' : ''}',
-                  ),
-                  visualDensity: VisualDensity.compact,
+        // h-14 (56px) + px-4 del header web.
+        toolbarHeight: 56,
+        titleSpacing: 16,
+        // glass-nav: sin sombra ni tinte al hacer scroll; solo el borde inferior.
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        shape: Border(bottom: BorderSide(color: theme.colorScheme.outline)),
+        title: Row(
+          children: [
+            Icon(
+              Icons.verified_user,
+              size: 24,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'SOSecure',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            // Los dos badges son excluyentes entre sí, igual que en la web: el
+            // de sincronización solo tiene sentido con conexión (si no hay red,
+            // la cola no se puede vaciar y lo relevante es "sin internet").
+            if (!_isOnline) ...[
+              const SizedBox(width: 8),
+              Flexible(
+                child: _HeaderBadge(
+                  icon: Icons.wifi_off,
+                  label: 'header_offline'.tr(),
+                  color: AppColors.warning,
                 ),
               ),
-            ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'settings_title'.tr(),
-            onPressed: () => context.push('/settings'),
-          ),
-        ],
+            ] else if (pendingCount > 0) ...[
+              const SizedBox(width: 8),
+              // Cuántos elementos (alertas SOS, en esta fase) están esperando
+              // reconexión para subirse.
+              Flexible(
+                child: _HeaderBadge(
+                  icon: Icons.notifications_active_outlined,
+                  label: 'header_sync'.tr(namedArgs: {'n': '$pendingCount'}),
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: const [_AccountMenuButton(), SizedBox(width: 4)],
       ),
       body: Stack(
         children: [
@@ -100,16 +152,39 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
               if (simpleMode)
                 Container(
                   width: double.infinity,
-                  color: Colors.amber.withValues(alpha: 0.2),
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Text(
-                    'settings_simpleModeActive'.tr(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.amber,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.2),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: AppColors.warning.withValues(alpha: 0.3),
+                      ),
                     ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.extension,
+                        size: 14,
+                        color: AppColors.warning,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          'settings_simpleModeActive'.tr(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.warning,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               Expanded(
@@ -194,6 +269,117 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// Pastilla de estado del header (sin internet / pendientes por sincronizar).
+// Puerto de los dos <div> con bg-{color}/20 rounded-full de app-shell.tsx: el
+// color lo define quien la usa y tiñe fondo, ícono y texto por igual.
+class _HeaderBadge extends StatelessWidget {
+  const _HeaderBadge({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          // Flexible + ellipsis: en pantallas angostas el badge cede antes que
+          // desbordar el AppBar (la marca "SOSecure" nunca se recorta).
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Puerto del DropdownMenu de UserCircle en app-shell.tsx: correo del usuario
+// (solo informativo), Ajustes y Cerrar sesión. Sustituye al botón directo de
+// Ajustes que tenía este header — cerrar sesión pasa de estar enterrado al
+// final de la pantalla de Ajustes a quedar a dos toques, como en la web.
+class _AccountMenuButton extends ConsumerWidget {
+  const _AccountMenuButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final email = ref.watch(currentUserProvider)?.email;
+
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.account_circle_outlined),
+      position: PopupMenuPosition.under,
+      onSelected: (value) async {
+        if (value == 'settings') {
+          context.push('/settings');
+        } else if (value == 'signout') {
+          await supabase.auth.signOut();
+          if (context.mounted) context.go('/login');
+        }
+      },
+      itemBuilder: (context) => [
+        if (email != null) ...[
+          PopupMenuItem<String>(
+            enabled: false,
+            height: 36,
+            child: Text(
+              email,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          const PopupMenuDivider(),
+        ],
+        PopupMenuItem<String>(
+          value: 'settings',
+          child: Row(
+            children: [
+              const Icon(Icons.settings_outlined, size: 18),
+              const SizedBox(width: 12),
+              Text('header_settings'.tr()),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: 'signout',
+          child: Row(
+            children: [
+              const Icon(Icons.logout, size: 18),
+              const SizedBox(width: 12),
+              Text('header_signout'.tr()),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
