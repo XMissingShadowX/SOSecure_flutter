@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../core/glass.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
@@ -67,7 +68,7 @@ class _StatusCard extends ConsumerWidget {
     // Ver nota de Color.alphaBlend en after_tab_screen.dart (_ArrivedWellCard)
     // — mismo fix para el mismo glitch de Card + color translúcido en M3.
     final surface = Theme.of(context).colorScheme.surface;
-    return Card(
+    return GlassCard(
       color: sos.active
           ? Color.alphaBlend(destructive.withValues(alpha: 0.08), surface)
           : Color.alphaBlend(primary.withValues(alpha: 0.05), surface),
@@ -213,7 +214,7 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
     final location = ref.watch(locationWatcherProvider);
     final questions = incidentQuestions[_type] ?? [];
 
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -400,7 +401,7 @@ class _AltActivationCardState extends ConsumerState<_AltActivationCard> {
     final sos = ref.watch(sosProvider);
     final warning = Theme.of(context).colorScheme.tertiary;
 
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -659,7 +660,7 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
     final destructive = Theme.of(context).colorScheme.error;
     final primary = Theme.of(context).colorScheme.primary;
 
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -841,7 +842,7 @@ class _LocationHistoryCardState extends ConsumerState<_LocationHistoryCard> {
     }
     final reversed = last5.reversed.toList();
 
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

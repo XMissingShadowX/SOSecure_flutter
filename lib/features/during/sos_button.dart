@@ -14,6 +14,12 @@ import '../../state/settings_provider.dart';
 import '../../state/sos_provider.dart';
 
 const _holdDuration = Duration(milliseconds: 1000);
+
+// Cuánto permanece visible la etiqueta "Mantén presionado para SOS" antes de
+// deslizarse hacia abajo. Es una pista de descubrimiento: hace falta las
+// primeras veces, pero estorba de forma permanente una vez aprendido el gesto.
+const _labelVisibleDuration = Duration(seconds: 10);
+const _labelExitDuration = Duration(milliseconds: 320);
 const _secretTapCount = 5;
 const _secretTapWindow = Duration(milliseconds: 3000);
 
@@ -39,9 +45,42 @@ class _SosButtonState extends ConsumerState<SosButton> {
   Timer? _progressTimer;
   final List<DateTime> _tapTimes = [];
 
+  bool _labelVisible = true;
+  Timer? _labelTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startLabelTimer();
+  }
+
+  /// Muestra la etiqueta y programa su salida a los 10 s. Se rearma cada vez que
+  /// la etiqueta vuelve a ser relevante (al soltar el botón, o al reaparecer el
+  /// botón tras cancelar un SOS o cerrar el chat), no solo al montar el widget.
+  void _startLabelTimer() {
+    _labelTimer?.cancel();
+    if (mounted && !_labelVisible) setState(() => _labelVisible = true);
+    _labelTimer = Timer(_labelVisibleDuration, () {
+      if (mounted) setState(() => _labelVisible = false);
+    });
+  }
+
+  @override
+  void didUpdateWidget(SosButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // El botón estaba oculto (chat abierto o tab de Apoyo) y vuelve a aparecer:
+    // la pista se muestra otra vez desde cero.
+    if (oldWidget.hideIdleButton && !widget.hideIdleButton) _startLabelTimer();
+  }
+
   void _startHold() {
     if (ref.read(sosProvider).active) return;
+    // Mientras se mantiene presionado la etiqueta cambia a "Mantén
+    // presionando…" y es la única señal de progreso textual, así que se
+    // reasoma aunque ya se hubiera ocultado.
+    _labelTimer?.cancel();
     setState(() {
+      _labelVisible = true;
       _holding = true;
       _holdProgress = 0;
     });
@@ -70,6 +109,7 @@ class _SosButtonState extends ConsumerState<SosButton> {
       _holding = false;
       _holdProgress = 0;
     });
+    _startLabelTimer();
   }
 
   void _onSecretTap() {
@@ -85,12 +125,18 @@ class _SosButtonState extends ConsumerState<SosButton> {
   @override
   void dispose() {
     _progressTimer?.cancel();
+    _labelTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final sos = ref.watch(sosProvider);
+    // Al cancelar un SOS el botón inactivo vuelve a montarse: se reinicia la
+    // cuenta para que la pista acompañe otra vez y luego se retire.
+    ref.listen(sosProvider, (prev, next) {
+      if ((prev?.active ?? false) && !next.active) _startLabelTimer();
+    });
     final destructive = Theme.of(context).colorScheme.error;
     final simpleMode = ref.watch(simpleModeProvider);
 
@@ -192,32 +238,64 @@ class _SosButtonState extends ConsumerState<SosButton> {
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
-              // Solo la etiqueta de texto lleva el desenfoque de fondo — el botón
-              // en sí queda tal cual, sin blur (ajuste pedido tras ver el diseño).
-              ClipRRect(
-                borderRadius: BorderRadius.circular(999),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: destructive.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      _holding
-                          ? 'sos_holdingLabel'.tr()
-                          : 'sos_holdToActivateShort'.tr(),
-                      style: TextStyle(
-                        fontSize: simpleMode ? 14 : 12,
-                        fontWeight: FontWeight.w500,
-                        color: destructive,
-                      ),
-                    ),
+              // Pasados 10 s la pista se desliza hacia abajo y se desvanece, y
+              // al mismo tiempo deja de ocupar alto — como la Column está
+              // anclada al borde inferior (Positioned(bottom:)), esa altura que
+              // se libera hace que el botón SOS baje acompañando a la etiqueta.
+              //
+              // Un AnimatedSlide/AnimatedOpacity a secas no bastaba: mueven y
+              // desvanecen el pintado pero conservan el espacio en el layout, y
+              // el botón se quedaba clavado. El heightFactor animado del Align
+              // es lo que colapsa el hueco; el Transform.translate es el
+              // deslizamiento visual, y no se recorta (sin ClipRect) para que la
+              // etiqueta se siga viendo salir por encima de la barra inferior.
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 1, end: _labelVisible ? 1.0 : 0.0),
+                duration: _labelExitDuration,
+                curve: Curves.easeInCubic,
+                builder: (context, t, child) => Align(
+                  alignment: Alignment.topCenter,
+                  heightFactor: t,
+                  child: Transform.translate(
+                    offset: Offset(0, (1 - t) * 28),
+                    child: Opacity(opacity: t, child: child),
+                  ),
+                ),
+                // IgnorePointer evita que la etiqueta capture toques mientras
+                // sale o ya invisible — queda sobre la barra de navegación.
+                child: IgnorePointer(
+                  ignoring: !_labelVisible,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child:
+                        // Solo la etiqueta de texto lleva el desenfoque de fondo — el botón
+                        // en sí queda tal cual, sin blur (ajuste pedido tras ver el diseño).
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: destructive.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                _holding
+                                    ? 'sos_holdingLabel'.tr()
+                                    : 'sos_holdToActivateShort'.tr(),
+                                style: TextStyle(
+                                  fontSize: simpleMode ? 14 : 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: destructive,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                   ),
                 ),
               ),

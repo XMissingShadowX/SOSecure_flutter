@@ -59,6 +59,16 @@ class AppTheme {
       // por defecto que apagaba nuestros colores custom (ej. el verde de "safe" se veía
       // gris verdoso). Se desactiva para que los colores del tema web se vean tal cual.
       cardTheme: const CardThemeData(surfaceTintColor: Colors.transparent),
+      // Los diálogos de la web (components/ui/dialog.tsx y alert-dialog.tsx)
+      // usan `.glass-strong` con el mismo radio de 16px que las Card. Flutter
+      // no permite un gradiente aquí, así que se replica lo que sí se puede:
+      // radio, sin tinte tonal de M3 y la superficie opaca del tema.
+      dialogTheme: const DialogThemeData(
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        ),
+      ),
     );
   }
 
@@ -84,6 +94,16 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.darkBackground,
       cardTheme: const CardThemeData(surfaceTintColor: Colors.transparent),
+      // Los diálogos de la web (components/ui/dialog.tsx y alert-dialog.tsx)
+      // usan `.glass-strong` con el mismo radio de 16px que las Card. Flutter
+      // no permite un gradiente aquí, así que se replica lo que sí se puede:
+      // radio, sin tinte tonal de M3 y la superficie opaca del tema.
+      dialogTheme: const DialogThemeData(
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        ),
+      ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../core/glass.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gal/gal.dart';
 import 'package:http/http.dart' as http;
@@ -78,7 +79,7 @@ class _DangerZonesSectionState extends ConsumerState<_DangerZonesSection> {
     if (zones.isEmpty) return const SizedBox.shrink();
 
     final warning = Theme.of(context).colorScheme.tertiary;
-    return Card(
+    return GlassCard(
       color: Color.alphaBlend(
         warning.withValues(alpha: 0.08),
         Theme.of(context).colorScheme.surface,
@@ -162,7 +163,7 @@ class _AfterStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final safe = Theme.of(context).colorScheme.tertiary;
-    return Card(
+    return GlassCard(
       color: Color.alphaBlend(
         safe.withValues(alpha: 0.06),
         Theme.of(context).colorScheme.surface,
@@ -249,7 +250,7 @@ class _ArrivedWellCardState extends ConsumerState<_ArrivedWellCard> {
     final contacts = ref.watch(contactsProvider).valueOrNull ?? [];
     final safe = Theme.of(context).colorScheme.tertiary;
 
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -337,7 +338,7 @@ class _AlertHistorySection extends ConsumerWidget {
     final days = ref.watch(alertHistoryDaysProvider);
     final history = ref.watch(alertHistoryProvider);
 
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -619,7 +620,7 @@ class _RecordingsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final recordings = ref.watch(recordingsProvider);
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
