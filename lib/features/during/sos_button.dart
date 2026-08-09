@@ -567,6 +567,23 @@ class _SosActivePanel extends ConsumerWidget {
                             ],
                           ),
                         ),
+                      // Sin coordenadas la alerta no se pudo registrar (lat/long
+                      // son NOT NULL). Se avisa explícitamente para que nadie
+                      // asuma que sus contactos ya fueron notificados.
+                      if (sos.locationError != null)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: destructive.withValues(alpha: 0.15),
+                            border: Border.all(color: destructive),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            sos.locationError!,
+                            style: TextStyle(fontSize: 13, color: destructive),
+                          ),
+                        ),
                       const SizedBox(height: 12),
                       if (sos.contactsNotified.isNotEmpty)
                         Wrap(

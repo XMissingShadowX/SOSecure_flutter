@@ -112,6 +112,7 @@
   "sos_locationLabel": "Ubicación",
   "sos_stopRecordingDesc": "Se detendrá la grabación y se eliminará la alerta.",
   "sos_recordingUnavailable": "Grabación no disponible",
+  "sos_locationUnavailable": "No se pudo obtener tu ubicación, así que la alerta NO se envió a tus contactos. La grabación sigue activa. Muévete a un lugar con señal GPS o llama directamente al 911.",
   "pin_title": "SOSecure",
   "pin_enter": "Xiquitta mo-PIN tlapixcatl",
   "pin_forgot": "¿Oticcauh mo-PIN?",

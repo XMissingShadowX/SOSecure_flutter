@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/repositories/alerts_repository.dart';
@@ -16,17 +17,24 @@ import 'recorder_controller.dart';
 
 part 'sos_provider.g.dart';
 
+// Cuánto se espera un fix de GPS antes de recurrir a la última posición
+// conocida. La alarma y la grabación ya arrancaron para entonces — esto solo
+// retrasa el registro de la alerta en Supabase, no el aviso a la usuaria.
+const _locationWaitTimeout = Duration(seconds: 8);
+
 class SosState {
   final bool active;
   final SosAlert? alert;
   final List<String> contactsNotified;
   final bool saving;
+  final String? locationError;
 
   const SosState({
     this.active = false,
     this.alert,
     this.contactsNotified = const [],
     this.saving = false,
+    this.locationError,
   });
 
   SosState copyWith({
@@ -34,12 +42,17 @@ class SosState {
     SosAlert? alert,
     List<String>? contactsNotified,
     bool? saving,
+    String? locationError,
+    bool clearLocationError = false,
   }) {
     return SosState(
       active: active ?? this.active,
       alert: alert ?? this.alert,
       contactsNotified: contactsNotified ?? this.contactsNotified,
       saving: saving ?? this.saving,
+      locationError: clearLocationError
+          ? null
+          : (locationError ?? this.locationError),
     );
   }
 }
@@ -62,13 +75,20 @@ class Sos extends _$Sos {
 
   Future<void> activate() async {
     if (state.active) return;
-    final location = ref.read(locationWatcherProvider);
-    if (!location.hasCoordinates) return;
 
     final contacts = ref.read(contactsProvider).valueOrNull ?? [];
     final names = contacts.map((c) => c.name).toList();
 
-    state = state.copyWith(active: true, contactsNotified: names);
+    // La alarma, el servicio y la grabación arrancan ANTES de resolver el GPS.
+    // Antes esto vivía detrás de un `if (!hasCoordinates) return`, así que sin
+    // fix de GPS el SOS se rendía en silencio absoluto — por voz era todavía
+    // peor: la persona decía la palabra clave y el teléfono no hacía nada, y
+    // ella creía que la alerta ya iba en camino.
+    state = state.copyWith(
+      active: true,
+      contactsNotified: names,
+      clearLocationError: true,
+    );
     unawaited(SosForegroundService.start());
     unawaited(
       SosAlarm.triggerUrgent(
@@ -80,10 +100,22 @@ class Sos extends _$Sos {
     // La grabación es evidencia suplementaria — si falla, la alerta procede igual.
     unawaited(ref.read(recorderProvider.notifier).start());
 
+    final coords = await _resolveCoordinates();
+    if (coords == null) {
+      // Se canceló mientras esperábamos el fix: no hay nada que reportar.
+      if (!state.active) return;
+      // latitude/longitude son NOT NULL en sos_alerts, sos_locations e
+      // incidents, así que sin coordenadas no hay alerta que registrar. La
+      // grabación local y la alarma siguen corriendo; lo que cambia es que
+      // ahora la usuaria se entera en vez de asumir que se envió.
+      state = state.copyWith(locationError: 'sos_locationUnavailable'.tr());
+      return;
+    }
+
     try {
       final alert = await _alertsRepo.createAlert(
-        latitude: location.latitude!,
-        longitude: location.longitude!,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
         contactNames: names,
       );
       state = state.copyWith(alert: alert);
@@ -111,14 +143,41 @@ class Sos extends _$Sos {
               table: 'sos_alerts',
               payload: {
                 'user_id': userId,
-                'latitude': location.latitude,
-                'longitude': location.longitude,
+                'latitude': coords.latitude,
+                'longitude': coords.longitude,
                 'status': 'active',
                 'contacts_notified': names,
               },
             );
       }
     }
+  }
+
+  // Resuelve coordenadas en tres escalones, de mejor a peor: fix actual del
+  // stream -> esperar hasta _locationWaitTimeout a que llegue uno -> última
+  // posición conocida del sistema. Devuelve null solo si no hay absolutamente
+  // ninguna ubicación disponible (GPS denegado y sin caché).
+  Future<({double latitude, double longitude})?> _resolveCoordinates() async {
+    final immediate = ref.read(locationWatcherProvider);
+    if (immediate.hasCoordinates) {
+      return (
+        latitude: immediate.latitude!,
+        longitude: immediate.longitude!,
+      );
+    }
+
+    final deadline = DateTime.now().add(_locationWaitTimeout);
+    while (DateTime.now().isBefore(deadline)) {
+      await Future.delayed(const Duration(milliseconds: 250));
+      // La usuaria canceló el SOS mientras esperábamos el fix.
+      if (!state.active) return null;
+      final loc = ref.read(locationWatcherProvider);
+      if (loc.hasCoordinates) {
+        return (latitude: loc.latitude!, longitude: loc.longitude!);
+      }
+    }
+
+    return ref.read(locationWatcherProvider.notifier).lastKnown();
   }
 
   // Falsa alarma: descarta grabación, borra alerta/incidente, limpia estado.

@@ -102,4 +102,19 @@ class LocationWatcher extends _$LocationWatcher {
       );
     }
   }
+
+  // Última posición conocida del sistema (cacheada por Android, normalmente de
+  // hace minutos). Es el último recurso de Sos.activate() cuando el stream aún
+  // no entregó un fix: imperfecta, pero mucho mejor que no poder mandar la
+  // alerta. Vive aquí porque este provider es el único punto de la app que
+  // habla con Geolocator directamente.
+  Future<({double latitude, double longitude})?> lastKnown() async {
+    try {
+      final position = await Geolocator.getLastKnownPosition();
+      if (position == null) return null;
+      return (latitude: position.latitude, longitude: position.longitude);
+    } catch (_) {
+      return null;
+    }
+  }
 }

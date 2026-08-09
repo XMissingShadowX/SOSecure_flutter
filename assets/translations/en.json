@@ -112,6 +112,7 @@
   "sos_locationLabel": "Location",
   "sos_stopRecordingDesc": "Recording will stop and the alert will be deleted.",
   "sos_recordingUnavailable": "Recording unavailable",
+  "sos_locationUnavailable": "Your location could not be determined, so the alert was NOT sent to your contacts. Recording is still running. Move somewhere with GPS signal or call emergency services directly.",
   "pin_title": "SOSecure",
   "pin_enter": "Enter your security PIN",
   "pin_forgot": "Forgot your PIN?",
