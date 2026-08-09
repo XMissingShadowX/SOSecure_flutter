@@ -211,9 +211,17 @@ class EmergencyChat extends _$EmergencyChat {
     // (invisible en la UI, ver el parseo en emergency_chat_widget.dart) es
     // lo que le permite al widget mostrar el botón "Ver transmisión" en vez
     // de que el usuario tenga que copiar la URL a mano.
+    // El sufijo `sosecure-live:{id}` se concatena fuera de la traducción a
+    // propósito: es un marcador que parsea la UI, no texto para leer. Si
+    // viviera dentro de la cadena traducible, un cambio de un traductor
+    // rompería el botón "Ver transmisión" sin que nadie lo note.
     final text = sosAlert != null
-        ? '🚨 ALERTA SOS — Estoy en peligro.\n📍 https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}\n🎥 Ver en vivo: ${Env.apiBaseUrl}/emergency/${sosAlert.id}\nsosecure-live:${sosAlert.id}'
-        : '🚨 ALERTA SOS — Estoy en peligro. No tengo ubicación disponible.';
+        ? '${'chat_sosAlertWithLocation'.tr(namedArgs: {
+            'mapUrl':
+                'https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}',
+            'liveUrl': '${Env.apiBaseUrl}/emergency/${sosAlert.id}',
+          })}\nsosecure-live:${sosAlert.id}'
+        : 'chat_sosNoLocation'.tr();
     for (final receiverId in state.resolvedIds.values) {
       if (receiverId == null || receiverId == userId) continue;
       try {

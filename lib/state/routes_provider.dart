@@ -150,7 +150,7 @@ class Routes extends _$Routes {
     } catch (e) {
       state = state.copyWith(
         loading: false,
-        error: 'No se pudieron calcular las rutas: $e',
+        error: 'routes_calcFailed'.tr(namedArgs: {'e': '$e'}),
       );
     }
   }

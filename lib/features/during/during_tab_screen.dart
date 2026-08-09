@@ -85,8 +85,14 @@ class _StatusCard extends ConsumerWidget {
             Expanded(
               child: Text(
                 sos.active
-                    ? 'SOS activo — ${sos.alert != null ? "Alerta #${sos.alert!.id.substring(0, 8)}" : "creando alerta..."}'
-                    : 'Modo emergencia — reporta y graba evidencia',
+                    ? (sos.alert != null
+                          ? 'during_sosActiveAlert'.tr(
+                              namedArgs: {
+                                'ref': sos.alert!.id.substring(0, 8),
+                              },
+                            )
+                          : 'during_sosActiveCreating'.tr())
+                    : 'during_emergencyModeSubtitle'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
@@ -607,7 +613,7 @@ class _RecordingCardState extends ConsumerState<_RecordingCard> {
     try {
       await Share.shareXFiles([
         XFile(_lastFile!.path),
-      ], text: '🚨 Grabación SOSecure');
+      ], text: 'during_recordingTitle'.tr());
       setState(() => _statusMsg = 'during_shared'.tr());
     } catch (e) {
       setState(

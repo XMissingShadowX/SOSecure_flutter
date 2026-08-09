@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/repositories/alerts_repository.dart';
@@ -99,10 +100,13 @@ class Sos extends _$Sos {
       locationPending: false,
     );
     unawaited(SosForegroundService.start());
+    // Estas dos claves ya estaban traducidas a los 5 idiomas desde hace
+    // tiempo; el código simplemente nunca las usó y mandaba el texto en
+    // español escrito a mano.
     unawaited(
       SosAlarm.triggerUrgent(
-        '🚨 SOSecure SOS Activado',
-        'Alerta de emergencia enviada a tus contactos',
+        'sos_alertActivated'.tr(),
+        'sos_alertSent'.tr(),
       ),
     );
 

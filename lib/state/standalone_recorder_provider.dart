@@ -145,7 +145,9 @@ class StandaloneRecorder extends _$StandaloneRecorder {
       return File(xfile.path);
     } catch (e) {
       await state.videoController?.dispose();
-      state = StandaloneRecorderState(errorMessage: 'Error al detener: $e');
+      state = StandaloneRecorderState(
+        errorMessage: 'recorder_stopFailed'.tr(namedArgs: {'e': '$e'}),
+      );
       return null;
     }
   }

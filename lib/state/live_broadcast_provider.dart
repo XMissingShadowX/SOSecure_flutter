@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -153,7 +154,9 @@ class LiveBroadcast extends _$LiveBroadcast {
         state = state.copyWith(segmentsSent: seq + 1);
       } catch (e, st) {
         debugPrint('[LiveBroadcast] ERROR en segmento $seq: $e\n$st');
-        state = state.copyWith(error: 'Error al transmitir: $e');
+        state = state.copyWith(
+          error: 'live_broadcastFailed'.tr(namedArgs: {'e': '$e'}),
+        );
       }
     });
   }
