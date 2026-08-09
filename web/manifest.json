@@ -1,11 +1,11 @@
 {
-    "name": "sosecure_flutter",
-    "short_name": "sosecure_flutter",
+    "name": "SOSecure",
+    "short_name": "SOSecure",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#05070B",
+    "theme_color": "#00CCB2",
+    "description": "La tecnología que te cuida desde tu bolsillo",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

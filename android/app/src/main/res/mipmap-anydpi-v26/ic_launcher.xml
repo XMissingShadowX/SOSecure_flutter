@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icono adaptativo (Android 8.0 / API 26+, o sea prácticamente todos los
+     dispositivos). Sin este archivo el launcher solo encuentra los PNG de
+     mipmap-*/ic_launcher.png y los mete dentro de un contenedor blanco con
+     borde, en vez de aplicarles la máscara del sistema (círculo, squircle,
+     etc.). Las dos capas se recortan juntas: solo el 66% central del lienzo
+     está garantizado como visible, por eso el escudo va más chico en
+     ic_launcher_foreground.png que en ic_launcher.png. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background"/>
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+</adaptive-icon>

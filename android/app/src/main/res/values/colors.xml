@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Capa de fondo del icono adaptativo (ver mipmap-anydpi-v26/ic_launcher.xml).
+         Es el mismo gris casi blanco sobre el que está montado el logo original
+         en assets/icon/sosecure_logo.png. -->
+    <color name="ic_launcher_background">#F7F7F7</color>
+</resources>

@@ -108,6 +108,10 @@ flutter:
 
   assets:
     - assets/translations/
+    # assets/icon/ NO se empaqueta: son los masters desde los que
+    # tool/generate_app_icons.sh genera los iconos de lanzador, que ya viven
+    # compilados en android/, ios/ y web/. Si algún día se muestra el logo
+    # dentro de la app, agregar aquí assets/icon/sosecure_logo.png.
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
