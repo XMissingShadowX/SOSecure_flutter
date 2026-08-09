@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:easy_localization/easy_localization.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/repositories/alerts_repository.dart';
@@ -22,19 +21,28 @@ part 'sos_provider.g.dart';
 // retrasa el registro de la alerta en Supabase, no el aviso a la usuaria.
 const _locationWaitTimeout = Duration(seconds: 8);
 
+// Cada cuánto se reintenta registrar la alerta mientras no haya ninguna
+// ubicación disponible. No hay límite de reintentos: mientras el SOS siga
+// activo se sigue intentando, porque rendirse equivale a dejar a la persona
+// sin alerta.
+const _pendingAlertRetryInterval = Duration(seconds: 2);
+
 class SosState {
   final bool active;
   final SosAlert? alert;
   final List<String> contactsNotified;
   final bool saving;
-  final String? locationError;
+  // SOS activo pero la alerta todavía no se pudo registrar por falta de
+  // ubicación. Se sigue reintentando en segundo plano; en cuanto llegue
+  // cualquier coordenada la alerta sale sola y esto vuelve a false.
+  final bool locationPending;
 
   const SosState({
     this.active = false,
     this.alert,
     this.contactsNotified = const [],
     this.saving = false,
-    this.locationError,
+    this.locationPending = false,
   });
 
   SosState copyWith({
@@ -42,17 +50,14 @@ class SosState {
     SosAlert? alert,
     List<String>? contactsNotified,
     bool? saving,
-    String? locationError,
-    bool clearLocationError = false,
+    bool? locationPending,
   }) {
     return SosState(
       active: active ?? this.active,
       alert: alert ?? this.alert,
       contactsNotified: contactsNotified ?? this.contactsNotified,
       saving: saving ?? this.saving,
-      locationError: clearLocationError
-          ? null
-          : (locationError ?? this.locationError),
+      locationPending: locationPending ?? this.locationPending,
     );
   }
 }
@@ -66,10 +71,14 @@ class Sos extends _$Sos {
   final _alertsRepo = AlertsRepository();
   final _recordingsRepo = RecordingsRepository();
   Timer? _locationTimer;
+  Timer? _pendingAlertTimer;
 
   @override
   SosState build() {
-    ref.onDispose(() => _locationTimer?.cancel());
+    ref.onDispose(() {
+      _locationTimer?.cancel();
+      _pendingAlertTimer?.cancel();
+    });
     return const SosState();
   }
 
@@ -87,7 +96,7 @@ class Sos extends _$Sos {
     state = state.copyWith(
       active: true,
       contactsNotified: names,
-      clearLocationError: true,
+      locationPending: false,
     );
     unawaited(SosForegroundService.start());
     unawaited(
@@ -101,24 +110,60 @@ class Sos extends _$Sos {
     unawaited(ref.read(recorderProvider.notifier).start());
 
     final coords = await _resolveCoordinates();
+    // Se canceló mientras esperábamos el fix: no hay nada que registrar.
+    if (!state.active) return;
+
     if (coords == null) {
-      // Se canceló mientras esperábamos el fix: no hay nada que reportar.
-      if (!state.active) return;
       // latitude/longitude son NOT NULL en sos_alerts, sos_locations e
-      // incidents, así que sin coordenadas no hay alerta que registrar. La
-      // grabación local y la alarma siguen corriendo; lo que cambia es que
-      // ahora la usuaria se entera en vez de asumir que se envió.
-      state = state.copyWith(locationError: 'sos_locationUnavailable'.tr());
+      // incidents, así que sin coordenadas todavía no se puede registrar la
+      // alerta — pero tampoco se abandona: se sigue reintentando en segundo
+      // plano y sale sola en cuanto aparezca cualquier ubicación.
+      state = state.copyWith(locationPending: true);
+      _startPendingAlertRetry(names);
       return;
     }
 
+    await _registerAlert(coords, names);
+  }
+
+  // Reintenta registrar la alerta mientras no haya ubicación. Sin límite de
+  // intentos a propósito: el SOS sigue activo y la persona sigue en riesgo, así
+  // que se insiste hasta que llegue una coordenada o hasta que ella cierre el
+  // SOS. El intervalo es de segundos, no de milisegundos, para no castigar la
+  // batería mientras tanto.
+  void _startPendingAlertRetry(List<String> names) {
+    _pendingAlertTimer?.cancel();
+    _pendingAlertTimer = Timer.periodic(_pendingAlertRetryInterval, (
+      timer,
+    ) async {
+      if (!state.active || state.alert != null) {
+        timer.cancel();
+        return;
+      }
+
+      final loc = ref.read(locationWatcherProvider);
+      final coords = loc.hasCoordinates
+          ? (latitude: loc.latitude!, longitude: loc.longitude!)
+          : await ref.read(locationWatcherProvider.notifier).lastKnown();
+      if (coords == null) return;
+
+      timer.cancel();
+      if (!state.active || state.alert != null) return;
+      await _registerAlert(coords, names);
+    });
+  }
+
+  Future<void> _registerAlert(
+    ({double latitude, double longitude}) coords,
+    List<String> names,
+  ) async {
     try {
       final alert = await _alertsRepo.createAlert(
         latitude: coords.latitude,
         longitude: coords.longitude,
         contactNames: names,
       );
-      state = state.copyWith(alert: alert);
+      state = state.copyWith(alert: alert, locationPending: false);
 
       _locationTimer?.cancel();
       _locationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -135,6 +180,7 @@ class Sos extends _$Sos {
       // La alerta en Supabase falló (sin conexión, etc.) — la grabación local sigue
       // en curso. Se encola para reintentar en cuanto vuelva la conexión (ver
       // offline_queue_provider.dart), en vez de perder la alerta silenciosamente.
+      state = state.copyWith(locationPending: false);
       final userId = ref.read(currentUserProvider)?.id;
       if (userId != null) {
         await ref
@@ -156,14 +202,12 @@ class Sos extends _$Sos {
   // Resuelve coordenadas en tres escalones, de mejor a peor: fix actual del
   // stream -> esperar hasta _locationWaitTimeout a que llegue uno -> última
   // posición conocida del sistema. Devuelve null solo si no hay absolutamente
-  // ninguna ubicación disponible (GPS denegado y sin caché).
+  // ninguna ubicación disponible (GPS denegado y sin caché); en ese caso el
+  // reintento en segundo plano toma el relevo.
   Future<({double latitude, double longitude})?> _resolveCoordinates() async {
     final immediate = ref.read(locationWatcherProvider);
     if (immediate.hasCoordinates) {
-      return (
-        latitude: immediate.latitude!,
-        longitude: immediate.longitude!,
-      );
+      return (latitude: immediate.latitude!, longitude: immediate.longitude!);
     }
 
     final deadline = DateTime.now().add(_locationWaitTimeout);
@@ -184,6 +228,8 @@ class Sos extends _$Sos {
   Future<void> cancel() async {
     _locationTimer?.cancel();
     _locationTimer = null;
+    _pendingAlertTimer?.cancel();
+    _pendingAlertTimer = null;
     await ref.read(liveBroadcastProvider.notifier).stop();
     await ref.read(recorderProvider.notifier).discard();
     await _alertsRepo.cancelAlert();
@@ -195,6 +241,8 @@ class Sos extends _$Sos {
   Future<void> saveAndClose() async {
     _locationTimer?.cancel();
     _locationTimer = null;
+    _pendingAlertTimer?.cancel();
+    _pendingAlertTimer = null;
     await ref.read(liveBroadcastProvider.notifier).stop();
     state = state.copyWith(saving: true);
 

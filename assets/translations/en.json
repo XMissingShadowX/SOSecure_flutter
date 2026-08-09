@@ -1,4 +1,4 @@
-{
+﻿{
   "yes": "Yes",
   "no": "No",
   "cancel": "Cancel",
@@ -112,7 +112,7 @@
   "sos_locationLabel": "Location",
   "sos_stopRecordingDesc": "Recording will stop and the alert will be deleted.",
   "sos_recordingUnavailable": "Recording unavailable",
-  "sos_locationUnavailable": "Your location could not be determined, so the alert was NOT sent to your contacts. Recording is still running. Move somewhere with GPS signal or call emergency services directly.",
+  "sos_locationPending": "Looking for your location… The alarm and recording are already running. The alert will be sent to your contacts automatically as soon as your location is available. If this is urgent, call emergency services.",
   "pin_title": "SOSecure",
   "pin_enter": "Enter your security PIN",
   "pin_forgot": "Forgot your PIN?",

@@ -567,10 +567,11 @@ class _SosActivePanel extends ConsumerWidget {
                             ],
                           ),
                         ),
-                      // Sin coordenadas la alerta no se pudo registrar (lat/long
-                      // son NOT NULL). Se avisa explícitamente para que nadie
-                      // asuma que sus contactos ya fueron notificados.
-                      if (sos.locationError != null)
+                      // Sin coordenadas todavía no se puede registrar la alerta
+                      // (lat/long son NOT NULL). Se sigue reintentando solo, pero
+                      // se avisa para que nadie asuma que sus contactos ya fueron
+                      // notificados mientras tanto.
+                      if (sos.locationPending)
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
@@ -579,9 +580,27 @@ class _SosActivePanel extends ConsumerWidget {
                             border: Border.all(color: destructive),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Text(
-                            sos.locationError!,
-                            style: TextStyle(fontSize: 13, color: destructive),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: destructive,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'sos_locationPending'.tr(),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: destructive,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       const SizedBox(height: 12),

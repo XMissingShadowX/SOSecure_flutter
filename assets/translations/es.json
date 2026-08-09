@@ -1,4 +1,4 @@
-{
+﻿{
   "yes": "Sí",
   "no": "No",
   "cancel": "Cancelar",
@@ -112,7 +112,7 @@
   "sos_locationLabel": "Ubicación",
   "sos_stopRecordingDesc": "Se detendrá la grabación y se eliminará la alerta.",
   "sos_recordingUnavailable": "Grabación no disponible",
-  "sos_locationUnavailable": "No se pudo obtener tu ubicación, así que la alerta NO se envió a tus contactos. La grabación sigue activa. Muévete a un lugar con señal GPS o llama directamente al 911.",
+  "sos_locationPending": "Buscando tu ubicación… La alarma y la grabación ya están activas. La alerta se enviará a tus contactos automáticamente en cuanto se obtenga tu ubicación. Si es urgente, llama al 911.",
   "pin_title": "SOSecure",
   "pin_enter": "Ingresa tu PIN de seguridad",
   "pin_forgot": "¿Olvidaste tu PIN?",
