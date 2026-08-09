@@ -214,27 +214,29 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
     final location = ref.watch(locationWatcherProvider);
     final questions = incidentQuestions[_type] ?? [];
 
+    // Cerrado por defecto: el formulario completo (tipo + 3 preguntas con sus
+    // botones + descripción + enviar) ocupaba toda la pantalla de la pestaña
+    // que se usa DURANTE una emergencia, empujando el resto fuera de vista.
     return GlassCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Theme(
+        // ExpansionTile pinta sus propias líneas divisorias; se quitan para que
+        // no rompan el borde de la tarjeta.
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: false,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          expandedCrossAxisAlignment: CrossAxisAlignment.start,
+          leading: Icon(
+            Icons.add_circle_outline,
+            color: Theme.of(context).colorScheme.tertiary,
+            size: 20,
+          ),
+          title: Text(
+            'map_reportTitle'.tr(),
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.add_circle_outline,
-                  color: Theme.of(context).colorScheme.tertiary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'map_reportTitle'.tr(),
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
             DropdownButtonFormField<IncidentType>(
               value: _type,
               decoration: InputDecoration(

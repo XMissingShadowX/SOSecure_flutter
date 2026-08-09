@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/glass.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../data/repositories/routes_repository.dart';
@@ -65,6 +66,11 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
     super.dispose();
   }
 
+  // Ubicación actual para sesgar la búsqueda de lugares hacia lo cercano. Si
+  // todavía no hay fix de GPS se manda null y Photon rankea como antes.
+  double? get _nearLatitude => ref.read(locationWatcherProvider).latitude;
+  double? get _nearLongitude => ref.read(locationWatcherProvider).longitude;
+
   void _onOriginChanged(String value) {
     _originDebounce?.cancel();
     if (value.length < 3) {
@@ -74,7 +80,11 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
     _originDebounce = Timer(const Duration(milliseconds: 500), () async {
       setState(() => _searchingOrigin = true);
       try {
-        final results = await _repo.searchPlaces(value);
+        final results = await _repo.searchPlaces(
+          value,
+          nearLatitude: _nearLatitude,
+          nearLongitude: _nearLongitude,
+        );
         if (!mounted) return;
         setState(() {
           _originSuggestions = results;
@@ -123,7 +133,11 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
         _searchError = null;
       });
       try {
-        final results = await _repo.searchPlaces(value);
+        final results = await _repo.searchPlaces(
+          value,
+          nearLatitude: _nearLatitude,
+          nearLongitude: _nearLongitude,
+        );
         if (!mounted) return;
         setState(() {
           _suggestions = results;
@@ -362,9 +376,28 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
                   ).colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  'routes_dailyLimitReached'.tr(),
-                  style: const TextStyle(fontSize: 12),
+                // Igual que el banner del asistente médico: antes solo
+                // informaba del límite, sin ninguna forma de actuar.
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'routes_dailyLimitReached'.tr(),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: () => context.push('/settings'),
+                        icon: const Icon(Icons.workspace_premium, size: 16),
+                        label: Text(
+                          'update_plan'.tr(),
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

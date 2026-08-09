@@ -25,13 +25,27 @@ class GeocodeResult {
 // (antes se interpretaba el 403 como "sin resultados", nunca como error real).
 const _userAgent = 'SOSecure/1.0 (Flutter; contacto@sosecure.site)';
 
+// Velocidad de caminata usada para estimar la duración a pie (4.8 km/h, el
+// promedio de un adulto). Ver la nota en fetchRoutes sobre por qué no se usa
+// la duración que devuelve OSRM.
+const _walkingMetersPerSecond = 1.33;
+
 class RoutesRepository {
+  // [nearLatitude]/[nearLongitude] sesgan los resultados hacia esa posición.
+  // Sin ellos Photon rankea a nivel mundial: buscar "farmacia" podía devolver
+  // una en otro país antes que la de la esquina.
   Future<List<GeocodeResult>> searchPlaces(
     String query, {
     int limit = 5,
+    double? nearLatitude,
+    double? nearLongitude,
   }) async {
+    final bias = (nearLatitude != null && nearLongitude != null)
+        ? '&lat=$nearLatitude&lon=$nearLongitude'
+        : '';
     final uri = Uri.parse(
-      'https://photon.komoot.io/api/?q=${Uri.encodeComponent(query)}&limit=$limit',
+      'https://photon.komoot.io/api/?q=${Uri.encodeComponent(query)}'
+      '&limit=$limit$bias',
     );
     final res = await http.get(
       uri,
@@ -63,6 +77,18 @@ class RoutesRepository {
   // Puerto del fetch de OSRM (route-map.tsx): perfil peatonal, rutas alternativas.
   // Devuelve hasta 3 rutas crudas (puntos + distancia/duración) — el mapeo a
   // RouteOption (nombre, puntaje de seguridad) vive en routes_provider.dart.
+  //
+  // OJO con la duración: el servidor público router.project-osrm.org solo tiene
+  // cargado el perfil de COCHE, e ignora el que se pide en la URL. Comprobado
+  // pidiendo el mismo trayecto como foot/walking/driving/bike/car: los cinco
+  // devuelven exactamente lo mismo, ~43 km/h. Usar esa duración tal cual hacía
+  // que un trayecto de 2.7 km apareciera como "4 min" cuando caminando son
+  // ~33 min. Por eso la duración se estima aquí desde la distancia.
+  //
+  // La distancia tampoco es peatonal (va por calles de coche), así que sigue
+  // siendo una aproximación. La solución de fondo es cambiar a un router que
+  // sí sirva perfil a pie (OpenRouteService o GraphHopper, ambos con capa
+  // gratuita pero con API key), y eso hay que acordarlo con el equipo.
   Future<
     List<({List<LatLng> points, double distanceMeters, double durationSeconds})>
   >
@@ -86,10 +112,11 @@ class RoutesRepository {
                     LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble()),
               )
               .toList();
+      final distanceMeters = (r['distance'] as num).toDouble();
       return (
         points: coords,
-        distanceMeters: (r['distance'] as num).toDouble(),
-        durationSeconds: (r['duration'] as num).toDouble(),
+        distanceMeters: distanceMeters,
+        durationSeconds: distanceMeters / _walkingMetersPerSecond,
       );
     }).toList();
   }
