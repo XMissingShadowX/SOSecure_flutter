@@ -738,6 +738,8 @@
   "chat_sosAlertShort": "🚨 Alerta SOS",
   "chat_aiConnectionError": "Sin conexión al asistente. Verifica tu internet.",
   "settings_chatFontSize": "Tamaño de letra en Apoyo",
+  "routes_lessThanMinute": "menos de 1 min",
+  "during_answeredCount": "{n} de {total} respondidas",
   "service_sosActiveTitle": "SOSecure — Alerta activa",
   "service_sosActiveBody": "Grabando y compartiendo tu ubicación en segundo plano.",
   "notif_channelSosName": "Alertas SOS",

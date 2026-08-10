@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import '../../core/glass.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../domain/models/chat_message.dart';
 import '../../state/medic_chat_provider.dart';
@@ -50,6 +51,15 @@ class _UpgradeBanner extends StatelessWidget {
               'medic_premiumGateDesc'.tr(),
               style: const TextStyle(color: Colors.grey),
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            // Antes el banner terminaba aquí: la persona leía que necesita
+            // Premium y no tenía a dónde tocar — había que adivinar que la
+            // contratación vive en Ajustes.
+            FilledButton.icon(
+              onPressed: () => context.push('/settings'),
+              icon: const Icon(Icons.workspace_premium, size: 18),
+              label: Text('update_plan'.tr()),
             ),
           ],
         ),
