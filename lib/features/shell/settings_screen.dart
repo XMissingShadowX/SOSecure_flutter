@@ -5,15 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/env.dart';
 import '../../data/api/pin_api.dart';
 import '../../data/api/plan_api.dart';
 import '../../data/repositories/plan_repository.dart';
 import '../../data/supabase_client.dart';
 import '../../state/settings_provider.dart';
 import '../../state/volume_sos_provider.dart';
+import '../premium/checkout_launcher.dart';
 
 // Puerto del diálogo de Ajustes de components/app-shell.tsx: tema, idioma, PIN, modo
 // simple, y el ajuste de pulsaciones/ventana de tiempo del botón de volumen (Fase 4).
@@ -63,14 +62,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  Future<void> _openWebPayment(String path) async {
-    final uri = Uri.parse('${Env.apiBaseUrl}$path');
-    // El pago (Mercado Pago/PayPal) siempre es un flujo de navegador, igual
-    // que en la web — pero esta app usa el cliente Supabase nativo, no
-    // cookies, así que el navegador externo NO comparte sesión: el usuario
-    // deberá iniciar sesión ahí de nuevo con la misma cuenta.
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
+  // El pago (Mercado Pago/PayPal) siempre es un flujo de navegador, igual que
+  // en la web. openCheckout pide la URL de la pasarela a la API con el token
+  // de la app, así el navegador externo abre directo el checkout del proveedor
+  // en vez de una página de SOSecure que exigiría iniciar sesión de nuevo.
+  Future<void> _openPayment({required bool family}) =>
+      openCheckout(context, family: family);
 
   Future<void> _cancelPremium() async {
     setState(() => _cancellingPremium = true);
@@ -291,7 +288,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               active: _premium?.isActive ?? false,
               activeLabel: 'family_active'.tr(),
               inactiveLabel: 'family_inactive'.tr(),
-              onActivate: () => _openWebPayment('/plan-premium/pago'),
+              onActivate: () => _openPayment(family: false),
               onCancel: _cancelPremium,
               cancelling: _cancellingPremium,
             ),
@@ -309,7 +306,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ? 'family_owner'.tr()
                   : 'family_active'.tr(),
               inactiveLabel: 'family_inactive'.tr(),
-              onActivate: () => _openWebPayment('/plan-familiar'),
+              onActivate: () => _openPayment(family: true),
               // Solo el dueño puede cancelar el plan familiar — un miembro
               // invitado no tiene esa opción (misma regla que la web, ver
               // CLAUDE.md: "la gestión de miembros solo se muestra al dueño").

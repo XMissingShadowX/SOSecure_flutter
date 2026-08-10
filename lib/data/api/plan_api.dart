@@ -19,6 +19,40 @@ class PlanApi {
     };
   }
 
+  /// Pide a la web la URL de pago de la pasarela y la devuelve.
+  ///
+  /// Antes la app abría la *página* del checkout (`/plan-premium/pago`) en el
+  /// navegador externo, que no comparte la sesión de Supabase con la app —
+  /// el usuario tenía que volver a iniciar sesión ahí solo para llegar a la
+  /// pasarela. Llamando la API con el Bearer que ya tenemos, obtenemos el
+  /// `init_point` de Mercado Pago / el `approve` link de PayPal y abrimos ese
+  /// directamente, saltándonos el login.
+  ///
+  /// [provider] es 'mercadopago' o 'paypal' — mismos valores que acepta la web.
+  Future<String> startCheckout({
+    required bool family,
+    required String provider,
+  }) async {
+    final path = family ? '/api/family/checkout' : '/api/premium/checkout';
+    final res = await http.post(
+      Uri.parse('${Env.apiBaseUrl}$path'),
+      headers: await _authHeaders(),
+      body: jsonEncode({'action': 'create-session', 'provider': provider}),
+    );
+    final body = jsonDecode(res.body) as Map<String, dynamic>?;
+    if (res.statusCode != 200) {
+      throw Exception(
+        body?['error'] ??
+            'plan_checkoutError'.tr(namedArgs: {'code': '${res.statusCode}'}),
+      );
+    }
+    final url = body?['url'] as String?;
+    if (url == null || url.isEmpty) {
+      throw Exception('plan_checkoutError'.tr(namedArgs: {'code': 'url'}));
+    }
+    return url;
+  }
+
   Future<void> cancelPremium() async {
     final res = await http.post(
       Uri.parse('${Env.apiBaseUrl}/api/premium/cancel'),

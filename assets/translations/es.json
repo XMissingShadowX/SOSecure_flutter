@@ -125,6 +125,8 @@
   "pin_readConfigError": "No se pudo leer la configuración del PIN ({code}): {body}",
   "pin_saveConfigError": "No se pudo guardar el PIN ({code}): {body}",
   "plan_cancelError": "No se pudo cancelar ({code})",
+  "plan_checkoutError": "No se pudo iniciar el pago ({code})",
+  "plan_chooseProvider": "¿Con qué quieres pagar?",
   "plan_deleteAccountApiError": "No se pudo eliminar la cuenta ({code})",
   "pin_lockedOutFor": "Demasiados intentos. Espera {seconds}s.",
   "pin_resetLinkSent": "Te enviamos un enlace a tu correo para confirmar el reseteo del PIN.",
