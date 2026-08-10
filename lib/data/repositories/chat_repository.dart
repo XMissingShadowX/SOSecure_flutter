@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/env.dart';
@@ -20,7 +21,9 @@ class ChatRepository {
       body: jsonEncode({'messages': messages}),
     );
     if (res.statusCode != 200) {
-      throw Exception('Error al contactar el asistente (${res.statusCode})');
+      throw Exception(
+        'chat_assistantError'.tr(namedArgs: {'code': '${res.statusCode}'}),
+      );
     }
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     return body['content'] as String? ?? '';

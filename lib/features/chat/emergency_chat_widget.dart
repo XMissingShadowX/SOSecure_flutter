@@ -73,8 +73,13 @@ class _EmergencyChatWidgetState extends ConsumerState<EmergencyChatWidget> {
     String text;
     if (type == 'location') {
       text = location.hasCoordinates
-          ? '📍 Mi ubicación: https://maps.google.com/?q=${location.latitude},${location.longitude}'
-          : '⚠️ No tengo ubicación disponible ahora.';
+          ? 'chat_myLocation'.tr(
+              namedArgs: {
+                'url':
+                    'https://maps.google.com/?q=${location.latitude},${location.longitude}',
+              },
+            )
+          : 'chat_noLocationNow'.tr();
     } else {
       text = _inputController.text.trim();
       if (text.isEmpty) return;

@@ -134,7 +134,7 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
         setState(() {
           _suggestions = [];
           _searching = false;
-          _searchError = 'No se pudo buscar: $e';
+          _searchError = 'routes_searchFailed'.tr(namedArgs: {'e': '$e'});
         });
       }
     });
