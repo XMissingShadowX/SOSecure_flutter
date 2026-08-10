@@ -125,6 +125,8 @@
   "pin_readConfigError": "Could not read PIN config ({code}): {body}",
   "pin_saveConfigError": "Could not save PIN ({code}): {body}",
   "plan_cancelError": "Could not cancel ({code})",
+  "plan_checkoutError": "Could not start the payment ({code})",
+  "plan_chooseProvider": "How do you want to pay?",
   "plan_deleteAccountApiError": "Could not delete account ({code})",
   "pin_lockedOutFor": "Too many attempts. Wait {seconds}s.",
   "pin_resetLinkSent": "We sent a link to your email to confirm the PIN reset.",
