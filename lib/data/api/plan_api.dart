@@ -10,6 +10,11 @@ import '../supabase_client.dart';
 // mismo patrón que PinApi — pasa el access token de Supabase como Authorization
 // Bearer, esas rutas ya soportan ese header además de cookies (ver
 // lib/supabase/server.ts::getAuthedUser en el proyecto web).
+// La barra final NO es opcional: next.config.ts del proyecto web tiene
+// `trailingSlash: true`, así que una URL sin ella devuelve un 308 hacia la
+// versión con barra. Ese redirect deja el POST sin cuerpo y responde HTML
+// ("Redirecting..."), que revienta al hacer jsonDecode. Mismo motivo por el
+// que pin_api.dart y chat_repository.dart ya las llevan.
 class PlanApi {
   Future<Map<String, String>> _authHeaders() async {
     final token = supabase.auth.currentSession?.accessToken;
@@ -33,7 +38,7 @@ class PlanApi {
     required bool family,
     required String provider,
   }) async {
-    final path = family ? '/api/family/checkout' : '/api/premium/checkout';
+    final path = family ? '/api/family/checkout/' : '/api/premium/checkout/';
     final res = await http.post(
       Uri.parse('${Env.apiBaseUrl}$path'),
       headers: await _authHeaders(),
@@ -55,7 +60,7 @@ class PlanApi {
 
   Future<void> cancelPremium() async {
     final res = await http.post(
-      Uri.parse('${Env.apiBaseUrl}/api/premium/cancel'),
+      Uri.parse('${Env.apiBaseUrl}/api/premium/cancel/'),
       headers: await _authHeaders(),
     );
     if (res.statusCode != 200) {
@@ -69,7 +74,7 @@ class PlanApi {
 
   Future<void> cancelFamily() async {
     final res = await http.post(
-      Uri.parse('${Env.apiBaseUrl}/api/family/cancel'),
+      Uri.parse('${Env.apiBaseUrl}/api/family/cancel/'),
       headers: await _authHeaders(),
     );
     if (res.statusCode != 200) {
@@ -83,7 +88,7 @@ class PlanApi {
 
   Future<void> deleteAccount() async {
     final res = await http.post(
-      Uri.parse('${Env.apiBaseUrl}/api/delete-account'),
+      Uri.parse('${Env.apiBaseUrl}/api/delete-account/'),
       headers: await _authHeaders(),
     );
     if (res.statusCode != 200) {

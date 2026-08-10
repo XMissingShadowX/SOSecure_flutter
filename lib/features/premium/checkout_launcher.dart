@@ -78,8 +78,10 @@ Future<void> openCheckout(BuildContext context, {required bool family}) async {
     );
     final opened = await _launch(Uri.parse(url));
     if (opened) return;
-  } catch (_) {
-    // cae al respaldo de abajo
+  } catch (e) {
+    // Sin este log, un fallo de la API es indistinguible del camino feliz:
+    // el usuario solo ve que aterriza en la web en vez de en la pasarela.
+    debugPrint('[checkout] fallo la API, usando respaldo web: $e');
   }
 
   // Respaldo: la página web de siempre (pedirá iniciar sesión, pero funciona).
