@@ -736,5 +736,11 @@
   "chat_newMessage": "New message",
   "chat_sosAlertShort": "🚨 SOS Alert",
   "chat_aiConnectionError": "Can't reach the assistant. Check your internet connection.",
-  "settings_chatFontSize": "Support chat font size"
+  "settings_chatFontSize": "Support chat font size",
+  "premium_ctaUpgrade": "Upgrade to Premium",
+  "premium_ctaSeePlans": "See plans in Settings",
+  "premium_ctaFamily": "More than one of you? See the Family Plan",
+  "premium_ctaUnlock": "Unlock",
+  "premium_ctaOpenFailed": "Couldn't open the checkout page. Check your connection.",
+  "chat_aiPremiumGateTitle": "SOSecure AI"
 }

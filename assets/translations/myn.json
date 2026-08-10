@@ -736,5 +736,11 @@
   "chat_newMessage": "Nuevo mensaje",
   "chat_sosAlertShort": "🚨 Alerta SOS",
   "chat_aiConnectionError": "Sin conexión al asistente. Verifica tu internet.",
-  "settings_chatFontSize": "Tamaño de letra en Apoyo"
+  "settings_chatFontSize": "Tamaño de letra en Apoyo",
+  "premium_ctaUpgrade": "Activar Premium",
+  "premium_ctaSeePlans": "Ver planes en Ajustes",
+  "premium_ctaFamily": "¿Son varios? Ver Plan Familiar",
+  "premium_ctaUnlock": "Desbloquear",
+  "premium_ctaOpenFailed": "No se pudo abrir la página de pago. Revisa tu conexión.",
+  "chat_aiPremiumGateTitle": "SOSecure AI"
 }

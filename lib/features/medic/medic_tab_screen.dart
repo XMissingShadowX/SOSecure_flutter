@@ -7,6 +7,7 @@ import '../../domain/models/chat_message.dart';
 import '../../state/medic_chat_provider.dart';
 import '../../state/premium_provider.dart';
 import '../../state/settings_provider.dart';
+import '../premium/upgrade_cta.dart';
 
 // Puerto de components/tabs/medic-tab.tsx: chat de apoyo psicológico con Claude
 // vía /api/chat, con fallback a respuestas enlatadas si falla la red. Gateado
@@ -20,8 +21,8 @@ class MedicTabScreen extends ConsumerWidget {
 
     return premiumAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => _UpgradeBanner(),
-      data: (isPremium) => isPremium ? _ChatBody() : _UpgradeBanner(),
+      error: (_, _) => const _UpgradeBanner(),
+      data: (isPremium) => isPremium ? _ChatBody() : const _UpgradeBanner(),
     );
   }
 }
@@ -31,29 +32,9 @@ class _UpgradeBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.workspace_premium_outlined, size: 48, color: primary),
-            const SizedBox(height: 16),
-            Text(
-              'medic_premiumGateTitle'.tr(),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'medic_premiumGateDesc'.tr(),
-              style: const TextStyle(color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return PremiumGateCard(
+      title: 'medic_premiumGateTitle'.tr(),
+      description: 'medic_premiumGateDesc'.tr(),
     );
   }
 }

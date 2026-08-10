@@ -14,6 +14,7 @@ import '../../state/location_provider.dart';
 import '../../state/places_provider.dart';
 import '../../state/premium_provider.dart';
 import '../../state/routes_provider.dart';
+import '../premium/upgrade_cta.dart';
 
 const _severityColors = {
   'high': Color(0xFFEF4444),
@@ -362,9 +363,16 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
                   ).colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  'routes_dailyLimitReached'.tr(),
-                  style: const TextStyle(fontSize: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'routes_dailyLimitReached'.tr(),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(height: 10),
+                    const UpgradeButtons(),
+                  ],
                 ),
               ),
             ],
@@ -690,40 +698,28 @@ class _RouteOptionCard extends StatelessWidget {
             ),
           ),
         ),
+        // La pastilla de "Premium" era decorativa: informaba del candado y
+        // dejaba al usuario sin nada que tocar. Ahora es el botón que abre la
+        // contratación, igual que los demás muros de pago de la app.
         if (locked)
           Positioned.fill(
             child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  border: Border.all(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.4),
+              child: FilledButton.tonalIcon(
+                onPressed: () => openPremiumCheckout(context),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  visualDensity: VisualDensity.compact,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.lock_outline,
-                      size: 14,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'premium'.tr(),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+                icon: const Icon(Icons.lock_open, size: 14),
+                label: Text(
+                  'premium_ctaUnlock'.tr(),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
