@@ -736,5 +736,7 @@
   "chat_newMessage": "Nuevo mensaje",
   "chat_sosAlertShort": "🚨 Alerta SOS",
   "chat_aiConnectionError": "Sin conexión al asistente. Verifica tu internet.",
-  "settings_chatFontSize": "Tamaño de letra en Apoyo"
+  "settings_chatFontSize": "Tamaño de letra en Apoyo",
+  "routes_lessThanMinute": "menos de 1 min",
+  "during_answeredCount": "{n} de {total} respondidas"
 }

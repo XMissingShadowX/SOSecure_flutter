@@ -132,6 +132,13 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
     super.dispose();
   }
 
+  void _showSentSnackBar() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('during_reportSentShort'.tr())),
+    );
+  }
+
   Future<void> _submit() async {
     setState(() => _error = null);
     final location = ref.read(locationWatcherProvider);
@@ -166,6 +173,10 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
         _descriptionController.clear();
         _answers = ['', '', ''];
       });
+      // El aviso de "enviado" vive dentro del panel plegable, así que si la
+      // persona lo cierra justo después de enviar no lo vería nunca. El
+      // SnackBar se muestra pase lo que pase.
+      _showSentSnackBar();
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted) setState(() => _done = false);
       });
@@ -213,6 +224,9 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
   Widget build(BuildContext context) {
     final location = ref.watch(locationWatcherProvider);
     final questions = incidentQuestions[_type] ?? [];
+    final answered = questions.isEmpty
+        ? 0
+        : _answers.take(questions.length).where((a) => a.isNotEmpty).length;
 
     // Cerrado por defecto: el formulario completo (tipo + 3 preguntas con sus
     // botones + descripción + enviar) ocupaba toda la pantalla de la pestaña
@@ -240,6 +254,19 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
             'map_reportTitle'.tr(),
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
+          // Plegado, el formulario no da ninguna señal de que quedó a medias:
+          // alguien puede responder 2 de 3, cerrarlo y olvidarlo.
+          subtitle: (answered > 0 && answered < questions.length)
+              ? Text(
+                  'during_answeredCount'.tr(
+                    namedArgs: {
+                      'n': '$answered',
+                      'total': '${questions.length}',
+                    },
+                  ),
+                  style: const TextStyle(fontSize: 12),
+                )
+              : null,
           children: [
             DropdownButtonFormField<IncidentType>(
               value: _type,

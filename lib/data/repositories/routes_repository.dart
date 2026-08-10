@@ -38,6 +38,11 @@ const _fallbackRouterBase = 'https://router.project-osrm.org';
 // (4.8 km/h, el promedio de un adulto).
 const _walkingMetersPerSecond = 1.33;
 
+// http.get no tiene timeout propio: sin esto, un servidor que acepta la
+// conexión y no responde deja la pantalla cargando para siempre. Las respuestas
+// medidas van de 200 a 1200 ms.
+const _requestTimeout = Duration(seconds: 8);
+
 class RoutesRepository {
   // [nearLatitude]/[nearLongitude] sesgan los resultados hacia esa posición.
   // Sin ellos Photon rankea a nivel mundial: buscar "farmacia" podía devolver
@@ -55,10 +60,12 @@ class RoutesRepository {
       'https://photon.komoot.io/api/?q=${Uri.encodeComponent(query)}'
       '&limit=$limit$bias',
     );
-    final res = await http.get(
-      uri,
-      headers: {'Accept': 'application/json', 'User-Agent': _userAgent},
-    );
+    final res = await http
+        .get(
+          uri,
+          headers: {'Accept': 'application/json', 'User-Agent': _userAgent},
+        )
+        .timeout(_requestTimeout);
     if (res.statusCode != 200) {
       throw Exception('Photon error (${res.statusCode})');
     }
@@ -124,10 +131,9 @@ class RoutesRepository {
     List<({List<LatLng> points, double distanceMeters, double durationSeconds})>
   >
   _requestRoutes(String url, {required bool estimateDuration}) async {
-    final res = await http.get(
-      Uri.parse(url),
-      headers: {'User-Agent': _userAgent},
-    );
+    final res = await http
+        .get(Uri.parse(url), headers: {'User-Agent': _userAgent})
+        .timeout(_requestTimeout);
     if (res.statusCode != 200) {
       throw Exception('OSRM error (${res.statusCode})');
     }

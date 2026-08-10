@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:latlong2/latlong.dart';
 
 // Puerto de RouteInfo/RouteGeometry (route-map.tsx) + RouteOption (lib/types.ts).
@@ -30,6 +31,9 @@ class RouteOption {
       final m = ((durationSeconds % 3600) / 60).floor();
       return '${h}h $m min';
     }
+    // Sin esto, cualquier trayecto de menos de un minuto se mostraba como
+    // "0 min" por el redondeo hacia abajo.
+    if (durationSeconds < 60) return 'routes_lessThanMinute'.tr();
     return '${(durationSeconds / 60).floor()} min';
   }
 }
