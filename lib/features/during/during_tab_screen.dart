@@ -224,6 +224,10 @@ class _IncidentReportCardState extends ConsumerState<_IncidentReportCard> {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           initiallyExpanded: false,
+          // El texto escrito y las respuestas sobreviven igual (viven en este
+          // State, no en los hijos), pero sin esto el subárbol se destruye al
+          // plegar y se pierde el foco del teclado a media captura.
+          maintainState: true,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
