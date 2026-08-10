@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import '../../core/brand.dart';
 import '../../core/glass.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -73,11 +74,7 @@ class _PermissionGateScreenState extends State<PermissionGateScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.shield_moon,
-                    size: 56,
-                    color: theme.colorScheme.primary,
-                  ),
+                  const SosecureLogo(size: 72),
                   const SizedBox(height: 8),
                   Text(
                     'perm_gateTitle'.tr(),

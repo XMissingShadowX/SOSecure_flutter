@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/brand.dart';
 import '../../data/supabase_client.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -59,11 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.shield_moon,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                  const SosecureLogo(size: 88),
                   const SizedBox(height: 8),
                   const Text(
                     'SOSecure',

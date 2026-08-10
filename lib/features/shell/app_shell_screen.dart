@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/brand.dart';
 import '../../core/glass.dart';
 import '../../core/theme.dart';
 import '../../data/supabase_client.dart';
@@ -115,11 +116,7 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
           shape: Border(bottom: BorderSide(color: theme.colorScheme.outline)),
           title: Row(
             children: [
-              Icon(
-                Icons.verified_user,
-                size: 24,
-                color: theme.colorScheme.primary,
-              ),
+              const SosecureLogo(size: 26),
               const SizedBox(width: 8),
               const Text(
                 'SOSecure',
