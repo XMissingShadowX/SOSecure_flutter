@@ -2,16 +2,31 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
+// Evento del canal nativo. `press` es informativo (una pulsación suelta que ya
+// quedó contada del lado nativo); `trigger` es el gesto completo: el SOS debe
+// activarse.
 class VolumeButtonEvent {
-  final String button; // 'up' | 'down'
+  final String type; // 'press' | 'trigger'
+  final String? source; // 'up' | 'down' (solo en 'press')
   final int timestamp;
-  VolumeButtonEvent({required this.button, required this.timestamp});
+
+  const VolumeButtonEvent({
+    required this.type,
+    required this.timestamp,
+    this.source,
+  });
+
+  bool get isTrigger => type == 'trigger';
 }
 
-// Wrapper Dart del MethodChannel/EventChannel de MainActivity.kt — puerto de
-// VolumeButtonPlugin.java. Solo Android tiene esta capacidad (no hay API
-// pública de botón de volumen en iOS, ver ios_secondary_gesture equivalente
-// en before_tab/sos_button: el botón flotante).
+// Wrapper Dart del MethodChannel/EventChannel de MainActivity.kt. Solo Android
+// tiene esta capacidad (no hay API pública de botón de volumen en iOS; ahí el
+// equivalente es el botón flotante de sos_button.dart).
+//
+// El conteo de pulsaciones dejó de vivir en Dart: ahora lo hace
+// VolumeSosDetector.kt, porque con la pantalla apagada las teclas llegan a un
+// foreground service y no a la Activity. Dart solo empuja la configuración y
+// escucha el disparo.
 class VolumeButtonChannel {
   static const _method = MethodChannel(
     'com.sosecure.sosecure_flutter/volume_button',
@@ -30,12 +45,46 @@ class VolumeButtonChannel {
     await _method.invokeMethod('stopListening');
   }
 
-  static Stream<VolumeButtonEvent> get onPress {
+  /// Persiste los umbrales del lado nativo y arranca o detiene el servicio en
+  /// segundo plano. Hay que llamarlo cada vez que cambia la configuración: el
+  /// servicio y el receptor de arranque leen esos valores sin que exista un
+  /// motor de Flutter vivo.
+  static Future<void> configure({
+    required int presses,
+    required int windowMs,
+    required bool backgroundEnabled,
+  }) async {
+    if (!Platform.isAndroid) return;
+    await _method.invokeMethod('configure', {
+      'presses': presses,
+      'windowMs': windowMs,
+      'backgroundEnabled': backgroundEnabled,
+    });
+  }
+
+  static Future<bool> isBackgroundServiceRunning() async {
+    if (!Platform.isAndroid) return false;
+    final running = await _method.invokeMethod<bool>(
+      'isBackgroundServiceRunning',
+    );
+    return running ?? false;
+  }
+
+  /// Disparo que ocurrió sin la app viva (el servicio la acaba de levantar).
+  /// Devuelve el instante del gesto, o null si no hay ninguno pendiente.
+  static Future<DateTime?> consumePendingTrigger() async {
+    if (!Platform.isAndroid) return null;
+    final at = await _method.invokeMethod<int>('consumePendingTrigger');
+    return at == null ? null : DateTime.fromMillisecondsSinceEpoch(at);
+  }
+
+  static Stream<VolumeButtonEvent> get onEvent {
     if (!Platform.isAndroid) return const Stream.empty();
     return _events.receiveBroadcastStream().map((event) {
       final map = Map<String, dynamic>.from(event as Map);
       return VolumeButtonEvent(
-        button: map['button'] as String,
+        type: map['type'] as String? ?? 'press',
+        source: map['source'] as String?,
         timestamp: map['timestamp'] as int,
       );
     });

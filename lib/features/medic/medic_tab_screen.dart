@@ -2,12 +2,12 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import '../../core/glass.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../domain/models/chat_message.dart';
 import '../../state/medic_chat_provider.dart';
 import '../../state/premium_provider.dart';
 import '../../state/settings_provider.dart';
+import '../premium/upgrade_cta.dart';
 
 // Puerto de components/tabs/medic-tab.tsx: chat de apoyo psicológico con Claude
 // vía /api/chat, con fallback a respuestas enlatadas si falla la red. Gateado
@@ -21,8 +21,8 @@ class MedicTabScreen extends ConsumerWidget {
 
     return premiumAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => _UpgradeBanner(),
-      data: (isPremium) => isPremium ? _ChatBody() : _UpgradeBanner(),
+      error: (_, _) => const _UpgradeBanner(),
+      data: (isPremium) => isPremium ? _ChatBody() : const _UpgradeBanner(),
     );
   }
 }
@@ -32,38 +32,9 @@ class _UpgradeBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.workspace_premium_outlined, size: 48, color: primary),
-            const SizedBox(height: 16),
-            Text(
-              'medic_premiumGateTitle'.tr(),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'medic_premiumGateDesc'.tr(),
-              style: const TextStyle(color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            // Antes el banner terminaba aquí: la persona leía que necesita
-            // Premium y no tenía a dónde tocar — había que adivinar que la
-            // contratación vive en Ajustes.
-            FilledButton.icon(
-              onPressed: () => context.push('/settings'),
-              icon: const Icon(Icons.workspace_premium, size: 18),
-              label: Text('update_plan'.tr()),
-            ),
-          ],
-        ),
-      ),
+    return PremiumGateCard(
+      title: 'medic_premiumGateTitle'.tr(),
+      description: 'medic_premiumGateDesc'.tr(),
     );
   }
 }
@@ -80,21 +51,9 @@ class _ChatBodyState extends ConsumerState<_ChatBody> {
   final _scrollController = ScrollController();
 
   List<(IconData, String, String)> get _quickPrompts => [
-    (
-      Icons.favorite_border,
-      'medic_anxiety'.tr(),
-      'medic_anxietyMsg'.tr(),
-    ),
-    (
-      Icons.air,
-      'medic_breathing'.tr(),
-      'medic_breathingMsg'.tr(),
-    ),
-    (
-      Icons.chat_bubble_outline,
-      'medic_talk'.tr(),
-      'medic_talkMsg'.tr(),
-    ),
+    (Icons.favorite_border, 'medic_anxiety'.tr(), 'medic_anxietyMsg'.tr()),
+    (Icons.air, 'medic_breathing'.tr(), 'medic_breathingMsg'.tr()),
+    (Icons.chat_bubble_outline, 'medic_talk'.tr(), 'medic_talkMsg'.tr()),
     (
       Icons.emoji_emotions_outlined,
       'medic_techniques'.tr(),

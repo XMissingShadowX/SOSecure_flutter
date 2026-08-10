@@ -12,6 +12,7 @@ import '../../state/location_provider.dart';
 import '../../state/premium_provider.dart';
 import '../../state/settings_provider.dart';
 import '../../state/sos_provider.dart';
+import '../premium/upgrade_cta.dart';
 import 'live_stream_viewer.dart';
 
 // Puerto del ítem LIVE_ID de emergency-chat.tsx: vista previa de la propia
@@ -392,14 +393,10 @@ class _Conversation extends ConsumerWidget {
     if (isAi &&
         !(isPremiumAsync.valueOrNull ?? false) &&
         !isPremiumAsync.isLoading) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'chat_aiPremiumGateDesc'.tr(),
-            textAlign: TextAlign.center,
-          ),
-        ),
+      return PremiumGateCard(
+        icon: Icons.auto_awesome,
+        title: 'chat_aiPremiumGateTitle'.tr(),
+        description: 'chat_aiPremiumGateDesc'.tr(),
       );
     }
 

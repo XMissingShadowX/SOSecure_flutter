@@ -72,6 +72,7 @@ class Sos extends _$Sos {
   final _alertsRepo = AlertsRepository();
   final _recordingsRepo = RecordingsRepository();
   Timer? _locationTimer;
+  bool _activating = false;
   Timer? _pendingAlertTimer;
 
   @override
@@ -84,8 +85,19 @@ class Sos extends _$Sos {
   }
 
   Future<void> activate() async {
-    if (state.active) return;
+    // El guard de reentrada viene de cambios-ferP2: `state.active` por sí solo
+    // no basta porque se pone en true más abajo, de forma asíncrona, y el gesto
+    // del botón de volumen puede disparar activate() dos veces antes de eso.
+    if (state.active || _activating) return;
+    _activating = true;
+    try {
+      await _activate();
+    } finally {
+      _activating = false;
+    }
+  }
 
+  Future<void> _activate() async {
     final contacts = ref.read(contactsProvider).valueOrNull ?? [];
     final names = contacts.map((c) => c.name).toList();
 
@@ -104,10 +116,7 @@ class Sos extends _$Sos {
     // tiempo; el código simplemente nunca las usó y mandaba el texto en
     // español escrito a mano.
     unawaited(
-      SosAlarm.triggerUrgent(
-        'sos_alertActivated'.tr(),
-        'sos_alertSent'.tr(),
-      ),
+      SosAlarm.triggerUrgent('sos_alertActivated'.tr(), 'sos_alertSent'.tr()),
     );
 
     // La grabación es evidencia suplementaria — si falla, la alerta procede igual.

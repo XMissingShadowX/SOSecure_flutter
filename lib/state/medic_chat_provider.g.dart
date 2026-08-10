@@ -6,7 +6,7 @@ part of 'medic_chat_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$medicChatHash() => r'b6af7098a3f03fe757ab1d3365498da0068a1b18';
+String _$medicChatHash() => r'7a434e126727e100495d4b0f7258104b8d3e41df';
 
 /// See also [MedicChat].
 @ProviderFor(MedicChat)
