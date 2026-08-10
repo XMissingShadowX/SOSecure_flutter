@@ -6,7 +6,7 @@ part of 'live_broadcast_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$liveBroadcastHash() => r'06536be6cac8f5bf378deaae65ea8c73d539ce9f';
+String _$liveBroadcastHash() => r'e05e62e9a016677109b3ce42b4a5f111363b0d9b';
 
 /// See also [LiveBroadcast].
 @ProviderFor(LiveBroadcast)

@@ -22,7 +22,7 @@ final emergencyChatOpenProvider =
     );
 
 typedef _$EmergencyChatOpen = Notifier<bool>;
-String _$emergencyChatHash() => r'ae5025cd2a3476658a5b9fcce9c8f7269db452df';
+String _$emergencyChatHash() => r'6a8a02de8c422f868c834ef16c4b7b376610d6a9';
 
 /// See also [EmergencyChat].
 @ProviderFor(EmergencyChat)

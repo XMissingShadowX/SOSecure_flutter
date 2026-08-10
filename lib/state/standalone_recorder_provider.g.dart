@@ -7,7 +7,7 @@ part of 'standalone_recorder_provider.dart';
 // **************************************************************************
 
 String _$standaloneRecorderHash() =>
-    r'f19d76c8e366c007f281e41466c6f609d243d3ce';
+    r'aaae31c36b30420383d338d303c1dc594ef1feb9';
 
 /// See also [StandaloneRecorder].
 @ProviderFor(StandaloneRecorder)

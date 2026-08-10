@@ -53,6 +53,7 @@ class Sos extends _$Sos {
   final _alertsRepo = AlertsRepository();
   final _recordingsRepo = RecordingsRepository();
   Timer? _locationTimer;
+  bool _activating = false;
 
   @override
   SosState build() {
@@ -61,9 +62,22 @@ class Sos extends _$Sos {
   }
 
   Future<void> activate() async {
-    if (state.active) return;
-    final location = ref.read(locationWatcherProvider);
-    if (!location.hasCoordinates) return;
+    if (state.active || _activating) return;
+    _activating = true;
+    try {
+      await _activate();
+    } finally {
+      _activating = false;
+    }
+  }
+
+  Future<void> _activate() async {
+    // Con la app recién abierta (por ejemplo cuando el gesto del botón de
+    // volumen la levanta desde cero) el watcher de ubicación todavía no tiene
+    // el primer fix: salir de inmediato dejaba la alerta sin enviar y sin que
+    // el usuario se enterara. Se le da margen al GPS antes de rendirse.
+    final location = await _awaitCoordinates();
+    if (location == null) return;
 
     final contacts = ref.read(contactsProvider).valueOrNull ?? [];
     final names = contacts.map((c) => c.name).toList();
@@ -118,6 +132,34 @@ class Sos extends _$Sos {
               },
             );
       }
+    }
+  }
+
+  // Espera hasta [timeout] a que el watcher único de ubicación entregue un fix.
+  // Devuelve null si no llegó ninguno — sin coordenadas no hay alerta que crear
+  // (la tabla sos_alerts las exige).
+  Future<LocationState?> _awaitCoordinates({
+    Duration timeout = const Duration(seconds: 20),
+  }) async {
+    final current = ref.read(locationWatcherProvider);
+    if (current.hasCoordinates) return current;
+
+    final completer = Completer<LocationState?>();
+    final subscription = ref.listen<LocationState>(locationWatcherProvider, (
+      _,
+      next,
+    ) {
+      if (next.hasCoordinates && !completer.isCompleted) completer.complete(next);
+    });
+    final timer = Timer(timeout, () {
+      if (!completer.isCompleted) completer.complete(null);
+    });
+
+    try {
+      return await completer.future;
+    } finally {
+      timer.cancel();
+      subscription.close();
     }
   }
 

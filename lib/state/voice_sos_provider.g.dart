@@ -6,7 +6,7 @@ part of 'voice_sos_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$voiceSosHash() => r'188de6666c093a838b6477854bfb7276ae288e2e';
+String _$voiceSosHash() => r'09c7ba58a206bb157d9e84fa3a69a95e5ad4d94e';
 
 /// See also [VoiceSos].
 @ProviderFor(VoiceSos)

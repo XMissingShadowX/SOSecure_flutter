@@ -6,7 +6,7 @@ part of 'volume_sos_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$volumeSosHash() => r'5cec63fd52fede85de152181bb52f5cbd236f2ad';
+String _$volumeSosHash() => r'b982a264dc320c4090abd65b5c329f89335674f1';
 
 /// See also [VolumeSos].
 @ProviderFor(VolumeSos)

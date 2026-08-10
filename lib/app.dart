@@ -6,6 +6,7 @@ import 'core/indigenous_locale_fallback.dart';
 import 'core/router.dart';
 import 'core/theme.dart';
 import 'state/settings_provider.dart';
+import 'state/volume_sos_provider.dart';
 
 class SosecureApp extends ConsumerWidget {
   const SosecureApp({super.key});
@@ -13,6 +14,11 @@ class SosecureApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(appThemeModeProvider);
+    // Se instancia desde la raíz, no desde el shell: cuando el gesto del botón
+    // de volumen levanta la app estando cerrada, el disparo pendiente tiene que
+    // consumirse aunque la primera pantalla sea el bloqueo por PIN o el gate de
+    // permisos — esperar a que el usuario llegue al shell haría inútil el gesto.
+    ref.watch(volumeSosProvider);
     return MaterialApp.router(
       title: 'SOSecure',
       debugShowCheckedModeBanner: false,

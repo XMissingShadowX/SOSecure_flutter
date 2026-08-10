@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/env.dart';
@@ -527,7 +530,80 @@ class _VolumeSosCard extends ConsumerWidget {
             ),
             style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
+          // El gesto solo sirve si funciona con el teléfono en el bolsillo:
+          // esto enciende el servicio nativo que lo detecta con la pantalla
+          // apagada, bloqueada o con la app cerrada (Android; en iOS no hay
+          // API pública de botones de volumen).
+          if (Platform.isAndroid) ...[
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text('settings_volumeBackground'.tr()),
+              subtitle: Text(
+                'settings_volumeBackgroundDesc'.tr(),
+                style: const TextStyle(fontSize: 12),
+              ),
+              value: volume.backgroundEnabled,
+              onChanged: notifier.setBackgroundEnabled,
+            ),
+            if (volume.backgroundEnabled)
+              const _BatteryOptimizationTile(),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+// Con la optimización de batería activa, Android congela el proceso al rato de
+// apagar la pantalla y el gesto deja de responder justo cuando más falta hace.
+// No se pide sola al arrancar (es intrusiva): se ofrece aquí, junto al ajuste
+// que la necesita, y se oculta cuando ya está concedida.
+class _BatteryOptimizationTile extends StatefulWidget {
+  const _BatteryOptimizationTile();
+
+  @override
+  State<_BatteryOptimizationTile> createState() =>
+      _BatteryOptimizationTileState();
+}
+
+class _BatteryOptimizationTileState extends State<_BatteryOptimizationTile> {
+  bool? _exempt;
+
+  @override
+  void initState() {
+    super.initState();
+    _check();
+  }
+
+  Future<void> _check() async {
+    final status = await Permission.ignoreBatteryOptimizations.status;
+    if (!mounted) return;
+    setState(() => _exempt = status.isGranted);
+  }
+
+  Future<void> _request() async {
+    await Permission.ignoreBatteryOptimizations.request();
+    await _check();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_exempt == null || _exempt == true) return const SizedBox.shrink();
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        Icons.battery_alert_outlined,
+        color: Theme.of(context).colorScheme.error,
+      ),
+      title: Text('settings_volumeBatteryTitle'.tr()),
+      subtitle: Text(
+        'settings_volumeBatteryDesc'.tr(),
+        style: const TextStyle(fontSize: 12),
+      ),
+      trailing: TextButton(
+        onPressed: _request,
+        child: Text('settings_volumeBatteryAction'.tr()),
       ),
     );
   }
