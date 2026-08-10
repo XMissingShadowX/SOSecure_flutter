@@ -221,9 +221,9 @@ class _ArrivedWellCardState extends ConsumerState<_ArrivedWellCard> {
     setState(() => _sending = true);
 
     final now = DateTime.now();
-    final text =
-        '✅ Llegué bien a mi destino — ${now.toLocal().toString().substring(0, 16)}\n\n'
-        'Mensaje enviado automáticamente desde la app SOSecure.';
+    final text = 'after_arrivedMessage'.tr(
+      namedArgs: {'time': now.toLocal().toString().substring(0, 16)},
+    );
 
     var sent = 0;
     for (final contact in contacts) {

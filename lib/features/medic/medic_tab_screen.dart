@@ -51,21 +51,9 @@ class _ChatBodyState extends ConsumerState<_ChatBody> {
   final _scrollController = ScrollController();
 
   List<(IconData, String, String)> get _quickPrompts => [
-    (
-      Icons.favorite_border,
-      'medic_anxiety'.tr(),
-      'medic_anxietyMsg'.tr(),
-    ),
-    (
-      Icons.air,
-      'medic_breathing'.tr(),
-      'medic_breathingMsg'.tr(),
-    ),
-    (
-      Icons.chat_bubble_outline,
-      'medic_talk'.tr(),
-      'medic_talkMsg'.tr(),
-    ),
+    (Icons.favorite_border, 'medic_anxiety'.tr(), 'medic_anxietyMsg'.tr()),
+    (Icons.air, 'medic_breathing'.tr(), 'medic_breathingMsg'.tr()),
+    (Icons.chat_bubble_outline, 'medic_talk'.tr(), 'medic_talkMsg'.tr()),
     (
       Icons.emoji_emotions_outlined,
       'medic_techniques'.tr(),

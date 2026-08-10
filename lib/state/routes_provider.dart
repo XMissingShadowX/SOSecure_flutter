@@ -53,13 +53,19 @@ class RoutesState {
     );
   }
 
-  static Map<String, String> get _names => {
-    'safest': 'routes_safest'.tr(),
-    'fastest': 'routes_fastest'.tr(),
-    'alternate': 'routes_alternate'.tr(),
-  };
-  static String nameFor(String id, int index) =>
-      _names[id] ?? 'routes_routeN'.tr(namedArgs: {'n': '${index + 1}'});
+  // El id viene por posición y es solo la clave de selección; NO es una
+  // afirmación sobre la ruta. Antes el nombre salía de ese id, así que "la más
+  // rápida" era simplemente la segunda que devolvía el servidor. Ahora se
+  // etiqueta con el dato medido.
+  //
+  // "La más segura" sigue siendo la primera por posición, porque hoy nadie
+  // calcula seguridad por trazo (el puntaje solo mira incidentes cerca del
+  // destino, igual para las tres rutas). Está reportado aparte.
+  static String nameFor(String id, int index, {required bool isFastest}) {
+    if (isFastest) return 'routes_fastest'.tr();
+    if (index == 0) return 'routes_safest'.tr();
+    return 'routes_alternate'.tr();
+  }
 }
 
 // Puerto de la orquestación de routes-tab.tsx (handleSearch/resetRoute +
@@ -115,6 +121,15 @@ class Routes extends _$Routes {
         incidents: tuples,
       );
 
+      // Índice de la ruta realmente más rápida, para que la etiqueta
+      // corresponda al tiempo que se muestra a su lado.
+      var fastestIndex = 0;
+      for (var i = 1; i < raw.length; i++) {
+        if (raw[i].durationSeconds < raw[fastestIndex].durationSeconds) {
+          fastestIndex = i;
+        }
+      }
+
       final options = <RouteOption>[];
       for (var i = 0; i < raw.length; i++) {
         final id = i < _ids.length ? _ids[i] : 'route-$i';
@@ -127,7 +142,7 @@ class Routes extends _$Routes {
         options.add(
           RouteOption(
             id: id,
-            name: RoutesState.nameFor(id, i),
+            name: RoutesState.nameFor(id, i, isFastest: i == fastestIndex),
             points: raw[i].points,
             distanceMeters: raw[i].distanceMeters,
             durationSeconds: raw[i].durationSeconds,
@@ -150,7 +165,7 @@ class Routes extends _$Routes {
     } catch (e) {
       state = state.copyWith(
         loading: false,
-        error: 'No se pudieron calcular las rutas: $e',
+        error: 'routes_calcFailed'.tr(namedArgs: {'e': '$e'}),
       );
     }
   }

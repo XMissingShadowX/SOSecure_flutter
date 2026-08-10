@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
 // Foreground service de Android para que la grabación/ubicación del SOS activo
@@ -11,6 +12,12 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 // principal de Flutter. En iOS, el equivalente son los background modes declarados en
 // Info.plist (audio + location), sin contraparte de "foreground service".
 class SosForegroundService {
+  // OJO: init() corre desde main() ANTES de runApp, es decir antes de que
+  // easy_localization tenga las traducciones cargadas — un .tr() aquí
+  // devolvería la clave cruda. Por eso el nombre del canal se queda fijo.
+  // Tampoco ganaría mucho traducirlo: Android congela el nombre del canal
+  // cuando se crea y no lo renombra al cambiar el idioma de la app. Lo que sí
+  // lee la usuaria (título y texto de la notificación) se traduce en start().
   static void init() {
     if (!Platform.isAndroid) return;
     FlutterForegroundTask.init(
@@ -48,9 +55,8 @@ class SosForegroundService {
     await requestPermissions();
     await FlutterForegroundTask.startService(
       serviceId: 501,
-      notificationTitle: 'SOSecure — Alerta activa',
-      notificationText:
-          'Grabando y compartiendo tu ubicación en segundo plano.',
+      notificationTitle: 'service_sosActiveTitle'.tr(),
+      notificationText: 'service_sosActiveBody'.tr(),
     );
   }
 

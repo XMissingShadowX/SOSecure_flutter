@@ -358,7 +358,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: locales
               .map(
                 (l) => ListTile(
-                  title: Text(l.languageCode.toUpperCase()),
+                  // El nombre nativo, no el código: "MYN" no le dice nada a
+                  // alguien que habla maya. Cada nombre se escribe igual en
+                  // los 5 archivos de traducción, así que la lista se lee
+                  // igual sin importar el idioma activo.
+                  title: Text('lang_${l.languageCode}'.tr()),
+                  trailing: l.languageCode == context.locale.languageCode
+                      ? const Icon(Icons.check)
+                      : null,
                   onTap: () => Navigator.pop(context, l),
                 ),
               )

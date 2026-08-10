@@ -66,6 +66,18 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
     super.dispose();
   }
 
+  // Ubicación actual para sesgar la búsqueda de lugares hacia lo cercano. Si
+  // todavía no hay fix de GPS se manda null y Photon rankea como antes.
+  double? get _nearLatitude => ref.read(locationWatcherProvider).latitude;
+  double? get _nearLongitude => ref.read(locationWatcherProvider).longitude;
+
+  // El debounce cancela el temporizador, pero no la petición ya en vuelo: si la
+  // vieja tardaba más que la nueva, sus resultados pisaban a los recientes.
+  // Cada búsqueda toma un turno y solo aplica su resultado si sigue siendo la
+  // última.
+  int _originSearchTurn = 0;
+  int _searchTurn = 0;
+
   void _onOriginChanged(String value) {
     _originDebounce?.cancel();
     if (value.length < 3) {
@@ -73,16 +85,21 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
       return;
     }
     _originDebounce = Timer(const Duration(milliseconds: 500), () async {
+      final turn = ++_originSearchTurn;
       setState(() => _searchingOrigin = true);
       try {
-        final results = await _repo.searchPlaces(value);
-        if (!mounted) return;
+        final results = await _repo.searchPlaces(
+          value,
+          nearLatitude: _nearLatitude,
+          nearLongitude: _nearLongitude,
+        );
+        if (!mounted || turn != _originSearchTurn) return;
         setState(() {
           _originSuggestions = results;
           _searchingOrigin = false;
         });
       } catch (_) {
-        if (!mounted) return;
+        if (!mounted || turn != _originSearchTurn) return;
         setState(() {
           _originSuggestions = [];
           _searchingOrigin = false;
@@ -119,23 +136,28 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
       return;
     }
     _debounce = Timer(const Duration(milliseconds: 500), () async {
+      final turn = ++_searchTurn;
       setState(() {
         _searching = true;
         _searchError = null;
       });
       try {
-        final results = await _repo.searchPlaces(value);
-        if (!mounted) return;
+        final results = await _repo.searchPlaces(
+          value,
+          nearLatitude: _nearLatitude,
+          nearLongitude: _nearLongitude,
+        );
+        if (!mounted || turn != _searchTurn) return;
         setState(() {
           _suggestions = results;
           _searching = false;
         });
       } catch (e) {
-        if (!mounted) return;
+        if (!mounted || turn != _searchTurn) return;
         setState(() {
           _suggestions = [];
           _searching = false;
-          _searchError = 'No se pudo buscar: $e';
+          _searchError = 'routes_searchFailed'.tr(namedArgs: {'e': '$e'});
         });
       }
     });
@@ -363,6 +385,8 @@ class _RoutesTabScreenState extends ConsumerState<RoutesTabScreen> {
                   ).colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
+                // Igual que el banner del asistente médico: antes solo
+                // informaba del límite, sin ninguna forma de actuar.
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
