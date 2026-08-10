@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:vibration/vibration.dart';
 
@@ -28,18 +29,23 @@ class SosAlarm {
     );
 
     if (Platform.isAndroid) {
-      const sosChannel = AndroidNotificationChannel(
+      // init() se llama de forma perezosa desde trigger*/notifyMessage, ya con
+      // la app corriendo, así que aquí .tr() sí resuelve. Aun así Android
+      // congela el nombre del canal al crearlo: si la usuaria cambia de idioma
+      // después, estos dos nombres se quedan en el idioma del primer uso hasta
+      // que se reinstale la app. Es una limitación de la plataforma.
+      final sosChannel = AndroidNotificationChannel(
         'sosecure_sos',
-        'Alertas SOS',
-        description: 'Notificaciones de alerta SOS activada',
+        'notif_channelSosName'.tr(),
+        description: 'notif_channelSosDesc'.tr(),
         importance: Importance.max,
         playSound: true,
         enableVibration: true,
       );
-      const chatChannel = AndroidNotificationChannel(
+      final chatChannel = AndroidNotificationChannel(
         'sosecure_chat',
-        'Mensajes',
-        description: 'Mensajes nuevos del chat de contactos de emergencia',
+        'notif_channelChatName'.tr(),
+        description: 'notif_channelChatDesc'.tr(),
         importance: Importance.high,
         playSound: true,
       );
@@ -70,9 +76,8 @@ class SosAlarm {
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'sosecure_chat',
-          'Mensajes',
-          channelDescription:
-              'Mensajes nuevos del chat de contactos de emergencia',
+          'notif_channelChatName'.tr(),
+          channelDescription: 'notif_channelChatDesc'.tr(),
           importance: Importance.high,
           priority: Priority.high,
           playSound: true,
@@ -110,8 +115,8 @@ class SosAlarm {
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'sosecure_sos',
-          'Alertas SOS',
-          channelDescription: 'Notificaciones de alerta SOS activada',
+          'notif_channelSosName'.tr(),
+          channelDescription: 'notif_channelSosDesc'.tr(),
           importance: urgent ? Importance.max : Importance.high,
           priority: urgent ? Priority.max : Priority.high,
           ongoing: urgent,
