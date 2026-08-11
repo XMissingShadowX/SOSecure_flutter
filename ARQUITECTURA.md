@@ -116,6 +116,34 @@ cambio de dos líneas que se hizo en los checkout, y no afecta a la web.
 
 ---
 
+### Correos de auth y deep links
+
+El **Site URL** de Supabase es `sosecure://login-callback` (deep link a la app,
+registrado en `AndroidManifest.xml` y manejado solo por `supabase_flutter`).
+Como es un esquema personalizado, **todo flujo debe pasar su `redirectTo`
+explícito** — si no coincide con la allowlist, Supabase cae al Site URL y el
+correo llega con un link que en escritorio no hace nada.
+
+| Flujo | `redirectTo` que manda |
+|---|---|
+| Registro desde la app | `sosecure://login-callback` |
+| Registro desde la web | `${clientAppUrl()}/auth/callback` |
+| Olvidé mi PIN | `${APP_URL}/auth/callback` |
+| Recuperar contraseña (web) | `${window.location.origin}/auth/reset-password` |
+
+Todos esos destinos tienen que estar en **Authentication → URL Configuration →
+Redirect URLs**. Lo más robusto son comodines: `https://www.sosecure.site/**` y
+`http://localhost:3000/**`.
+
+> **El código del correo es de un solo uso.** Cualquier `useEffect` que llame
+> `exchangeCodeForSession` debe correr **exactamente una vez**: guard con
+> `useRef`, leer el código de `window.location` (no de `useSearchParams`) y
+> borrarlo de la URL al leerlo. Un `t` de `useTranslation` en las dependencias
+> basta para que el efecto se repita y el segundo canje falle con "el enlace ha
+> expirado", aunque el primero haya funcionado.
+
+---
+
 ## 4. Flujo de pago (el más enredado)
 
 Mercado Pago y PayPal son flujos de **navegador**; no hay compra in-app. Lo que
@@ -335,9 +363,11 @@ curl.exe -s -X POST -H "Content-Type: application/json" -d "{}" `
 
 - **Captura inmediata del pago**: hoy depende del webhook. Un endpoint que la app
   llame con Bearer pasándole el `preapproval_id` quitaría la espera.
-- **`NEXT_PUBLIC_APP_URL` y la allowlist de Supabase**: deben usar la misma forma
-  del dominio que `Env.apiBaseUrl` (con `www`). Si no coinciden, el Magic Link
-  del flujo "olvidé mi PIN" cae en la Site URL por defecto y se rompe.
+- **Captura del pago desde la app**: el flujo "olvidé mi PIN" iniciado en la app
+  manda al usuario a la **web** (`/api/pin` usa `APP_URL` fijo), no de vuelta a
+  la app. Funciona, pero es un desvío. Se arreglaría dejando que la app indique
+  el destino (`sosecure://login-callback`), validado server-side contra una
+  lista blanca para no abrir un redirect abusable.
 - **Rate limiting del PIN**: es un `Map` en memoria, no persiste entre instancias
   serverless. Reemplazar por Redis/Upstash en producción real.
 - **Rutas cookie-only**: invitaciones de familia y de tracking no son usables
