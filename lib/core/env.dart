@@ -7,12 +7,15 @@ class Env {
 
   // Mismo backend Next.js que consume la web — las rutas /api/pin, /api/chat, etc.
   // viven ahí, sin cambios (ver plan de migración).
-  // NOTA: 'sosecure.site' es el dominio documentado en CLAUDE.md como fuente de verdad
-  // para los redirects de Magic Link (Supabase Auth) — pero en la red de prueba usada
-  // para la Fase 2 ese dominio no resolvía DNS en el teléfono físico (fallo consistente,
-  // no transitorio; sí resuelve desde la PC). Se usa el dominio de Vercel directamente
-  // para desbloquear las pruebas. Si se prueba el flujo de "olvidé mi PIN"
-  // (Magic Link) desde Flutter, revisar si Supabase acepta este dominio en su allowlist
-  // de redirect URLs, o volver a 'https://sosecure.site' una vez resuelto el DNS.
-  static const apiBaseUrl = 'https://sosecure-ten.vercel.app';
+  //
+  // Va CON 'www' a propósito. El dominio canónico en Vercel es
+  // www.sosecure.site; 'https://sosecure.site' responde 307 hacia el www, y en
+  // ese redirect un POST pierde el cuerpo y devuelve HTML ("Redirecting...")
+  // en vez de JSON — el mismo fallo que causaba la barra final faltante en
+  // plan_api.dart. Verificado: sin www da 307, con www da 401 JSON.
+  //
+  // Antes apuntaba a 'https://sosecure-ten.vercel.app' porque sosecure.site no
+  // resolvía DNS en el teléfono de pruebas; ese problema ya no ocurre (ping OK
+  // desde el Pixel a 216.198.79.1).
+  static const apiBaseUrl = 'https://www.sosecure.site';
 }
