@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/glass.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -690,6 +691,30 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
     );
   }
 
+  // Con el TextField todavía enfocado, Navigator.pop(ctx) dispara a la vez el
+  // cierre del diálogo Y la pérdida de foco (que oculta el teclado) — ambos
+  // intentan tocar la misma parte del árbol de widgets en el mismo frame.
+  // En logcat esto se ve como dos solicitudes de ocultar el teclado
+  // separadas (una por el foco, otra por el propio cierre del diálogo) a
+  // ~1s de diferencia, y termina en la aserción de framework
+  // "_dependents.isEmpty" (pantalla roja).
+  //
+  // En este dispositivo hay un plugin de teclado de fábrica (libMEOW,
+  // visible en logcat) que deja una barra de sugerencias pegada en pantalla
+  // después de que el teclado "se oculta" — cualquier toque posterior, en
+  // cualquier parte de la app, encuentra esa vista nativa todavía viva
+  // referenciando algo que Flutter ya desmontó. `unfocus()` por sí solo dejó
+  // el desmontaje en manos del framework; pedirle explícitamente al canal de
+  // texto que cierre la conexión, y darle un respiro antes de cerrar el
+  // diálogo, le da tiempo al sistema a limpiar esa barra por su cuenta.
+  Future<void> _closeKeywordDialog(BuildContext ctx, [String? result]) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await SystemChannels.textInput.invokeMethod('TextInput.hide');
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    if (!ctx.mounted) return;
+    Navigator.pop(ctx, result);
+  }
+
   Future<void> _editKeyword(
     BuildContext context,
     WidgetRef ref,
@@ -704,18 +729,17 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
           title: Text('before_voiceKeyword'.tr()),
           content: TextField(
             controller: controller,
-            autofocus: true,
             decoration: InputDecoration(
               hintText: 'before_voiceKeywordPlaceholder'.tr(),
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(ctx),
+              onPressed: () => _closeKeywordDialog(ctx),
               child: Text('cancel'.tr()),
             ),
             FilledButton(
-              onPressed: () => Navigator.pop(ctx, controller.text),
+              onPressed: () => _closeKeywordDialog(ctx, controller.text),
               child: Text('save'.tr()),
             ),
           ],
