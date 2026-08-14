@@ -99,9 +99,38 @@ bool _matchesKeyword(String transcript, String keyword) {
 // Google Speech no reconoce náhuatl, maya ni tseltal, así que esos caen a
 // español — mismo criterio que el fallback de MaterialLocalizations en
 // core/indigenous_locale_fallback.dart.
-String _preferredSpeechLocale() {
-  final languageCode = Intl.getCurrentLocale().split(RegExp('[_-]')).first;
-  return languageCode == 'en' ? 'en_US' : 'es_MX';
+//
+// Lee el idioma directo de SharedPreferences (clave 'locale') en vez de
+// Intl.getCurrentLocale(). easy_localization NUNCA sincroniza
+// Intl.defaultLocale (no lo asigna en ningún punto de su código fuente) —
+// así que Intl.getCurrentLocale() queda pegado al locale del proceso/sistema
+// sin importar qué idioma elija el usuario dentro de la app. Confirmado en
+// dispositivo: con la app en español, el reconocedor seguía recibiendo
+// 'en-US' porque el sistema del teléfono está en inglés — la corrección de
+// locale de abajo (es_US) nunca llegaba a usarse en la práctica.
+// easy_localization persiste su propio locale bajo esa clave exacta (ver
+// EasyLocalizationController._saveLocale en su código fuente); como este
+// Notifier no tiene BuildContext para leer context.locale, se lee la
+// preferencia directo, igual que ya hace el resto de este archivo.
+//
+// 'es_US' y NO 'es_MX': confirmado en dispositivo (logcat, SodaLPDirGenerator
+// / LanguagePackConfigImpl) que los paquetes de reconocimiento OFFLINE de
+// Google solo existen para 'es-ES' y 'es-US' — 'es_MX' ni siquiera aparece
+// en la lista de paquetes descargables, en ningún dispositivo. Pedirlo
+// explícitamente hacía que _resolveSpeechLocale() lo encontrara como locale
+// "soportado" (esa lista sí incluye es_MX, pero es la de reconocimiento por
+// RED, no la de modelos offline) y se quedara con él — así que la escucha
+// nunca llegaba a abrir el micrófono en cualquier escenario que cayera a
+// reconocimiento local (sin red, o con la cuenta de Google fallando). De las
+// dos variantes offline reales, 'es_US' es la más cercana al español
+// mexicano en vocabulario (no usa "vosotros"/tuteo distinto de España).
+Future<String> _preferredSpeechLocale() async {
+  final prefs = await SharedPreferences.getInstance();
+  // 'es' de respaldo: coincide con fallbackLocale en main.dart si el usuario
+  // nunca eligió idioma a mano (SharedPreferences aún no tiene la clave).
+  final saved = prefs.getString('locale') ?? 'es';
+  final languageCode = saved.split(RegExp('[_-]')).first;
+  return languageCode == 'en' ? 'en_US' : 'es_US';
 }
 
 @Riverpod(keepAlive: true)
@@ -209,20 +238,30 @@ class VoiceSos extends _$VoiceSos {
   // ausente hace que la escucha falle sin explicación.
   Future<String?> _resolveSpeechLocale() async {
     if (_localeResolved) return _cachedLocaleId;
-    final preferred = _preferredSpeechLocale();
+    final preferred = await _preferredSpeechLocale();
+    // Confirmado en dispositivo: el separador de localeId puede venir con
+    // guion ("es-US", como lo reporta Android en logcat) o con guion bajo
+    // ("es_US", el formato que arma _preferredSpeechLocale). Comparar
+    // directo contra 'es_US' fallaba SIEMPRE contra un listado en formato
+    // con guion, cayendo al primer "es*" del listado (que resultó ser
+    // es-ES) en vez del que en verdad se pidió.
+    String normalize(String id) => id.replaceAll('-', '_');
+    final normalizedPreferred = normalize(preferred);
     try {
       final available = await _speech.locales();
       _cachedLocaleId = null;
       for (final locale in available) {
-        if (locale.localeId == preferred) {
-          _cachedLocaleId = preferred;
+        if (normalize(locale.localeId) == normalizedPreferred) {
+          // Se guarda el id tal como lo reporta el plugin, no el nuestro —
+          // así se manda de vuelta exactamente en el formato que espera.
+          _cachedLocaleId = locale.localeId;
           break;
         }
       }
       if (_cachedLocaleId == null) {
-        final language = preferred.split('_').first;
+        final language = normalizedPreferred.split('_').first;
         for (final locale in available) {
-          if (locale.localeId.startsWith(language)) {
+          if (normalize(locale.localeId).startsWith(language)) {
             _cachedLocaleId = locale.localeId;
             break;
           }
