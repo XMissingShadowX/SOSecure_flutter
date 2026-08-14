@@ -58,6 +58,52 @@ class PlanApi {
     return url;
   }
 
+  /// Invita a un correo al plan familiar del usuario actual. Espeja
+  /// POST /api/family/invite (un solo elemento en `members`, la app invita de
+  /// a uno en vez del batch que soporta la web). Lanza si el correo es
+  /// inválido, si ya se llegó al límite de 5, o si la fila individual falló.
+  Future<void> inviteFamilyMember({required String email, String? name}) async {
+    final res = await http.post(
+      Uri.parse('${Env.apiBaseUrl}/api/family/invite/'),
+      headers: await _authHeaders(),
+      body: jsonEncode({
+        'members': [
+          {'email': email, if (name != null && name.isNotEmpty) 'name': name},
+        ],
+      }),
+    );
+    final body = jsonDecode(res.body) as Map<String, dynamic>?;
+    if (res.statusCode != 200) {
+      throw Exception(
+        body?['error'] ??
+            'family_inviteError'.tr(),
+      );
+    }
+    final results = body?['results'] as List?;
+    final result = results?.isNotEmpty == true
+        ? results!.first as Map<String, dynamic>
+        : null;
+    if (result == null || result['ok'] != true) {
+      throw Exception(result?['reason'] ?? 'family_inviteError'.tr());
+    }
+  }
+
+  /// Vincula la cuenta actual a un grupo familiar por su token de invitación.
+  /// Espeja POST /api/family/accept. Devuelve el nombre del grupo al que se
+  /// unió, para el mensaje de bienvenida.
+  Future<String> acceptFamilyInvite(String token) async {
+    final res = await http.post(
+      Uri.parse('${Env.apiBaseUrl}/api/family/accept/'),
+      headers: await _authHeaders(),
+      body: jsonEncode({'token': token}),
+    );
+    final body = jsonDecode(res.body) as Map<String, dynamic>?;
+    if (res.statusCode != 200) {
+      throw Exception(body?['error'] ?? 'family_joinInvalidToken'.tr());
+    }
+    return body?['group_name'] as String? ?? 'Plan Familiar';
+  }
+
   Future<void> cancelPremium() async {
     final res = await http.post(
       Uri.parse('${Env.apiBaseUrl}/api/premium/cancel/'),
