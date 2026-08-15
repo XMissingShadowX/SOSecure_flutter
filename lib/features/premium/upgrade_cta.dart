@@ -1,31 +1,14 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/env.dart';
-
-// Ruta de pago del Premium individual en el sitio web — misma que usa el
-// _PlanCard de settings_screen.dart (Mercado Pago/PayPal son flujos web, no
-// hay compra in-app).
-const _premiumCheckoutPath = '/plan-premium/pago';
-const _familyCheckoutPath = '/plan-familiar';
-
-Future<void> _openCheckout(BuildContext context, String path) async {
-  final uri = Uri.parse('${Env.apiBaseUrl}$path');
-  final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-  if (!opened && context.mounted) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('premium_ctaOpenFailed'.tr())));
-  }
-}
+import 'checkout_launcher.dart';
 
 /// Abre la contratación de Premium en el navegador. Para muros de pago que no
 /// usan [UpgradeButtons] porque no tienen espacio para un botón completo (la
 /// pastilla sobre una ruta bloqueada, por ejemplo).
 Future<void> openPremiumCheckout(BuildContext context) =>
-    _openCheckout(context, _premiumCheckoutPath);
+    openCheckout(context, family: false);
 
 // Los muros de pago que ve un usuario del plan gratuito (chat de apoyo,
 // SOSecure AI, rutas alternativas, límite diario de búsquedas) explicaban la
@@ -36,12 +19,12 @@ Future<void> openPremiumCheckout(BuildContext context) =>
 class UpgradeButtons extends StatelessWidget {
   const UpgradeButtons({
     super.key,
-    this.checkoutPath = _premiumCheckoutPath,
+    this.family = false,
     this.dense = false,
   });
 
-  /// Ruta del sitio web que abre el botón primario.
-  final String checkoutPath;
+  /// true para contratar el Plan Familiar; false (por defecto) para el Premium.
+  final bool family;
 
   /// Versión compacta (un solo botón, sin "Ver planes") para banners
   /// pequeños donde dos botones apilados no caben.
@@ -50,7 +33,7 @@ class UpgradeButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final upgrade = FilledButton.icon(
-      onPressed: () => _openCheckout(context, checkoutPath),
+      onPressed: () => openCheckout(context, family: family),
       icon: const Icon(Icons.workspace_premium, size: 18),
       label: Text('premium_ctaUpgrade'.tr()),
     );
@@ -123,7 +106,7 @@ class PremiumGateCard extends StatelessWidget {
               const UpgradeButtons(),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () => _openCheckout(context, _familyCheckoutPath),
+                onPressed: () => openCheckout(context, family: true),
                 child: Text('premium_ctaFamily'.tr()),
               ),
             ],

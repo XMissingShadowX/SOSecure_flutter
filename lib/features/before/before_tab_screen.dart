@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/glass.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,13 +14,12 @@ import '../../state/location_provider.dart';
 import '../../platform/sos_alarm.dart';
 import '../../state/security_timer_provider.dart';
 import '../../state/voice_sos_provider.dart';
-import '../map/map_tab_screen.dart';
 import '../routes/routes_tab_screen.dart';
 
-// Puerto parcial de components/tabs/before-tab.tsx para la Fase 3: compartir
-// ubicación en vivo (hooks/use-live-location.ts) y el temporizador de
-// seguridad. Rutas/mapa (OSRM, Photon, flutter_map) llegan en la Fase 5 — el
-// resto de esta pantalla queda placeholder hasta entonces.
+// Puerto parcial de components/tabs/before-tab.tsx: compartir ubicación en
+// vivo (hooks/use-live-location.ts) y el temporizador de seguridad, además
+// de rutas seguras (OSRM/Photon vía RoutesTabScreen). El mapa de incidentes
+// que vivía aquí se movió a HomeTabScreen.
 class BeforeTabScreen extends ConsumerStatefulWidget {
   const BeforeTabScreen({super.key});
 
@@ -59,10 +59,10 @@ class _BeforeTabScreenState extends ConsumerState<BeforeTabScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Orden y agrupación calcada de before-tab.tsx: cabecera, luego las
-    // secciones colapsables de rutas y mapa (ambas cerradas por defecto, igual
-    // que routesExpanded/mapExpanded en la web), y después temporizador, zonas
-    // seguras, ubicación en vivo y palabra clave — en ese orden exacto.
+    // Orden y agrupación calcada de before-tab.tsx: cabecera, luego rutas,
+    // temporizador, zonas seguras, ubicación en vivo y palabra clave — en ese
+    // orden exacto. La planificación de rutas ya no colapsa: queda siempre
+    // visible en vez de arrancar cerrada como routesExpanded en la web.
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: [
@@ -76,17 +76,12 @@ class _BeforeTabScreenState extends ConsumerState<BeforeTabScreen> {
         // primera vez.
         _BeforeStatusCard(),
         const SizedBox(height: 16),
-        _CollapsibleSection(
-          icon: Icons.navigation_outlined,
-          title: 'before_safeRoute'.tr(),
-          child: RoutesTabScreen(),
+        Text(
+          'before_safeRoute'.tr(),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
         ),
-        const SizedBox(height: 16),
-        _CollapsibleSection(
-          icon: Icons.map_outlined,
-          title: 'before_mapIncidents'.tr(),
-          child: MapTabScreen(),
-        ),
+        const SizedBox(height: 8),
+        RoutesTabScreen(),
         const SizedBox(height: 16),
         _SecurityTimerCard(),
         const SizedBox(height: 16),
@@ -95,62 +90,6 @@ class _BeforeTabScreenState extends ConsumerState<BeforeTabScreen> {
         _LiveSharingCard(),
         const SizedBox(height: 16),
         _VoiceKeywordCard(),
-      ],
-    );
-  }
-}
-
-// Puerto de los botones routesExpanded/mapExpanded de before-tab.tsx — ambas
-// secciones arrancan colapsadas y el usuario las abre a demanda.
-class _CollapsibleSection extends StatefulWidget {
-  final IconData icon;
-  final String title;
-  final Widget child;
-  const _CollapsibleSection({
-    required this.icon,
-    required this.title,
-    required this.child,
-  });
-
-  @override
-  State<_CollapsibleSection> createState() => _CollapsibleSectionState();
-}
-
-class _CollapsibleSectionState extends State<_CollapsibleSection> {
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          onTap: () => setState(() => _expanded = !_expanded),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                Icon(widget.icon, size: 20, color: primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-                Icon(
-                  _expanded ? Icons.expand_less : Icons.expand_more,
-                  color: Colors.grey,
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (_expanded) ...[const SizedBox(height: 8), widget.child],
       ],
     );
   }
@@ -690,35 +629,66 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
     );
   }
 
+  // Con el TextField todavía enfocado, Navigator.pop(ctx) dispara a la vez el
+  // cierre del diálogo Y la pérdida de foco (que oculta el teclado) — ambos
+  // intentan tocar la misma parte del árbol de widgets en el mismo frame.
+  // En logcat esto se ve como dos solicitudes de ocultar el teclado
+  // separadas (una por el foco, otra por el propio cierre del diálogo) a
+  // ~1s de diferencia, y termina en la aserción de framework
+  // "_dependents.isEmpty" (pantalla roja).
+  //
+  // En este dispositivo hay un plugin de teclado de fábrica (libMEOW,
+  // visible en logcat) que deja una barra de sugerencias pegada en pantalla
+  // después de que el teclado "se oculta" — cualquier toque posterior, en
+  // cualquier parte de la app, encuentra esa vista nativa todavía viva
+  // referenciando algo que Flutter ya desmontó. `unfocus()` por sí solo dejó
+  // el desmontaje en manos del framework; pedirle explícitamente al canal de
+  // texto que cierre la conexión, y darle un respiro antes de cerrar el
+  // diálogo, le da tiempo al sistema a limpiar esa barra por su cuenta.
+  Future<void> _closeKeywordDialog(BuildContext ctx, [String? result]) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await SystemChannels.textInput.invokeMethod('TextInput.hide');
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    if (!ctx.mounted) return;
+    Navigator.pop(ctx, result);
+  }
+
   Future<void> _editKeyword(
     BuildContext context,
     WidgetRef ref,
     String current,
   ) async {
     final controller = TextEditingController(text: current);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('before_voiceKeyword'.tr()),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: 'before_voiceKeywordPlaceholder'.tr(),
+    final String? result;
+    try {
+      result = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('before_voiceKeyword'.tr()),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              hintText: 'before_voiceKeywordPlaceholder'.tr(),
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => _closeKeywordDialog(ctx),
+              child: Text('cancel'.tr()),
+            ),
+            FilledButton(
+              onPressed: () => _closeKeywordDialog(ctx, controller.text),
+              child: Text('save'.tr()),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('cancel'.tr()),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: Text('save'.tr()),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      // El controller se crea en cada apertura del diálogo; sin esto queda
+      // colgando una instancia por cada vez que se cambia la palabra clave.
+      controller.dispose();
+    }
+
     if (result != null && result.trim().isNotEmpty) {
       await ref
           .read(voiceSosProvider.notifier)

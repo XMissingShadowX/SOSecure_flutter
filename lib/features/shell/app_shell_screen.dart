@@ -156,7 +156,15 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
               ],
             ],
           ),
-          actions: const [_AccountMenuButton(), SizedBox(width: 4)],
+          actions: [
+            // Antes vivía como tarjeta fija en Home (_SafetyTipsCard) — quedaba
+            // enterrada por scroll y solo visible en esa tab. Como botón junto al
+            // de cuenta, los consejos quedan a un toque desde cualquier pestaña.
+            // Respeta simpleMode igual que la tarjeta original (oculto ahí).
+            if (!simpleMode) const _SafetyTipsButton(),
+            const _AccountMenuButton(),
+            const SizedBox(width: 4),
+          ],
         ),
         body: Stack(
           children: [
@@ -338,6 +346,75 @@ class _HeaderBadge extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Botón de "Consejos de seguridad" en el header, junto al de cuenta. Antes
+// era _SafetyTipsCard, una tarjeta fija en Home (home_tip1/2/3) — movida
+// aquí para que quede accesible desde cualquier pestaña, no solo Home.
+class _SafetyTipsButton extends StatelessWidget {
+  const _SafetyTipsButton();
+
+  List<String> _tips() => ['home_tip1'.tr(), 'home_tip2'.tr(), 'home_tip3'.tr()];
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.lightbulb_outline),
+      tooltip: 'home_tips_title'.tr(),
+      onPressed: () => showDialog<void>(
+        context: context,
+        builder: (context) {
+          final primary = Theme.of(context).colorScheme.primary;
+          final tips = _tips();
+          return AlertDialog(
+            title: Text('home_tips_title'.tr()),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < tips.length; i++)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: i < tips.length - 1 ? 10 : 0,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 24,
+                          height: 24,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: primary.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${i + 1}',
+                            style: TextStyle(
+                              color: primary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(tips[i])),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('close'.tr()),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

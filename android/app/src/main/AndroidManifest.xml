@@ -118,5 +118,15 @@
             <category android:name="android.intent.category.BROWSABLE"/>
             <data android:scheme="https"/>
         </intent>
+        <!-- Requerido por speech_to_text (paquete usado por voice_sos_provider.dart)
+             con targetSdk 30+: sin esto, el plugin no puede DESCUBRIR el servicio de
+             reconocimiento de voz del sistema por package visibility (Android 11+) —
+             initialize()/listen() no lanzan error, simplemente no hay ningún
+             reconocedor disponible para bindear, así que la palabra clave nunca se
+             detecta aunque el permiso de micrófono ya esté concedido. Ver el README
+             del paquete, sección "Android SDK 30 or later". -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
     </queries>
 </manifest>
