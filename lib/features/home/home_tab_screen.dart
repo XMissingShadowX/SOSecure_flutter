@@ -13,6 +13,7 @@ import '../../state/contacts_provider.dart';
 import '../../state/location_provider.dart';
 import '../../state/places_provider.dart';
 import '../../state/settings_provider.dart';
+import '../map/map_tab_screen.dart';
 
 const _placeIcons = {
   'home': Icons.home,
@@ -68,11 +69,17 @@ class HomeTabScreen extends ConsumerWidget {
         children: [
           _StatusBanner(location: location),
           const SizedBox(height: 16),
-          if (!simpleMode) ...[
-            _SafetyTipsCard(),
-            const SizedBox(height: 16),
-          ],
           _LocationCard(location: location, simpleMode: simpleMode),
+          const SizedBox(height: 16),
+          // Movido desde la pestaña Antes: el mapa de incidentes comunitario
+          // encaja mejor junto a la ubicación propia en el resumen de Home.
+          // Sin colapsar — visible siempre, a diferencia de como vivía en Antes.
+          Text(
+            'before_mapIncidents'.tr(),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          ),
+          const SizedBox(height: 8),
+          MapTabScreen(),
           const SizedBox(height: 16),
           _FrequentPlacesCard(places: places, location: location),
           const SizedBox(height: 16),
@@ -143,75 +150,6 @@ class _StatusBanner extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Puerto de la tarjeta "Consejos de Seguridad" de home-tab.tsx (home_tip1/2/3)
-// — se ocultaba por completo en el port original, faltaba entre el banner de
-// estado y la tarjeta de ubicación, igual que en la web.
-class _SafetyTipsCard extends StatelessWidget {
-  const _SafetyTipsCard();
-
-  List<String> get _tips => [
-    'home_tip1'.tr(),
-    'home_tip2'.tr(),
-    'home_tip3'.tr(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    return GlassCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'home_tips_title'.tr(),
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            for (var i = 0; i < _tips.length; i++)
-              Padding(
-                padding: EdgeInsets.only(bottom: i < _tips.length - 1 ? 10 : 0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: primary.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '${i + 1}',
-                        style: TextStyle(
-                          color: primary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        _tips[i],
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
           ],
         ),
       ),
