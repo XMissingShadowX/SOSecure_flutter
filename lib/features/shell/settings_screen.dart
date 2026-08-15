@@ -11,6 +11,7 @@ import '../../data/api/pin_api.dart';
 import '../../data/api/plan_api.dart';
 import '../../data/repositories/plan_repository.dart';
 import '../../data/supabase_client.dart';
+import '../../platform/volume_button_channel.dart';
 import '../../state/settings_provider.dart';
 import '../../state/volume_sos_provider.dart';
 import '../premium/checkout_launcher.dart';
@@ -859,8 +860,10 @@ class _VolumeSosCard extends ConsumerWidget {
               value: volume.backgroundEnabled,
               onChanged: notifier.setBackgroundEnabled,
             ),
-            if (volume.backgroundEnabled)
+            if (volume.backgroundEnabled) ...[
               const _BatteryOptimizationTile(),
+              const _FullScreenIntentTile(),
+            ],
           ],
         ],
       ),
@@ -917,6 +920,77 @@ class _BatteryOptimizationTileState extends State<_BatteryOptimizationTile> {
       trailing: TextButton(
         onPressed: _request,
         child: Text('settings_volumeBatteryAction'.tr()),
+      ),
+    );
+  }
+}
+
+// Android 14+ dejó de conceder USE_FULL_SCREEN_INTENT por defecto (ver
+// MainActivity.kt): sin este permiso, el gesto con el teléfono cerrado y
+// bloqueado degrada a una notificación normal en vez de abrir la app sobre la
+// pantalla de bloqueo. En versiones previas siempre viene concedido, así que
+// el tile ni se muestra. Mismo patrón que _BatteryOptimizationTile: se
+// re-chequea al volver de Ajustes, vía didChangeAppLifecycleState.
+class _FullScreenIntentTile extends StatefulWidget {
+  const _FullScreenIntentTile();
+
+  @override
+  State<_FullScreenIntentTile> createState() => _FullScreenIntentTileState();
+}
+
+class _FullScreenIntentTileState extends State<_FullScreenIntentTile>
+    with WidgetsBindingObserver {
+  bool? _granted;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _check();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _check();
+  }
+
+  Future<void> _check() async {
+    final granted = await VolumeButtonChannel.canUseFullScreenIntent();
+    if (!mounted) return;
+    setState(() => _granted = granted);
+  }
+
+  Future<void> _request() async {
+    await VolumeButtonChannel.requestFullScreenIntentPermission();
+    // El usuario vuelve de Ajustes del sistema y dispara didChangeAppLifecycleState
+    // (resumed), que re-chequea; esto solo cubre el caso en que ya estaba
+    // concedido y el sistema no llegó a pausar la app.
+    await _check();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_granted == null || _granted == true) return const SizedBox.shrink();
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        Icons.lock_open_outlined,
+        color: Theme.of(context).colorScheme.error,
+      ),
+      title: Text('settings_volumeFullscreenTitle'.tr()),
+      subtitle: Text(
+        'settings_volumeFullscreenDesc'.tr(),
+        style: const TextStyle(fontSize: 12),
+      ),
+      trailing: TextButton(
+        onPressed: _request,
+        child: Text('settings_volumeFullscreenAction'.tr()),
       ),
     );
   }

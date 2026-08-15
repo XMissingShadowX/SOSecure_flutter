@@ -9,6 +9,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.database.ContentObserver
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.VolumeProvider
 import android.media.session.MediaSession
@@ -66,6 +68,13 @@ class VolumeSosService : Service() {
 
     private var mediaSession: MediaSession? = null
     private var volumeObserver: ContentObserver? = null
+    private var audioFocusRequest: AudioFocusRequest? = null
+
+    // No reacciona a nada — solo necesitamos el foco para que el sistema nos
+    // considere la sesión de audio "activa" a efectos de enrutar las teclas de
+    // volumen (ver requestAudioFocus). No se reproduce audio real, así que no
+    // hay nada que pausar/reanudar cuando se gana o pierde el foco.
+    private val focusListener = AudioManager.OnAudioFocusChangeListener {}
 
     // Con la pantalla apagada y sin nada reproduciéndose, las teclas de volumen
     // no tocan el stream de música sino el de timbre/notificaciones: vigilar
@@ -108,7 +117,49 @@ class VolumeSosService : Service() {
             it.release()
         }
         mediaSession = null
+        abandonAudioFocus()
         super.onDestroy()
+    }
+
+    // Una MediaSession "activa" con estado STATE_PLAYING generalmente basta para
+    // que el sistema le enrute las teclas de volumen, pero en la práctica el
+    // enrutado con la pantalla apagada es más confiable si la sesión también
+    // sostiene el foco de audio — es la misma señal que usa Android para decidir
+    // qué app es "la que está sonando ahora" y darle prioridad sobre las teclas
+    // físicas. No se reproduce nada real: es foco silencioso, solo para ganar esa
+    // prioridad, igual que hacen las apps de disparador por botón de volumen.
+    private fun requestAudioFocus() {
+        val audio = getSystemService(AudioManager::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val attributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build()
+            val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(attributes)
+                .setOnAudioFocusChangeListener(focusListener)
+                .build()
+            audioFocusRequest = request
+            audio.requestAudioFocus(request)
+        } else {
+            @Suppress("DEPRECATION")
+            audio.requestAudioFocus(
+                focusListener,
+                AudioManager.STREAM_MUSIC,
+                AudioManager.AUDIOFOCUS_GAIN,
+            )
+        }
+    }
+
+    private fun abandonAudioFocus() {
+        val audio = getSystemService(AudioManager::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioFocusRequest?.let { audio.abandonAudioFocusRequest(it) }
+        } else {
+            @Suppress("DEPRECATION")
+            audio.abandonAudioFocus(focusListener)
+        }
+        audioFocusRequest = null
     }
 
     private fun startInForeground() {
@@ -205,6 +256,7 @@ class VolumeSosService : Service() {
             setPlaybackToRemote(provider)
             isActive = true
         }
+        requestAudioFocus()
     }
 
     private fun startVolumeObserver() {

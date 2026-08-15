@@ -1,8 +1,11 @@
 package com.sosecure.sosecure_flutter
 
+import android.app.NotificationManager
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.KeyEvent
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -80,6 +83,40 @@ class MainActivity : FlutterActivity() {
 
                     "consumePendingTrigger" ->
                         result.success(VolumeSosDetector.consumePendingTrigger(this))
+
+                    // Android 14+ (API 34) dejó de conceder USE_FULL_SCREEN_INTENT
+                    // por defecto: sin este permiso especial, wakeUpApp() en
+                    // VolumeSosDetector.kt degrada a una notificación normal en vez
+                    // de abrir la app sobre la pantalla de bloqueo — el disparo con
+                    // el teléfono cerrado deja de "sentirse" inmediato. En versiones
+                    // previas el permiso ya viene concedido, así que se reporta
+                    // siempre true.
+                    "canUseFullScreenIntent" -> {
+                        val granted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                            getSystemService(NotificationManager::class.java).canUseFullScreenIntent()
+                        } else {
+                            true
+                        }
+                        result.success(granted)
+                    }
+
+                    "requestFullScreenIntentPermission" -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                            try {
+                                startActivity(
+                                    Intent(
+                                        Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                                        Uri.parse("package:$packageName"),
+                                    )
+                                )
+                            } catch (_: Exception) {
+                                // Algunos fabricantes no implementan esta pantalla de
+                                // ajustes pese a declarar el API level; sin ella no hay
+                                // nada más que hacer del lado nativo.
+                            }
+                        }
+                        result.success(null)
+                    }
 
                     else -> result.notImplemented()
                 }

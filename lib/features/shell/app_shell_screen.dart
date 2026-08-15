@@ -37,6 +37,32 @@ class AppShellScreen extends ConsumerStatefulWidget {
 class _AppShellScreenState extends ConsumerState<AppShellScreen> {
   int _index = 0;
 
+  // Instancias de las 5 tabs, cacheadas y solo reconstruidas cuando cambia el
+  // locale (ver _tabsFor). Antes eran una getter que fabricaba widgets nuevos
+  // en cada build() de este State —y este State reconstruye seguido: tema,
+  // conectividad, cola offline, modo simple, panel del chat—, así que CUALQUIERA
+  // de esos cambios forzaba un rebuild completo de las 5 pantallas (incluidas
+  // las 4 que ni se ven, apiladas en el IndexedStack). Con instancias cacheadas,
+  // `identical(oldWidget, newWidget)` deja que Flutter salte por completo esa
+  // reconstrucción salvo que el locale realmente haya cambiado — que es lo único
+  // que de verdad la necesita, ver el historial de este archivo.
+  Locale? _tabsLocale;
+  List<Widget>? _tabs;
+
+  List<Widget> _tabsFor(Locale locale) {
+    if (_tabs == null || _tabsLocale != locale) {
+      _tabsLocale = locale;
+      _tabs = [
+        HomeTabScreen(),
+        BeforeTabScreen(),
+        DuringTabScreen(),
+        AfterTabScreen(),
+        MedicTabScreen(),
+      ];
+    }
+    return _tabs!;
+  }
+
   // Espeja el `isOnline` de app-shell.tsx (useState + listeners window
   // online/offline). Vive como estado local del shell —igual que en la web—
   // en vez de como provider: solo el badge del header lo consume. La cola
@@ -64,24 +90,6 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
     final online = !results.contains(ConnectivityResult.none);
     if (mounted && online != _isOnline) setState(() => _isOnline = online);
   }
-
-  // Getter (no `final`/`static const`) para que cada build() de
-  // AppShellScreen construya instancias NUEVAS de las 5 pantallas. Un widget
-  // const (o una misma instancia reutilizada vía `final`) es tratado por
-  // Flutter como "sin cambios" en `updateChild` (compara por identidad de
-  // objeto) y salta por completo su reconstrucción — con la lista
-  // cacheada en un `final`/`static const` aquí, TODO el contenido de las 5
-  // pestañas quedaba congelado en el idioma con el que se montó la app la
-  // primera vez, sin reaccionar a cambios de idioma posteriores — esto era
-  // la causa raíz de la mayoría de los textos reportados como
-  // "hardcodeados" en Home/Durante/Después/etc.
-  List<Widget> get _tabs => [
-    HomeTabScreen(),
-    BeforeTabScreen(),
-    DuringTabScreen(),
-    AfterTabScreen(),
-    MedicTabScreen(),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -213,7 +221,10 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
                             ),
                           )
                         : theme,
-                    child: IndexedStack(index: _index, children: _tabs),
+                    child: IndexedStack(
+                      index: _index,
+                      children: _tabsFor(context.locale),
+                    ),
                   ),
                 ),
               ],
