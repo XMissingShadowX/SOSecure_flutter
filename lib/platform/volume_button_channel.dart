@@ -70,6 +70,25 @@ class VolumeButtonChannel {
     return running ?? false;
   }
 
+  /// Android 14+ (API 34) dejó de conceder `USE_FULL_SCREEN_INTENT` por
+  /// defecto: sin él, el disparo con la app cerrada y el teléfono bloqueado
+  /// degrada a una notificación normal en vez de abrir la app sobre la
+  /// pantalla de bloqueo. En versiones previas el permiso ya viene concedido.
+  static Future<bool> canUseFullScreenIntent() async {
+    if (!Platform.isAndroid) return true;
+    final granted = await _method.invokeMethod<bool>(
+      'canUseFullScreenIntent',
+    );
+    return granted ?? true;
+  }
+
+  /// Abre la pantalla de ajustes del sistema donde se concede el permiso
+  /// anterior. No hay API para pedirlo con un diálogo in-app.
+  static Future<void> requestFullScreenIntentPermission() async {
+    if (!Platform.isAndroid) return;
+    await _method.invokeMethod('requestFullScreenIntentPermission');
+  }
+
   /// Disparo que ocurrió sin la app viva (el servicio la acaba de levantar).
   /// Devuelve el instante del gesto, o null si no hay ninguno pendiente.
   static Future<DateTime?> consumePendingTrigger() async {
