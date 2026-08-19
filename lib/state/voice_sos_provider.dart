@@ -17,6 +17,20 @@ const _enabledKey = 'sosecure.voiceSosEnabled';
 const _keywordKey = 'sosecure.voiceKeyword';
 const _defaultKeyword = 'socorro';
 
+// Palabra que se ofrece a quien nunca configuró una propia, según el idioma
+// guardado. Antes _defaultKeyword era el único valor posible: con la app en
+// inglés, la tarjeta decía 'Listening: "socorro"' y la persona decía "help"
+// sin que nada coincidiera nunca. Esto NO toca lo que alguien ya tenga
+// guardado — solo cambia qué se ofrece a quien nunca tocó el campo.
+const _defaultKeywordByLanguage = {'en': 'help'};
+
+Future<String> _defaultKeywordForSavedLocale() async {
+  final prefs = await SharedPreferences.getInstance();
+  final saved = prefs.getString('locale') ?? 'es';
+  final languageCode = saved.split(RegExp('[_-]')).first;
+  return _defaultKeywordByLanguage[languageCode] ?? _defaultKeyword;
+}
+
 // Reinicio normal tras un silencio (el reconocedor de Android corta solo).
 const _restartDelay = Duration(milliseconds: 300);
 // Tope del backoff cuando venimos fallando. No hay límite de reintentos: esta
@@ -148,11 +162,18 @@ class VoiceSos extends _$VoiceSos {
   bool _userSetEnabled = false;
   int _consecutiveFailures = 0;
   Timer? _restartTimer;
-  // La lista de idiomas del dispositivo se consulta por canal nativo; se
-  // resuelve una vez y se reutiliza, porque _listenOnce corre cada pocos
-  // segundos durante el ciclo normal de escucha.
-  String? _cachedLocaleId;
-  bool _localeResolved = false;
+  // Los idiomas que el dispositivo tiene instalados (_speech.locales(), canal
+  // nativo) no cambian mientras la app corre — eso sí se cachea para siempre.
+  // El idioma PREFERIDO es distinto: viene de SharedPreferences y la persona
+  // puede cambiarlo en Ajustes a mitad de sesión. Antes se cacheaba el
+  // resultado completo de la resolución (preferido + disponibles) una sola
+  // vez para siempre: alguien que abría la app en español y luego cambiaba a
+  // inglés en Ajustes se quedaba con el reconocedor escuchando en español el
+  // resto de la sesión, sin ningún aviso. _preferredSpeechLocale() ya es
+  // barato (SharedPreferences cachea el valor en memoria tras la primera
+  // lectura), así que no hace falta cachearlo aparte — se relee cada vez y
+  // solo se compara contra la lista de disponibles, que esa sí es estable.
+  List<LocaleName>? _cachedAvailableLocales;
 
   @override
   VoiceSosState build() {
@@ -182,7 +203,8 @@ class VoiceSos extends _$VoiceSos {
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool(_enabledKey) ?? false;
-    final keyword = prefs.getString(_keywordKey) ?? _defaultKeyword;
+    final saved = prefs.getString(_keywordKey);
+    final keyword = saved ?? await _defaultKeywordForSavedLocale();
     if (_disposed || _userSetEnabled) return;
     state = state.copyWith(enabled: enabled, keyword: keyword);
     if (enabled) _listenOnce();
@@ -237,7 +259,6 @@ class VoiceSos extends _$VoiceSos {
   // devuelve null para que el reconocedor use el del sistema. Forzar un locale
   // ausente hace que la escucha falle sin explicación.
   Future<String?> _resolveSpeechLocale() async {
-    if (_localeResolved) return _cachedLocaleId;
     final preferred = await _preferredSpeechLocale();
     // Confirmado en dispositivo: el separador de localeId puede venir con
     // guion ("es-US", como lo reporta Android en logcat) o con guion bajo
@@ -248,30 +269,24 @@ class VoiceSos extends _$VoiceSos {
     String normalize(String id) => id.replaceAll('-', '_');
     final normalizedPreferred = normalize(preferred);
     try {
-      final available = await _speech.locales();
-      _cachedLocaleId = null;
+      final available = _cachedAvailableLocales ??= await _speech.locales();
       for (final locale in available) {
         if (normalize(locale.localeId) == normalizedPreferred) {
-          // Se guarda el id tal como lo reporta el plugin, no el nuestro —
+          // Se devuelve el id tal como lo reporta el plugin, no el nuestro —
           // así se manda de vuelta exactamente en el formato que espera.
-          _cachedLocaleId = locale.localeId;
-          break;
+          return locale.localeId;
         }
       }
-      if (_cachedLocaleId == null) {
-        final language = normalizedPreferred.split('_').first;
-        for (final locale in available) {
-          if (normalize(locale.localeId).startsWith(language)) {
-            _cachedLocaleId = locale.localeId;
-            break;
-          }
+      final language = normalizedPreferred.split('_').first;
+      for (final locale in available) {
+        if (normalize(locale.localeId).startsWith(language)) {
+          return locale.localeId;
         }
       }
+      return null;
     } catch (_) {
-      _cachedLocaleId = preferred;
+      return preferred;
     }
-    _localeResolved = true;
-    return _cachedLocaleId;
   }
 
   Future<void> _listenOnce() async {
