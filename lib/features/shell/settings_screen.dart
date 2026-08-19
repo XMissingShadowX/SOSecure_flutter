@@ -517,7 +517,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _PlanCard(
                 icon: Icons.family_restroom_rounded,
                 nameLabel: 'plan_familiarNameLabel'.tr(),
-                priceLabel: '\$295',
+                priceLabel: '\$229',
                 periodLabel: 'plan_familiarPeriod'.tr(),
                 taglineLabel: 'plan_familiarTagline'.tr(),
                 benefits: [
