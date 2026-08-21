@@ -50,7 +50,16 @@ class AlertsRepository {
       'longitude': longitude,
     });
 
-    await _notifyContacts(alert: alert, user: user);
+    try {
+      await _notifyContacts(alert: alert, user: user);
+    } catch (_) {
+      // La notificación es best-effort — la alerta ya se guardó igual. Sin
+      // este try/catch, un fallo de red en la Edge Function (timeout, cold
+      // start) tiraba la excepción hasta Sos._activate(), que lo trataba como
+      // si createAlert() entero hubiera fallado y encolaba una alerta
+      // DUPLICADA en offline_queue_provider — dos filas "active" para una
+      // sola emergencia, con la notificación real nunca reintentada.
+    }
 
     return alert;
   }

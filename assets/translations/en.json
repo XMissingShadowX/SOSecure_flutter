@@ -750,5 +750,9 @@
   "settings_volumeBatteryAction": "Allow",
   "settings_volumeFullscreenTitle": "Open over lock screen",
   "settings_volumeFullscreenDesc": "Without this permission, Android 14+ only shows a notification instead of opening the app automatically while the phone is locked.",
-  "settings_volumeFullscreenAction": "Allow"
+  "settings_volumeFullscreenAction": "Allow",
+  "sos_activating": "Getting your location...",
+  "settings_volumeServiceDownTitle": "The service stopped",
+  "settings_volumeServiceDownDesc": "Android paused it (low memory or manufacturer battery saving). The screen-off gesture isn't active right now.",
+  "settings_volumeServiceDownAction": "Restart"
 }

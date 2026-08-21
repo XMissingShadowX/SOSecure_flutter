@@ -547,6 +547,8 @@ class _FrequentPlacesCard extends ConsumerWidget {
       ),
     );
     debounce?.cancel();
+    labelController.dispose();
+    addressController.dispose();
   }
 }
 
@@ -859,6 +861,9 @@ class _ContactsCard extends ConsumerWidget {
         ),
       ),
     );
+    nameController.dispose();
+    phoneController.dispose();
+    emailController.dispose();
   }
 }
 

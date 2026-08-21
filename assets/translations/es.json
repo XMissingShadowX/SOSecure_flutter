@@ -750,5 +750,9 @@
   "settings_volumeBatteryAction": "Permitir",
   "settings_volumeFullscreenTitle": "Abrir sobre pantalla bloqueada",
   "settings_volumeFullscreenDesc": "Sin este permiso, Android 14 o superior solo muestra una notificación en vez de abrir la app automáticamente cuando el teléfono está bloqueado.",
-  "settings_volumeFullscreenAction": "Permitir"
+  "settings_volumeFullscreenAction": "Permitir",
+  "sos_activating": "Obteniendo tu ubicación...",
+  "settings_volumeServiceDownTitle": "El servicio se detuvo",
+  "settings_volumeServiceDownDesc": "Android lo pausó (memoria baja o ahorro de batería del fabricante). El gesto con la pantalla apagada no está activo ahora mismo.",
+  "settings_volumeServiceDownAction": "Reiniciar"
 }

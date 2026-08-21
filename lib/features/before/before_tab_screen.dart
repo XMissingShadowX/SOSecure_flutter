@@ -719,6 +719,7 @@ class _VoiceKeywordCardState extends ConsumerState<_VoiceKeywordCard> {
         ],
       ),
     );
+    controller.dispose();
     if (result != null && result.trim().isNotEmpty) {
       await ref
           .read(voiceSosProvider.notifier)

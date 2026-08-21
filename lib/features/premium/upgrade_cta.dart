@@ -11,7 +11,7 @@ import '../../core/env.dart';
 const _premiumCheckoutPath = '/plan-premium/pago';
 const _familyCheckoutPath = '/plan-familiar';
 
-Future<void> _openCheckout(BuildContext context, String path) async {
+Future<void> openCheckout(BuildContext context, String path) async {
   final uri = Uri.parse('${Env.apiBaseUrl}$path');
   final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!opened && context.mounted) {
@@ -25,7 +25,7 @@ Future<void> _openCheckout(BuildContext context, String path) async {
 /// usan [UpgradeButtons] porque no tienen espacio para un botón completo (la
 /// pastilla sobre una ruta bloqueada, por ejemplo).
 Future<void> openPremiumCheckout(BuildContext context) =>
-    _openCheckout(context, _premiumCheckoutPath);
+    openCheckout(context, _premiumCheckoutPath);
 
 // Los muros de pago que ve un usuario del plan gratuito (chat de apoyo,
 // SOSecure AI, rutas alternativas, límite diario de búsquedas) explicaban la
@@ -50,7 +50,7 @@ class UpgradeButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final upgrade = FilledButton.icon(
-      onPressed: () => _openCheckout(context, checkoutPath),
+      onPressed: () => openCheckout(context, checkoutPath),
       icon: const Icon(Icons.workspace_premium, size: 18),
       label: Text('premium_ctaUpgrade'.tr()),
     );
@@ -123,7 +123,7 @@ class PremiumGateCard extends StatelessWidget {
               const UpgradeButtons(),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () => _openCheckout(context, _familyCheckoutPath),
+                onPressed: () => openCheckout(context, _familyCheckoutPath),
                 child: Text('premium_ctaFamily'.tr()),
               ),
             ],

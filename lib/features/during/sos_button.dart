@@ -144,6 +144,14 @@ class _SosButtonState extends ConsumerState<SosButton> {
       return _SosActivePanel(sos: sos);
     }
 
+    // Entre que se suelta el botón y que `active` pasa a true puede haber
+    // hasta 20s de espera por el primer fix de GPS (ver Sos._awaitCoordinates)
+    // — sin esto el botón volvía a verse idle en ese lapso, como si el gesto
+    // no hubiera hecho nada, justo durante una emergencia real.
+    if (sos.activating) {
+      return _SosActivatingIndicator(bottomOffset: simpleMode ? 32.0 : 24.0);
+    }
+
     if (widget.hideIdleButton) {
       return const SizedBox.shrink();
     }
@@ -303,6 +311,66 @@ class _SosButtonState extends ConsumerState<SosButton> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// Se muestra en el lapso entre soltar el botón/gesto y que Sos.activate()
+// consigue el primer fix de GPS (hasta 20s, ver Sos._awaitCoordinates). Antes
+// de esto el botón volvía de inmediato a su estado idle en ese lapso, sin
+// ninguna señal de que el gesto sí se había registrado.
+class _SosActivatingIndicator extends StatelessWidget {
+  const _SosActivatingIndicator({required this.bottomOffset});
+
+  final double bottomOffset;
+
+  @override
+  Widget build(BuildContext context) {
+    final destructive = Theme.of(context).colorScheme.error;
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: bottomOffset,
+      child: Center(
+        child: Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: destructive,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: destructive.withValues(alpha: 0.5),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'sos_activating'.tr(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
