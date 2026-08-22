@@ -84,8 +84,19 @@ class Routes extends _$Routes {
     required LatLng origin,
     required GeocodeResult destination,
   }) async {
-    final isPremium = await ref.read(isPremiumProvider.future);
-    final allowed = await _repo.checkAndRecordSearch(isPremium: isPremium);
+    // Sin este try/catch, un fallo de red acá (el chequeo de límite diario de
+    // búsquedas, o el estado premium) tiraba una excepción sin capturar hasta
+    // el call site en routes_tab_screen.dart, que tampoco la atrapa: el state
+    // nunca cambiaba, así que no aparecía ni spinner ni mensaje de error —
+    // el botón de buscar ruta simplemente no hacía nada visible.
+    final bool allowed;
+    try {
+      final isPremium = await ref.read(isPremiumProvider.future);
+      allowed = await _repo.checkAndRecordSearch(isPremium: isPremium);
+    } catch (e) {
+      state = state.copyWith(error: 'No se pudieron calcular las rutas: $e');
+      return;
+    }
     if (!allowed) {
       state = state.copyWith(limitReached: true);
       return;

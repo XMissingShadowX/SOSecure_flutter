@@ -789,5 +789,9 @@
   "lang_tze": "Bats'il K'op",
   "during_emergencyModeSubtitle": "Modo emergencia — reporta y graba evidencia",
   "chat_sosAlertWithLocation": "🚨 ALERTA SOS — Estoy en peligro.\n📍 {mapUrl}\n🎥 Ver en vivo: {liveUrl}",
-  "after_arrivedMessage": "✅ Llegué bien a mi destino — {time}\n\nMensaje enviado automáticamente desde la app SOSecure."
+  "after_arrivedMessage": "✅ Llegué bien a mi destino — {time}\n\nMensaje enviado automáticamente desde la app SOSecure.",
+  "sos_activating": "Activando SOS...",
+  "settings_volumeServiceDownTitle": "El servicio se detuvo",
+  "settings_volumeServiceDownDesc": "Android lo pausó (memoria baja o ahorro de batería del fabricante). El gesto con la pantalla apagada no está activo ahora mismo.",
+  "settings_volumeServiceDownAction": "Reiniciar"
 }

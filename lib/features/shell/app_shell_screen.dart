@@ -95,9 +95,10 @@ class _AppShellScreenState extends ConsumerState<AppShellScreen> {
   Widget build(BuildContext context) {
     final pendingCount = ref.watch(offlineQueueProvider).length;
     final simpleMode = ref.watch(simpleModeProvider);
-    // Mantiene VolumeSos vivo (keepAlive) desde que arranca el shell, escuchando
-    // en toda la app salvo mientras hay un SOS activo — igual que useVolumeSOS
-    // montado globalmente en app-shell.tsx.
+    // Mantiene VolumeSos vivo (keepAlive) desde que arranca el shell — igual
+    // que useVolumeSOS montado globalmente en app-shell.tsx. Sigue escuchando
+    // incluso con un SOS activo (activate() ya es idempotente, ver
+    // volume_sos_provider.dart), no se pausa.
     ref.watch(volumeSosProvider);
 
     final theme = Theme.of(context);

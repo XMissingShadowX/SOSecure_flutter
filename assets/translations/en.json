@@ -789,5 +789,9 @@
   "lang_tze": "Bats'il K'op",
   "during_emergencyModeSubtitle": "Emergency mode — report and record evidence",
   "chat_sosAlertWithLocation": "🚨 SOS ALERT — I am in danger.\n📍 {mapUrl}\n🎥 Watch live: {liveUrl}",
-  "after_arrivedMessage": "✅ I arrived safely — {time}\n\nMessage sent automatically from the SOSecure app."
+  "after_arrivedMessage": "✅ I arrived safely — {time}\n\nMessage sent automatically from the SOSecure app.",
+  "sos_activating": "Activating SOS...",
+  "settings_volumeServiceDownTitle": "The service stopped",
+  "settings_volumeServiceDownDesc": "Android paused it (low memory or manufacturer battery saving). The screen-off gesture isn't active right now.",
+  "settings_volumeServiceDownAction": "Restart"
 }

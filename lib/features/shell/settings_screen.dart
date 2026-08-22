@@ -381,6 +381,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     );
+    controller.dispose();
     if (pin == null || pin.length < 4) return;
     try {
       await _pinApi.savePin(pin: pin, pinEnabled: true);
@@ -863,6 +864,7 @@ class _VolumeSosCard extends ConsumerWidget {
             if (volume.backgroundEnabled) ...[
               const _BatteryOptimizationTile(),
               const _FullScreenIntentTile(),
+              const _ServiceLivenessTile(),
             ],
           ],
         ],
@@ -1136,6 +1138,80 @@ class _FamilyMembersCard extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// Android puede matar el foreground service bajo presión de memoria (o algún
+// fabricante agresivo con la batería lo congela pese a la exención) sin que
+// nada se lo avise al usuario: los otros dos tiles de esta pantalla solo
+// verifican permisos concedidos, no que el servicio siga vivo de verdad. Se
+// re-chequea al abrir la pantalla y al volver a ella (igual que los otros
+// tiles), y el botón simplemente reenvía la configuración actual, que ya
+// reinicia el servicio del lado nativo (ver MainActivity.kt "configure").
+class _ServiceLivenessTile extends ConsumerStatefulWidget {
+  const _ServiceLivenessTile();
+
+  @override
+  ConsumerState<_ServiceLivenessTile> createState() =>
+      _ServiceLivenessTileState();
+}
+
+class _ServiceLivenessTileState extends ConsumerState<_ServiceLivenessTile>
+    with WidgetsBindingObserver {
+  bool? _running;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _check();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _check();
+  }
+
+  Future<void> _check() async {
+    final running = await VolumeButtonChannel.isBackgroundServiceRunning();
+    if (!mounted) return;
+    setState(() => _running = running);
+  }
+
+  // Este tile solo se muestra con volume.backgroundEnabled == true (ver el
+  // condicional en _VolumeSosCard), así que reenviar `true` no cambia el
+  // valor guardado — pero setBackgroundEnabled() igual reempuja la config al
+  // lado nativo, y eso es lo que reinicia el servicio muerto.
+  Future<void> _restart() async {
+    await ref.read(volumeSosProvider.notifier).setBackgroundEnabled(true);
+    await _check();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_running == null || _running == true) return const SizedBox.shrink();
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        Icons.error_outline,
+        color: Theme.of(context).colorScheme.error,
+      ),
+      title: Text('settings_volumeServiceDownTitle'.tr()),
+      subtitle: Text(
+        'settings_volumeServiceDownDesc'.tr(),
+        style: const TextStyle(fontSize: 12),
+      ),
+      trailing: TextButton(
+        onPressed: _restart,
+        child: Text('settings_volumeServiceDownAction'.tr()),
       ),
     );
   }
