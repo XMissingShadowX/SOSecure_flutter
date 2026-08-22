@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/repositories/alerts_repository.dart';
 import '../data/repositories/recordings_repository.dart';
+import '../data/supabase_client.dart';
 import '../domain/models/sos_alert.dart';
 import '../platform/sos_alarm.dart';
 import '../platform/sos_foreground_service.dart';
@@ -30,6 +31,14 @@ const _pendingAlertRetryInterval = Duration(seconds: 2);
 
 class SosState {
   final bool active;
+
+  /// Ventana breve entre que se dispara el gesto (botón, volumen, voz,
+  /// temporizador...) y que `active` pasa a true. Ya no se espera al GPS
+  /// para activar (alarma/grabación arrancan de inmediato en _activate();
+  /// ver locationPending para el registro de la alerta en sí) — este flag
+  /// solo cubre el trabajo síncrono previo. Los call sites deben mostrar
+  /// feedback mientras esto es true.
+  final bool activating;
   final SosAlert? alert;
   final List<String> contactsNotified;
   final bool saving;
@@ -40,6 +49,7 @@ class SosState {
 
   const SosState({
     this.active = false,
+    this.activating = false,
     this.alert,
     this.contactsNotified = const [],
     this.saving = false,
@@ -48,6 +58,7 @@ class SosState {
 
   SosState copyWith({
     bool? active,
+    bool? activating,
     SosAlert? alert,
     List<String>? contactsNotified,
     bool? saving,
@@ -55,6 +66,7 @@ class SosState {
   }) {
     return SosState(
       active: active ?? this.active,
+      activating: activating ?? this.activating,
       alert: alert ?? this.alert,
       contactsNotified: contactsNotified ?? this.contactsNotified,
       saving: saving ?? this.saving,
@@ -89,11 +101,20 @@ class Sos extends _$Sos {
     // no basta porque se pone en true más abajo, de forma asíncrona, y el gesto
     // del botón de volumen puede disparar activate() dos veces antes de eso.
     if (state.active || _activating) return;
+    // Sin sesión no hay a quién asociarle la alerta ni contactos que
+    // notificar (createAlert() exige user_id, y el encolado offline también
+    // requiere currentUserProvider) — activar igual dejaba vibrar/grabar/
+    // notificar como si el SOS hubiera salido, cuando en realidad la alerta
+    // se perdía en silencio. Puede pasar con el gesto de volumen: queda
+    // armado desde la raíz de la app (app.dart), antes del login.
+    if (supabase.auth.currentUser == null) return;
     _activating = true;
+    state = state.copyWith(activating: true);
     try {
       await _activate();
     } finally {
       _activating = false;
+      state = state.copyWith(activating: false);
     }
   }
 
@@ -239,6 +260,11 @@ class Sos extends _$Sos {
 
   // Falsa alarma: descarta grabación, borra alerta/incidente, limpia estado.
   Future<void> cancel() async {
+    // Hoy el único llamador (el diálogo de falsa alarma en sos_button.dart)
+    // solo se muestra con `active == true`, pero sin esta guarda un futuro
+    // call site accidental tiraría abajo el servicio en primer plano y
+    // llamaría a cancelAlert() sin que hubiera nada que cancelar.
+    if (!state.active) return;
     _locationTimer?.cancel();
     _locationTimer = null;
     _pendingAlertTimer?.cancel();

@@ -83,9 +83,19 @@ class StandaloneRecorder extends _$StandaloneRecorder {
 
   Future<File?> stopAudio() async {
     if (state.mode != StandaloneRecMode.audio) return null;
-    final path = await _audioRecorder.stop();
-    state = const StandaloneRecorderState();
-    return path != null ? File(path) : null;
+    try {
+      final path = await _audioRecorder.stop();
+      state = const StandaloneRecorderState();
+      return path != null ? File(path) : null;
+    } catch (e) {
+      // Sin este catch, un fallo acá (canal de plataforma, almacenamiento)
+      // dejaba `mode` clavado en `audio` para siempre: el botón de video
+      // seguía deshabilitado (depende de mode != audio) y el botón de
+      // detener audio no tenía forma de volver a idle sin reiniciar la app —
+      // mismo patrón que ya tiene stopVideo() más abajo.
+      state = StandaloneRecorderState(errorMessage: 'Error al detener: $e');
+      return null;
+    }
   }
 
   Future<void> startVideo() async {
