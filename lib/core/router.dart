@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/supabase_client.dart';
+import '../features/onboarding/deletion_cancelled_screen.dart';
 import '../features/onboarding/login_screen.dart';
 import '../features/onboarding/permission_gate_screen.dart';
 import '../features/onboarding/sign_up_screen.dart';
@@ -48,6 +49,12 @@ GoRouter buildRouter() {
       GoRoute(
         path: '/sign-up-success',
         builder: (context, state) => const SignUpSuccessScreen(),
+      ),
+      // Deliberadamente NO va en `loggingInRoute` — se llega ya logueado
+      // (ver deletion_cancelled_screen.dart).
+      GoRoute(
+        path: '/deletion-cancelled',
+        builder: (context, state) => const DeletionCancelledScreen(),
       ),
       GoRoute(
         path: '/permission-gate',

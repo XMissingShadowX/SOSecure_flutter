@@ -147,4 +147,27 @@ class PlanApi {
       );
     }
   }
+
+  /// Espeja POST /api/delete-account/cancel. Se llama justo después de un
+  /// login exitoso (ver login_screen.dart) — si la cuenta tenía un borrado
+  /// agendado (deleteAccount() de arriba ya no borra al instante, agenda
+  /// scheduled_deletion_at = now() + 30 días) y todavía no se cumplió el
+  /// plazo, volver a iniciar sesión lo cancela automáticamente. Devuelve
+  /// `false` tanto si no había nada que cancelar como si la llamada falló —
+  /// a esta altura del login no vale la pena bloquear ni mostrar un error
+  /// por esto, en el peor caso el usuario simplemente no ve el aviso de
+  /// bienvenida y el borrado sigue su curso sin haberse cancelado.
+  Future<bool> cancelScheduledDeletion() async {
+    try {
+      final res = await http.post(
+        Uri.parse('${Env.apiBaseUrl}/api/delete-account/cancel/'),
+        headers: await _authHeaders(),
+      );
+      if (res.statusCode != 200) return false;
+      final body = jsonDecode(res.body) as Map<String, dynamic>?;
+      return body?['cancelled'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
 }

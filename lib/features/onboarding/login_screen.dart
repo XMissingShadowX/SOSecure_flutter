@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/brand.dart';
+import '../../data/api/plan_api.dart';
 import '../../data/supabase_client.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -30,6 +31,20 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+      // Punto de integración elegido para cancelar un borrado de cuenta
+      // agendado: justo después de signInWithPassword — mismo criterio que
+      // app/auth/login/page.tsx en la web (ver ese archivo para la
+      // justificación completa). Es una carrera contra el redirect
+      // automático del router (GoRouterRefreshStream reacciona a
+      // onAuthStateChange apenas hay sesión, posiblemente antes de que este
+      // await resuelva) — si perdemos la carrera, `mounted` es false y
+      // simplemente no se muestra el aviso, pero la cancelación en el
+      // servidor ya se aplicó igual.
+      final cancelled = await PlanApi().cancelScheduledDeletion();
+      if (cancelled && mounted) {
+        context.go('/deletion-cancelled');
+        return;
+      }
       // onAuthStateChange + el redirect del router se encargan de navegar.
     } on AuthException catch (e) {
       setState(() => _error = e.message);
