@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
@@ -8,7 +9,18 @@ import 'package:record/record.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../platform/sos_foreground_service.dart';
+
 part 'standalone_recorder_provider.g.dart';
+
+// Identifica a este Notifier como dueño del foreground service compartido
+// (ver _owners en sos_foreground_service.dart) — sin esto, backgroundear la
+// app durante una grabación manual (sin ningún SOS activo) deja la
+// cámara/el micrófono sin cobertura: Android revoca su acceso a apps en
+// segundo plano que no sostienen un foreground service del tipo
+// correspondiente, y la grabación termina crasheando la app en vez de
+// simplemente cortarse.
+const _serviceOwner = 'standaloneRecorder';
 
 const _uuid = Uuid();
 
@@ -57,6 +69,7 @@ class StandaloneRecorder extends _$StandaloneRecorder {
     ref.onDispose(() {
       _audioRecorder.dispose();
       state.videoController?.dispose();
+      SosForegroundService.stop(owner: _serviceOwner);
     });
     return const StandaloneRecorderState();
   }
@@ -69,6 +82,13 @@ class StandaloneRecorder extends _$StandaloneRecorder {
       );
       return;
     }
+    unawaited(
+      SosForegroundService.start(
+        owner: _serviceOwner,
+        notificationTitle: 'service_recordingTitle'.tr(),
+        notificationText: 'service_recordingBody'.tr(),
+      ),
+    );
     final dir = await getTemporaryDirectory();
     _pendingPath = '${dir.path}/audio-${_uuid.v4()}.m4a';
     await _audioRecorder.start(
@@ -95,6 +115,8 @@ class StandaloneRecorder extends _$StandaloneRecorder {
       // mismo patrón que ya tiene stopVideo() más abajo.
       state = StandaloneRecorderState(errorMessage: 'Error al detener: $e');
       return null;
+    } finally {
+      await SosForegroundService.stop(owner: _serviceOwner);
     }
   }
 
@@ -113,12 +135,20 @@ class StandaloneRecorder extends _$StandaloneRecorder {
         errorMessage: 'recorder_micPermissionDenied'.tr(),
       );
     }
+    unawaited(
+      SosForegroundService.start(
+        owner: _serviceOwner,
+        notificationTitle: 'service_recordingTitle'.tr(),
+        notificationText: 'service_recordingBody'.tr(),
+      ),
+    );
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
         state = state.copyWith(
           errorMessage: 'recorder_noCameraAvailable'.tr(),
         );
+        await SosForegroundService.stop(owner: _serviceOwner);
         return;
       }
       final back = cameras.firstWhere(
@@ -142,6 +172,7 @@ class StandaloneRecorder extends _$StandaloneRecorder {
       state = state.copyWith(
         errorMessage: 'recorder_startError'.tr(namedArgs: {'e': '$e'}),
       );
+      await SosForegroundService.stop(owner: _serviceOwner);
     }
   }
 
@@ -159,6 +190,8 @@ class StandaloneRecorder extends _$StandaloneRecorder {
         errorMessage: 'recorder_stopFailed'.tr(namedArgs: {'e': '$e'}),
       );
       return null;
+    } finally {
+      await SosForegroundService.stop(owner: _serviceOwner);
     }
   }
 
@@ -173,6 +206,7 @@ class StandaloneRecorder extends _$StandaloneRecorder {
       }
       await state.videoController?.dispose();
     }
+    await SosForegroundService.stop(owner: _serviceOwner);
     state = const StandaloneRecorderState();
   }
 }

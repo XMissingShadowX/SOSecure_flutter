@@ -12,6 +12,13 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 // principal de Flutter. En iOS, el equivalente son los background modes declarados en
 // Info.plist (audio + location), sin contraparte de "foreground service".
 class SosForegroundService {
+  // Quién pidió que el servicio siga corriendo. Un SOS activo (sos_provider.dart)
+  // y una grabación manual (standalone_recorder_provider.dart) pueden pedirlo
+  // por separado y hasta solaparse (la persona empieza a grabar a mano y
+  // durante eso dispara un SOS real); sin este conteo, quien terminara
+  // primero apagaría el servicio para el otro y la cámara/ubicación del que
+  // seguía activo se quedarían sin cobertura en segundo plano.
+  static final Set<String> _owners = {};
   // OJO: init() corre desde main() ANTES de runApp, es decir antes de que
   // easy_localization tenga las traducciones cargadas — un .tr() aquí
   // devolvería la clave cruda. Por eso el nombre del canal se queda fijo.
@@ -49,19 +56,29 @@ class SosForegroundService {
     }
   }
 
-  static Future<void> start() async {
+  static Future<void> start({
+    required String owner,
+    String? notificationTitle,
+    String? notificationText,
+  }) async {
     if (!Platform.isAndroid) return;
+    _owners.add(owner);
+    // Ya hay otro dueño manteniéndolo vivo: no se toca la notificación que ya
+    // se está mostrando (podría ser la de un SOS real) por la de este dueño.
     if (await FlutterForegroundTask.isRunningService) return;
     await requestPermissions();
     await FlutterForegroundTask.startService(
       serviceId: 501,
-      notificationTitle: 'service_sosActiveTitle'.tr(),
-      notificationText: 'service_sosActiveBody'.tr(),
+      notificationTitle: notificationTitle ?? 'service_sosActiveTitle'.tr(),
+      notificationText: notificationText ?? 'service_sosActiveBody'.tr(),
     );
   }
 
-  static Future<void> stop() async {
+  static Future<void> stop({required String owner}) async {
     if (!Platform.isAndroid) return;
+    _owners.remove(owner);
+    // Sigue habiendo alguien más que lo necesita (ver _owners arriba).
+    if (_owners.isNotEmpty) return;
     if (await FlutterForegroundTask.isRunningService) {
       await FlutterForegroundTask.stopService();
     }
