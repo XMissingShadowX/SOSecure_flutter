@@ -17,17 +17,22 @@ import android.util.Log
 import io.flutter.plugin.common.EventChannel
 
 // Contador de pulsaciones del gesto de SOS por botón de volumen. Vive en un
-// `object` (no en la Activity ni en el Service) porque las pulsaciones llegan
-// desde tres orígenes distintos según dónde esté la app:
-//
-//   · Activity en primer plano   -> MainActivity.dispatchKeyEvent
-//   · pantalla apagada/bloqueada -> VolumeSosService (MediaSession + observer)
-//   · app cerrada                -> igual que el anterior, el servicio sobrevive
+// `object` (no en la Activity ni en el Service) porque las pulsaciones pueden
+// llegar tanto desde MainActivity.dispatchKeyEvent como desde VolumeSosService
+// (MediaSession + observer), según dónde esté la app.
 //
 // Antes el conteo vivía en Dart (volume_sos_provider.dart) y solo se alimentaba
-// del primer origen, así que el gesto simplemente no existía con la pantalla
-// apagada — que es justo cuando hace falta. Ahora el conteo es nativo y único,
-// y Dart solo configura los umbrales y reacciona al disparo.
+// de la Activity en primer plano, así que el gesto simplemente no existía con
+// la pantalla apagada — que es justo cuando hace falta. Ahora el conteo es
+// nativo y único, y Dart solo configura los umbrales y reacciona al disparo.
+//
+// registerPress() descarta cualquier pulsación con la pantalla encendida (ver
+// más abajo): el gesto es exclusivamente para el teléfono guardado y a
+// oscuras. En la práctica esto deja inerte el camino de MainActivity —
+// dispatchKeyEvent solo puede dispararse con la Activity en primer plano, y
+// eso exige la pantalla encendida — pero se deja tal cual por si el criterio
+// de "pantalla encendida" cambia en el futuro (p.ej. Doze con pantalla
+// prendida en Ambient Display).
 object VolumeSosDetector {
     // Etiqueta única para seguir el gesto entero desde logcat:
     //   adb logcat -s SOSecureVolume:D
@@ -92,6 +97,17 @@ object VolumeSosDetector {
     }
 
     fun registerPress(context: Context, source: String) {
+        // El gesto es exclusivamente para cuando el teléfono está guardado con
+        // la pantalla apagada: con la pantalla encendida ya hay un botón de
+        // SOS visible en la app, y contar pulsaciones aquí es lo que hacía que
+        // la sesión de audio remota se sintiera como si se estuviera
+        // conectando a un accesorio externo cada vez que alguien subía o
+        // bajaba el volumen con la app abierta o el teléfono desbloqueado.
+        val power = context.getSystemService(PowerManager::class.java)
+        if (power.isInteractive) {
+            Log.d(TAG, "pulsación ignorada — pantalla encendida ($source)")
+            return
+        }
         val now = System.currentTimeMillis()
         val reached: Boolean
         val count: Int
