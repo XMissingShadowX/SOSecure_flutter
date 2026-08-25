@@ -770,6 +770,8 @@
   "during_answeredCount": "{n} of {total} answered",
   "service_sosActiveTitle": "SOSecure — Alert active",
   "service_sosActiveBody": "Recording and sharing your location in the background.",
+  "service_recordingTitle": "SOSecure — Recording",
+  "service_recordingBody": "Your recording keeps going in the background.",
   "notif_channelSosName": "SOS alerts",
   "notif_channelSosDesc": "Notifications for an activated SOS alert",
   "notif_channelChatName": "Messages",

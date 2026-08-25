@@ -132,7 +132,7 @@ class Sos extends _$Sos {
       contactsNotified: names,
       locationPending: false,
     );
-    unawaited(SosForegroundService.start());
+    unawaited(SosForegroundService.start(owner: 'sos'));
     // Estas dos claves ya estaban traducidas a los 5 idiomas desde hace
     // tiempo; el código simplemente nunca las usó y mandaba el texto en
     // español escrito a mano.
@@ -272,7 +272,7 @@ class Sos extends _$Sos {
     await ref.read(liveBroadcastProvider.notifier).stop();
     await ref.read(recorderProvider.notifier).discard();
     await _alertsRepo.cancelAlert();
-    await SosForegroundService.stop();
+    await SosForegroundService.stop(owner: 'sos');
     state = const SosState();
   }
 
@@ -310,7 +310,7 @@ class Sos extends _$Sos {
       }
     }
 
-    await SosForegroundService.stop();
+    await SosForegroundService.stop(owner: 'sos');
     state = const SosState();
   }
 }

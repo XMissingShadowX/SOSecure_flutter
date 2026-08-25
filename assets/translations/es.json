@@ -770,6 +770,8 @@
   "during_answeredCount": "{n} de {total} respondidas",
   "service_sosActiveTitle": "SOSecure — Alerta activa",
   "service_sosActiveBody": "Grabando y compartiendo tu ubicación en segundo plano.",
+  "service_recordingTitle": "SOSecure — Grabando",
+  "service_recordingBody": "Tu grabación sigue en curso en segundo plano.",
   "notif_channelSosName": "Alertas SOS",
   "notif_channelSosDesc": "Notificaciones de alerta SOS activada",
   "notif_channelChatName": "Mensajes",

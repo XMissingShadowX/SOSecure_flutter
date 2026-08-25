@@ -84,6 +84,23 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Detección continua del gesto de emergencia (pulsaciones del botón de volumen) con la pantalla apagada, para activar una alerta SOS sin desbloquear el teléfono." />
         </service>
+        <!-- Requerido por flutter_foreground_task (SosForegroundService en
+             platform/sos_foreground_service.dart): el paquete NO declara este
+             servicio en su propio AndroidManifest.xml (a diferencia de
+             VolumeSosService arriba, que sí es nuestro) — queda a cargo de la
+             app declararlo, o startService() falla en tiempo de ejecución
+             porque el sistema no encuentra la clase del servicio. Sin esto
+             cualquier SOS activo (o una grabación manual en Durante) que
+             intentara sobrevivir en segundo plano crasheaba la app entera al
+             llamar a FlutterForegroundTask.startService(). Los tres tipos
+             cubren lo que de verdad sigue corriendo en el proceso principal
+             mientras este servicio mantiene la notificación persistente:
+             cámara y micrófono (RecorderController / StandaloneRecorder) y
+             ubicación (LocationWatcher). -->
+        <service
+            android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="camera|microphone|location" />
         <!-- Sin directBootAware: las preferencias donde vive la configuración
              del gesto están en almacenamiento cifrado con credenciales, que no
              existe hasta el primer desbloqueo tras encender el teléfono. -->
