@@ -5,8 +5,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.database.ContentObserver
 import android.media.AudioAttributes
@@ -19,6 +21,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
 
@@ -42,6 +45,17 @@ import android.util.Log
 //     provoca cualquier pulsación que no hayamos interceptado. No detecta
 //     pulsaciones con el volumen ya al máximo o al mínimo, por eso es respaldo
 //     y no reemplazo. El contador deduplica lo que llega por ambos caminos.
+//
+// La MediaSession solo se activa mientras la pantalla está apagada (ver
+// registerScreenStateReceiver): activarla con la pantalla encendida es lo que
+// hacía que el control de volumen del sistema se viera como si el teléfono se
+// estuviera conectando a un accesorio externo cada vez que alguien ajustaba
+// el volumen con la app abierta o el celular desbloqueado — confuso y
+// alarmante para alguien que no sabe que SOSecure hace esto. Con la sesión
+// inactiva en pantalla encendida, Android enruta las teclas de volumen de
+// forma normal y VolumeSosDetector.registerPress() igual descarta cualquier
+// pulsación que llegue por el ContentObserver mientras la pantalla siga
+// encendida.
 class VolumeSosService : Service() {
 
     companion object {
@@ -69,6 +83,7 @@ class VolumeSosService : Service() {
     private var mediaSession: MediaSession? = null
     private var volumeObserver: ContentObserver? = null
     private var audioFocusRequest: AudioFocusRequest? = null
+    private var screenStateReceiver: BroadcastReceiver? = null
 
     // No reacciona a nada — solo necesitamos el foco para que el sistema nos
     // considere la sesión de audio "activa" a efectos de enrutar las teclas de
@@ -99,6 +114,7 @@ class VolumeSosService : Service() {
         startInForeground()
         startMediaSession()
         startVolumeObserver()
+        registerScreenStateReceiver()
         running = true
         Log.d(VolumeSosDetector.TAG, "servicio en primer plano activo (MediaSession + observer)")
         // START_STICKY: si Android mata el proceso por memoria, vuelve a
@@ -110,6 +126,8 @@ class VolumeSosService : Service() {
     override fun onDestroy() {
         running = false
         Log.d(VolumeSosDetector.TAG, "servicio detenido")
+        screenStateReceiver?.let { unregisterReceiver(it) }
+        screenStateReceiver = null
         volumeObserver?.let { contentResolver.unregisterContentObserver(it) }
         volumeObserver = null
         mediaSession?.let {
@@ -119,6 +137,49 @@ class VolumeSosService : Service() {
         mediaSession = null
         abandonAudioFocus()
         super.onDestroy()
+    }
+
+    // Activa la MediaSession solo mientras la pantalla está apagada; con la
+    // pantalla encendida la desactiva y suelta el foco de audio para que el
+    // sistema enrute los botones de volumen de forma completamente normal (ver
+    // comentario de clase). Se registra un único receiver para toda la vida
+    // del servicio en vez de uno efímero por evento.
+    private fun registerScreenStateReceiver() {
+        if (screenStateReceiver != null) return
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                when (intent.action) {
+                    Intent.ACTION_SCREEN_OFF -> setSessionActive(true)
+                    Intent.ACTION_SCREEN_ON -> setSessionActive(false)
+                }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
+        }
+        // Desde Android 13 (API 33) un receiver registrado dinámicamente debe
+        // declarar explícitamente si se expone a otras apps o revienta con
+        // SecurityException al registrarse. ACTION_SCREEN_ON/OFF son
+        // broadcasts del sistema que ninguna otra app puede enviar, así que
+        // NOT_EXPORTED es lo correcto — no necesitamos que nadie más nos las
+        // mande.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(receiver, filter)
+        }
+        screenStateReceiver = receiver
+
+        // Estado inicial: el servicio puede arrancar con la pantalla ya
+        // apagada (p.ej. VolumeSosBootReceiver tras reiniciar el teléfono).
+        val power = getSystemService(PowerManager::class.java)
+        setSessionActive(!power.isInteractive)
+    }
+
+    private fun setSessionActive(active: Boolean) {
+        mediaSession?.isActive = active
+        if (active) requestAudioFocus() else abandonAudioFocus()
     }
 
     // Una MediaSession "activa" con estado STATE_PLAYING generalmente basta para
@@ -254,9 +315,9 @@ class VolumeSosService : Service() {
                     .build()
             )
             setPlaybackToRemote(provider)
-            isActive = true
+            // isActive se decide en registerScreenStateReceiver() según la
+            // pantalla esté encendida o apagada, no aquí.
         }
-        requestAudioFocus()
     }
 
     private fun startVolumeObserver() {
