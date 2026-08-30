@@ -1,18 +1,20 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/supabase_client.dart';
+import '../../state/tutorial_provider.dart';
 
-class SignUpScreen extends StatefulWidget {
+class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -39,6 +41,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
         // y cae de vuelta a la Site URL por defecto.
         emailRedirectTo: 'sosecure://login-callback',
       );
+      if (!mounted) return;
+      // Único punto de la app que marca una cuenta como "tutorial no visto" — cubre
+      // tanto la rama de sesión inmediata como la de confirmación por correo (ambas
+      // pasan por aquí antes del `if` que las distingue), usando el id de la
+      // respuesta directamente y no supabase.auth.currentUser, que sería null en la
+      // rama de confirmación por correo (todavía no hay sesión ambiente).
+      if (res.user != null) {
+        await ref
+            .read(tutorialSeenProvider.notifier)
+            .markPendingForNewSignup(res.user!.id);
+      }
       if (!mounted) return;
       if (res.session != null) {
         context.go('/');

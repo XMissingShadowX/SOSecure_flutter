@@ -1,19 +1,21 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/api/pin_api.dart';
+import '../../state/tutorial_provider.dart';
 
 // Puerto de components/pin-lock.tsx. Verificación 100% server-side vía PinApi — este
 // widget nunca calcula ni compara hashes localmente.
-class PinLockScreen extends StatefulWidget {
+class PinLockScreen extends ConsumerStatefulWidget {
   const PinLockScreen({super.key});
 
   @override
-  State<PinLockScreen> createState() => _PinLockScreenState();
+  ConsumerState<PinLockScreen> createState() => _PinLockScreenState();
 }
 
-class _PinLockScreenState extends State<PinLockScreen> {
+class _PinLockScreenState extends ConsumerState<PinLockScreen> {
   final _api = PinApi();
   final _pinController = TextEditingController();
   final _confirmController = TextEditingController();
@@ -53,8 +55,11 @@ class _PinLockScreenState extends State<PinLockScreen> {
   }
 
   void _goToShell() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.go('/');
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final seen = await ref.read(tutorialSeenProvider.notifier).refresh();
+      if (!mounted) return;
+      context.go(seen ? '/' : '/tutorial');
     });
   }
 

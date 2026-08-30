@@ -488,6 +488,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               title: 'settings_volumeSos'.tr(),
               children: [_VolumeSosCard()],
             ),
+            _SettingsSection(
+              icon: Icons.school_outlined,
+              title: 'settings_tutorialSectionTitle'.tr(),
+              children: [
+                ListTile(
+                  title: Text('settings_replayTutorial'.tr()),
+                  subtitle: Text('settings_replayTutorialDesc'.tr()),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/tutorial?replay=true'),
+                ),
+              ],
+            ),
             if (_loadingPlans)
               const GlassCard(
                 child: Padding(
