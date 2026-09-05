@@ -16,7 +16,10 @@ class LiveLocationRepository {
       'display_name': displayName,
       'latitude': latitude,
       'longitude': longitude,
-      'updated_at': DateTime.now().toIso8601String(),
+      // Ver la misma nota en alerts_repository.dart.updateLocation: .toUtc()
+      // es obligatorio antes de serializar, o la columna timestamptz pierde
+      // el offset local (-6h en México) al interpretarlo como si ya fuera UTC.
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
       'is_sharing': true,
     }, onConflict: 'user_id');
   }

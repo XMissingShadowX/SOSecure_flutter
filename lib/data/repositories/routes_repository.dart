@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
@@ -44,21 +45,73 @@ const _walkingMetersPerSecond = 1.33;
 const _requestTimeout = Duration(seconds: 8);
 
 class RoutesRepository {
-  // [nearLatitude]/[nearLongitude] sesgan los resultados hacia esa posición.
-  // Sin ellos Photon rankea a nivel mundial: buscar "farmacia" podía devolver
-  // una en otro país antes que la de la esquina.
+  // Radios (km) que se intentan en orden, del más angosto al más ancho.
+  // Bug real: `lat`/`lon`/`location_bias_scale` de Photon son solo una
+  // sugerencia DÉBIL de ranking, no un filtro — para una palabra genérica
+  // como "parque" casi nunca hay una coincidencia de texto fuerte cerca, así
+  // que el filtro de distancia del lado cliente (por sobre esos resultados ya
+  // limitados) siempre terminaba vacío y caía al fallback global, mostrando
+  // "Parque, Lisboa" o "Parque Nacional de Doñana, España" para un usuario en
+  // Querétaro. `bbox` sí es un filtro geográfico DURO en Photon — restringe
+  // la búsqueda a esa caja desde el propio servidor, imitando el
+  // "cerca primero, ensanchar solo si no hay nada" de Google Places.
+  static const _searchRadiiKm = [30.0, 120.0, 400.0];
+  // 1° de latitud ≈ 111 km siempre; 1° de longitud se encoge con el coseno de
+  // la latitud (más angosto lejos del ecuador) — sin este ajuste la caja
+  // sería demasiado angosta en longitud a latitudes altas.
+  static const _kmPerDegreeLat = 111.0;
+
+  // [nearLatitude]/[nearLongitude] acotan la búsqueda a esa zona (ver arriba).
   Future<List<GeocodeResult>> searchPlaces(
     String query, {
     int limit = 5,
     double? nearLatitude,
     double? nearLongitude,
   }) async {
-    final bias = (nearLatitude != null && nearLongitude != null)
-        ? '&lat=$nearLatitude&lon=$nearLongitude'
-        : '';
+    final hasNear = nearLatitude != null && nearLongitude != null;
+    if (hasNear) {
+      for (final radiusKm in _searchRadiiKm) {
+        final results = await _queryPhoton(
+          query,
+          limit: limit,
+          nearLatitude: nearLatitude,
+          nearLongitude: nearLongitude,
+          radiusKm: radiusKm,
+        );
+        if (results.isNotEmpty) return results;
+      }
+    }
+    // Último recurso (o si no hay ubicación del usuario todavía): sin
+    // restricción geográfica, para no dejar al usuario sin nada si de plano
+    // no existe ningún resultado ni ensanchando el radio.
+    return _queryPhoton(query, limit: limit);
+  }
+
+  Future<List<GeocodeResult>> _queryPhoton(
+    String query, {
+    required int limit,
+    double? nearLatitude,
+    double? nearLongitude,
+    double? radiusKm,
+  }) async {
+    var extra = '';
+    if (nearLatitude != null && nearLongitude != null) {
+      extra = '&lat=$nearLatitude&lon=$nearLongitude&location_bias_scale=1.0';
+      if (radiusKm != null) {
+        final latDelta = radiusKm / _kmPerDegreeLat;
+        final lonDelta =
+            radiusKm /
+            (_kmPerDegreeLat * math.cos(nearLatitude * math.pi / 180).abs().clamp(0.01, 1.0));
+        final minLon = nearLongitude - lonDelta;
+        final minLat = nearLatitude - latDelta;
+        final maxLon = nearLongitude + lonDelta;
+        final maxLat = nearLatitude + latDelta;
+        extra += '&bbox=$minLon,$minLat,$maxLon,$maxLat';
+      }
+    }
     final uri = Uri.parse(
       'https://photon.komoot.io/api/?q=${Uri.encodeComponent(query)}'
-      '&limit=$limit$bias',
+      '&limit=$limit$extra',
     );
     final res = await http
         .get(

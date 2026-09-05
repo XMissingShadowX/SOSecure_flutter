@@ -381,6 +381,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     );
+    // Ver la nota en home_tab_screen.dart._showContactDialog: disponer justo
+    // al resolver showDialog() lo hace mientras el AlertDialog todavía se
+    // anima hacia afuera, y su TextField revienta con "used after being
+    // disposed".
+    await Future.delayed(const Duration(milliseconds: 300));
     controller.dispose();
     if (pin == null || pin.length < 4) return;
     try {

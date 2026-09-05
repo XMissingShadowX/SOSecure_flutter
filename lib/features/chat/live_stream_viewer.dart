@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -22,6 +24,13 @@ class _LiveStreamViewerState extends State<LiveStreamViewer> {
   final _repo = LiveStreamRepository();
   final List<VideoSegmentPayload> _queue = [];
   VideoPlayerController? _controller;
+  // Se descarga/decodifica adelantado mientras _controller sigue reproduciendo
+  // el segmento actual, para que el handoff entre clips sea instantáneo. Antes
+  // cada segmento se pedía a la red recién cuando el anterior terminaba de
+  // reproducirse, y esa espera (red + decode) era la pausa visible entre
+  // clips — ver la nota de latencia en live_stream_repository.dart.
+  VideoPlayerController? _pending;
+  bool _preparingNext = false;
   bool _live = false;
   bool _waiting = true;
   bool _playing = false;
@@ -62,36 +71,93 @@ class _LiveStreamViewerState extends State<LiveStreamViewer> {
   RealtimeChannel? _channel;
 
   Future<void> _playNextIfIdle() async {
-    if (_playing || _queue.isEmpty) return;
+    if (_playing) {
+      // Ya hay uno reproduciéndose: solo asegurar que el siguiente se esté
+      // precargando, no arrancar una segunda reproducción.
+      unawaited(_prepareNext());
+      return;
+    }
     _playing = true;
+    await _advance();
+  }
+
+  // Trae el siguiente segmento de la cola a un VideoPlayerController listo
+  // para reproducirse (initialize() ya resuelto), sin reemplazar todavía al
+  // que está en pantalla.
+  Future<void> _prepareNext() async {
+    if (_preparingNext || _pending != null || _queue.isEmpty) return;
+    _preparingNext = true;
     // Si se acumularon varios segmentos (red lenta), descartar los viejos y
     // quedarse con el más reciente — igual que el recorte de cola en la web.
     while (_queue.length > 3) {
       _queue.removeAt(0);
     }
     final next = _queue.removeAt(0);
-    final oldController = _controller;
     try {
       final controller = VideoPlayerController.networkUrl(Uri.parse(next.url));
       await controller.initialize();
       if (!mounted) {
         await controller.dispose();
+        _preparingNext = false;
         return;
       }
-      setState(() => _controller = controller);
-      await oldController?.dispose();
-      await controller.play();
-      controller.addListener(() {
-        if (controller.value.position >= controller.value.duration &&
-            !controller.value.isPlaying) {
-          _playing = false;
-          _playNextIfIdle();
-        }
-      });
+      _pending = controller;
     } catch (_) {
-      _playing = false;
-      if (_queue.isNotEmpty) _playNextIfIdle();
+      // Segmento roto/inaccesible — se descarta y se intenta con el que sigue
+      // en cola, si hay.
     }
+    _preparingNext = false;
+    if (_pending == null && _queue.isNotEmpty) {
+      unawaited(_prepareNext());
+    }
+  }
+
+  // Hace visible el siguiente clip: si ya había uno precargado en _pending el
+  // cambio es instantáneo (sin red/decode de por medio); si no (primer
+  // segmento, o la precarga no alcanzó a terminar) cae al camino directo.
+  Future<void> _advance() async {
+    var controller = _pending;
+    _pending = null;
+    if (controller == null) {
+      if (_queue.isEmpty) {
+        _playing = false;
+        return;
+      }
+      final next = _queue.removeAt(0);
+      try {
+        controller = VideoPlayerController.networkUrl(Uri.parse(next.url));
+        await controller.initialize();
+      } catch (_) {
+        controller = null;
+      }
+    }
+    if (controller == null) {
+      if (_queue.isNotEmpty) {
+        await _advance();
+      } else {
+        _playing = false;
+      }
+      return;
+    }
+    if (!mounted) {
+      await controller.dispose();
+      _playing = false;
+      return;
+    }
+    final oldController = _controller;
+    final current = controller;
+    setState(() => _controller = current);
+    await oldController?.dispose();
+    await current.play();
+    current.addListener(() {
+      if (current.value.position >= current.value.duration &&
+          !current.value.isPlaying) {
+        _advance();
+      }
+    });
+    // Empezar a precargar el que sigue de inmediato, en paralelo a la
+    // reproducción que acaba de arrancar.
+    unawaited(_prepareNext());
   }
 
   @override

@@ -133,6 +133,7 @@
   "pin_lockedOutFor": "Too many attempts. Wait {seconds}s.",
   "pin_resetLinkSent": "We sent a link to your email to confirm the PIN reset.",
   "pin_statusError": "Could not check PIN status.",
+  "pin_offlineNeedsConnection": "Offline — you need internet to unlock.",
   "retry": "Retry",
   "unlock": "Unlock",
   "home_locationLoading": "Determining location...",

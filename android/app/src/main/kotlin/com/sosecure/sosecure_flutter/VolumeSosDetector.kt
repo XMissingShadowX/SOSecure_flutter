@@ -130,7 +130,11 @@ object VolumeSosDetector {
         if (reached) fire(context)
     }
 
-    private fun fire(context: Context) {
+    // Público para que otros orígenes de gesto (el tile de Ajustes Rápidos,
+    // SosTileService.kt) disparen exactamente el mismo camino que el botón de
+    // volumen: pending-trigger + wake lock + vibración + entrega directa al
+    // motor de Flutter si está vivo, o levantar la app si no.
+    fun fire(context: Context) {
         val ctx = context.applicationContext
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putLong(KEY_PENDING_TRIGGER, System.currentTimeMillis())

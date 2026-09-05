@@ -101,6 +101,20 @@
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
             android:exported="false"
             android:foregroundServiceType="camera|microphone|location" />
+        <!-- Botón de SOS en el panel de Ajustes Rápidos de Android (SosTileService.kt).
+             BIND_QUICKSETTINGS_TILE es obligatorio para que el sistema pueda bindear el
+             tile; el intent-filter QS_TILE es lo que lo hace aparecer en "Editar Ajustes
+             Rápidos". android:icon es obligatorio en API 30+ o el tile no se agrega. -->
+        <service
+            android:name=".SosTileService"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="SOS"
+            android:permission="android.permission.BIND_QUICKSETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
         <!-- Sin directBootAware: las preferencias donde vive la configuración
              del gesto están en almacenamiento cifrado con credenciales, que no
              existe hasta el primer desbloqueo tras encender el teléfono. -->

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 // Foreground service de Android para que la grabación/ubicación del SOS activo
 // sobrevivan con la pantalla apagada o la app en segundo plano (ver plan de Fase 2,
@@ -67,6 +68,27 @@ class SosForegroundService {
     // se está mostrando (podría ser la de un SOS real) por la de este dueño.
     if (await FlutterForegroundTask.isRunningService) return;
     await requestPermissions();
+    // El <service> de flutter_foreground_task declara
+    // foregroundServiceType="camera|microphone|location" en el manifest (fijo,
+    // no se puede acotar por llamada) — a partir de Android 14 (targetSdk 34+)
+    // el sistema exige que esos permisos YA estén concedidos en tiempo de
+    // ejecución antes de arrancar un foreground service con esos tipos, o
+    // lanza una SecurityException que mata el proceso entero y NO es
+    // capturable desde Dart (crash nativo, no una excepción de Flutter).
+    //
+    // Bug real encontrado en pruebas en dispositivo: sos_provider.dart dispara
+    // este start() y RecorderController.start() (que pide cámara/micrófono)
+    // en paralelo, ambos con unawaited(). En la primera activación de SOS de
+    // un usuario nuevo la carrera se ganaba del lado del foreground service
+    // antes de que el diálogo de permisos del sistema siquiera se resolviera,
+    // crasheando la app completa. Si los permisos todavía no están concedidos
+    // se prefiere no arrancar el servicio (la grabación/ubicación del SOS
+    // igual proceden en primer plano vía RecorderController) en vez de
+    // arriesgar el crash — en cuanto el usuario conceda los permisos, el
+    // siguiente SOS ya arranca el servicio con normalidad.
+    final cameraGranted = await Permission.camera.status;
+    final micGranted = await Permission.microphone.status;
+    if (!cameraGranted.isGranted || !micGranted.isGranted) return;
     await FlutterForegroundTask.startService(
       serviceId: 501,
       notificationTitle: notificationTitle ?? 'service_sosActiveTitle'.tr(),

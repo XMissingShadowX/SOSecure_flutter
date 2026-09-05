@@ -410,12 +410,25 @@ class _LiveSharingMap extends StatelessWidget {
                 : null,
           ),
           children: [
-            TileLayer(
-              urlTemplate: isDark
-                  ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                  : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-              subdomains: const ['a', 'b', 'c', 'd'],
-              userAgentPackageName: 'com.sosecure.app',
+            // CartoDB cerró su capa gratuita anónima de tiles (exige API key
+            // ahora) — ver la nota completa en map_tab_screen.dart. Mismo
+            // reemplazo por OSM + inversión de color para el modo oscuro.
+            ColorFiltered(
+              colorFilter: isDark
+                  ? const ColorFilter.matrix([
+                      -1, 0, 0, 0, 255,
+                      0, -1, 0, 0, 255,
+                      0, 0, -1, 0, 255,
+                      0, 0, 0, 1, 0,
+                    ])
+                  : const ColorFilter.mode(
+                      Colors.transparent,
+                      BlendMode.multiply,
+                    ),
+              child: TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.sosecure.app',
+              ),
             ),
             MarkerLayer(
               markers: [

@@ -485,6 +485,10 @@ class _FrequentPlacesCard extends ConsumerWidget {
       ),
     );
     debounce?.cancel();
+    // Ver la misma nota en _showContactDialog: disponer justo al resolver
+    // showDialog() lo hace mientras el AlertDialog todavía se anima hacia
+    // afuera, y su TextField revienta con "used after being disposed".
+    await Future.delayed(const Duration(milliseconds: 300));
     labelController.dispose();
     addressController.dispose();
   }
@@ -799,6 +803,15 @@ class _ContactsCard extends ConsumerWidget {
         ),
       ),
     );
+    // Bug real encontrado en pruebas en dispositivo: disponer los controllers
+    // apenas showDialog() resuelve (justo al hacer Navigator.pop) los destruye
+    // MIENTRAS el diálogo todavía se está animando hacia afuera — el
+    // AlertDialog usa una transición de salida por defecto, así que su
+    // TextField sigue reconstruyéndose un par de frames más con el controller
+    // ya muerto, lanzando "A TextEditingController was used after being
+    // disposed". 300ms cubre la duración de la transición de Material sin
+    // introducir un delay perceptible (el diálogo ya está fuera de pantalla).
+    await Future.delayed(const Duration(milliseconds: 300));
     nameController.dispose();
     phoneController.dispose();
     emailController.dispose();

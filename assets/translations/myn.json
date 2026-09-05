@@ -127,6 +127,7 @@
   "pin_lockedOutFor": "Demasiados intentos. Espera {seconds}s.",
   "pin_resetLinkSent": "Te enviamos un enlace a tu correo para confirmar el reseteo del PIN.",
   "pin_statusError": "No se pudo verificar el estado del PIN.",
+  "pin_offlineNeedsConnection": "Sin conexión — necesitas internet para desbloquear.",
   "retry": "Reintentar",
   "unlock": "Desbloquear",
   "home_locationLoading": "Kaxantik tu'ux waaneen...",
