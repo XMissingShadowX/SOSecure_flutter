@@ -56,6 +56,12 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
   String _filterTime = '7d';
   bool _heatMode = false;
   bool _refreshing = false;
+  // El GPS casi siempre resuelve después del primer build, así que
+  // FlutterMap.initialCenter (que solo se aplica una vez) queda fijo en
+  // _defaultCenter (Mérida). Esta bandera dispara un único .move() la
+  // primera vez que llega una ubicación real, sin pelear con el paneo
+  // manual del usuario después.
+  bool _hasAutoCentered = false;
 
   List<Incident> _applyFilters(List<Incident> incidents) {
     final now = DateTime.now();
@@ -110,6 +116,28 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
     final permissionsAsync = ref.watch(mapPermissionsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    ref.listen(locationWatcherProvider, (previous, next) {
+      if (_hasAutoCentered || !next.hasCoordinates) return;
+      _hasAutoCentered = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _mapController.move(
+          ll.LatLng(next.latitude!, next.longitude!),
+          _defaultZoom,
+        );
+      });
+    });
+    if (!_hasAutoCentered && location.hasCoordinates) {
+      _hasAutoCentered = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _mapController.move(
+          ll.LatLng(location.latitude!, location.longitude!),
+          _defaultZoom,
+        );
+      });
+    }
+
     final incidents = incidentsAsync.valueOrNull ?? [];
     final filtered = _applyFilters(incidents);
     final counts = {
@@ -134,12 +162,32 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
                   initialZoom: _defaultZoom,
                 ),
                 children: [
-                  TileLayer(
-                    urlTemplate: isDark
-                        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-                    subdomains: const ['a', 'b', 'c', 'd'],
-                    userAgentPackageName: 'com.sosecure.app',
+                  // CartoDB (basemaps.cartocdn.com) cerró su capa gratuita
+                  // anónima de tiles y ahora exige API key — los mapas
+                  // aparecían con la marca de agua "API KEY REQUIRED" en vez
+                  // del mapa real. Se cambia a los tiles estándar de
+                  // OpenStreetMap (gratis, sin key, mismo trato que Photon/OSRM
+                  // en routes_repository.dart). OSM no ofrece una variante
+                  // oscura gratuita, así que el modo oscuro se aproxima
+                  // invirtiendo los colores del tile claro — no es pixel-perfect
+                  // pero evita depender de un servicio de pago.
+                  ColorFiltered(
+                    colorFilter: isDark
+                        ? const ColorFilter.matrix([
+                            -1, 0, 0, 0, 255,
+                            0, -1, 0, 0, 255,
+                            0, 0, -1, 0, 255,
+                            0, 0, 0, 1, 0,
+                          ])
+                        : const ColorFilter.mode(
+                            Colors.transparent,
+                            BlendMode.multiply,
+                          ),
+                    child: TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.sosecure.app',
+                    ),
                   ),
                   if (_heatMode)
                     CircleLayer(

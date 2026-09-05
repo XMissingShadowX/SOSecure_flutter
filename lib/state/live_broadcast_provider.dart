@@ -12,10 +12,16 @@ import 'recorder_controller.dart';
 
 part 'live_broadcast_provider.g.dart';
 
-// Subido a 2s (desde 1.5s): el encoder de video de CameraX necesita un
-// margen real tras startVideoRecording() antes de poder recibir un nuevo
-// stopVideoRecording() sin crashear — ver la nota en _captureAndSend.
-const segmentDuration = Duration(milliseconds: 2000);
+// Subido a 5s (desde 2s, que a su vez venía de 1.5s): medido en dispositivo
+// (Cubot KingKong 9) que rotateSegment() -stop+start de CameraX- tarda
+// ~600-700ms fijos por corte, sin importar la duración del segmento — es el
+// costo de reinicializar la sesión de la cámara en este chipset, no algo que
+// dependa del contenido grabado. Con segmentos de 2s ese hueco era ~30% del
+// ciclo (se sentía muy entrecortado); con 5s baja a ~12-14%, a cambio de que
+// cada clip individual tarde un poco más en aparecer completo del lado del
+// receptor. Streaming continuo real (sin cortar clips) eliminaría el hueco
+// por completo, pero es un cambio de arquitectura mayor (ver CLAUDE.md/plan).
+const segmentDuration = Duration(milliseconds: 5000);
 
 class LiveBroadcastState {
   final bool live;

@@ -1,10 +1,13 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/api/pin_api.dart';
+import '../../state/sos_provider.dart';
 import '../../state/tutorial_provider.dart';
+import '../during/sos_button.dart';
 
 // Puerto de components/pin-lock.tsx. Verificación 100% server-side vía PinApi — este
 // widget nunca calcula ni compara hashes localmente.
@@ -63,6 +66,11 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
     });
   }
 
+  Future<bool> _isOffline() async {
+    final results = await Connectivity().checkConnectivity();
+    return results.contains(ConnectivityResult.none);
+  }
+
   Future<void> _submit() async {
     if (_pinController.text.length < 4) return;
     setState(() {
@@ -83,7 +91,17 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
       }
       _pinController.clear();
     } catch (e) {
-      setState(() => _error = '${'pin_verifyError'.tr()}$e');
+      // La verificación del PIN (bcrypt.compare) vive solo en el servidor —
+      // sin red, verify() siempre falla acá. Mostrar la excepción cruda
+      // ("ClientException: Failed to fetch...") no le dice nada útil a
+      // alguien en una situación de estrés; si de verdad no hay conexión, se
+      // prefiere el mensaje claro sobre el genérico de "error al verificar".
+      final offline = await _isOffline();
+      setState(() {
+        _error = offline
+            ? 'pin_offlineNeedsConnection'.tr()
+            : '${'pin_verifyError'.tr()}$e';
+      });
     } finally {
       if (mounted) setState(() => _verifying = false);
     }
@@ -108,6 +126,41 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // El SOS por botón de volumen (VolumeSosDetector.kt) y el tile de Ajustes
+    // Rápidos (SosTileService.kt) ya activan sosProvider directamente, sin
+    // pasar por ninguna pantalla — este mismo SosButton reutilizado aquí les
+    // da paridad al botón visible: alguien sin conexión (offline, el PIN no
+    // se puede verificar sin red — ver PinApi.getConfig()) igual puede pedir
+    // ayuda sin necesitar desbloquear. Contactos/historial/chat, lo único que
+    // el PIN protege de verdad, siguen fuera de alcance hasta desbloquear.
+    // Bug real encontrado en pruebas: SosButton se dibuja ENCIMA de esta
+    // pantalla (no la reemplaza), así que el TextField del PIN sigue montado
+    // y con el teclado enfocado por debajo aunque el panel de "SOS activo" lo
+    // tape por completo. Android seguía mostrando la decoración de
+    // composición del teclado (un subrayado punteado) sobre lo que fuera que
+    // estuviera pintado encima en ese momento. Soltar el foco apenas se
+    // activa el SOS evita que el teclado siga "opinando" sobre un campo que
+    // ya no se ve — buena práctica igual, aunque no era la causa real del
+    // texto amarillo/subrayado/gigante reportado en pruebas (ver abajo).
+    ref.listen(sosProvider, (previous, next) {
+      if (next.active && !(previous?.active ?? false)) {
+        FocusScope.of(context).unfocus();
+      }
+    });
+    // Causa real de ese bug: SosButton quedaba como HERMANO del Scaffold de
+    // _buildScaffold() dentro del Stack, no como su hijo — sin un ancestro
+    // Material, sus Text sin `decoration`/`fontSize` explícitos caían al
+    // estilo de repuesto de Flutter para texto sin contexto de estilo válido
+    // (amarillo, subrayado, tamaño crudo de plataforma). Envolver todo en un
+    // Material transparente le da ese ancestro sin pintar nada por su cuenta
+    // (el Scaffold de adentro ya pinta el fondo real).
+    return Material(
+      color: Colors.transparent,
+      child: Stack(children: [_buildScaffold(context), const SosButton()]),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     // Fail-closed: mientras no sepamos el estado del PIN, no renderizar nada del shell.
     if (_loading) {
       return const Scaffold(body: SizedBox.shrink());
@@ -198,6 +251,32 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
                   'pin_enter'.tr(),
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
+                // El estado "PIN activado" es el último conocido (sin red no
+                // se pudo confirmar ahora) — la verificación en sí sigue
+                // exigiendo conexión porque el bcrypt.compare vive solo en el
+                // servidor, así que esto es solo para que el usuario entienda
+                // por qué no puede desbloquear en vez de ver un error genérico.
+                if (_config?.fromCache == true) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.cloud_off,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'pin_offlineNeedsConnection'.tr(),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 24),
                 SizedBox(
                   width: 200,

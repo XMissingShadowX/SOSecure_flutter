@@ -66,7 +66,10 @@ class EmergencyChatRepository {
       'user_a': sorted[0],
       'user_b': sorted[1],
       'last_message': lastMessage,
-      'last_message_at': DateTime.now().toIso8601String(),
+      // Ver la misma nota en alerts_repository.dart.updateLocation: .toUtc()
+      // es obligatorio antes de serializar, o la columna timestamptz pierde
+      // el offset local al interpretar la hora local como si ya fuera UTC.
+      'last_message_at': DateTime.now().toUtc().toIso8601String(),
     }, onConflict: 'user_a,user_b');
   }
 

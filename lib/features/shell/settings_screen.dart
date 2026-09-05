@@ -11,6 +11,7 @@ import '../../data/api/pin_api.dart';
 import '../../data/api/plan_api.dart';
 import '../../data/repositories/plan_repository.dart';
 import '../../data/supabase_client.dart';
+import '../../platform/sos_tile_channel.dart';
 import '../../platform/volume_button_channel.dart';
 import '../../state/settings_provider.dart';
 import '../../state/volume_sos_provider.dart';
@@ -381,6 +382,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     );
+    // Ver la nota en home_tab_screen.dart._showContactDialog: disponer justo
+    // al resolver showDialog() lo hace mientras el AlertDialog todavía se
+    // anima hacia afuera, y su TextField revienta con "used after being
+    // disposed".
+    await Future.delayed(const Duration(milliseconds: 300));
     controller.dispose();
     if (pin == null || pin.length < 4) return;
     try {
@@ -878,6 +884,7 @@ class _VolumeSosCard extends ConsumerWidget {
               const _FullScreenIntentTile(),
               const _ServiceLivenessTile(),
             ],
+            const _SosTileButton(),
           ],
         ],
       ),
@@ -1006,6 +1013,64 @@ class _FullScreenIntentTileState extends State<_FullScreenIntentTile>
         onPressed: _request,
         child: Text('settings_volumeFullscreenAction'.tr()),
       ),
+    );
+  }
+}
+
+// Botón de SOS en el panel de Ajustes Rápidos de Android (SosTileService.kt).
+// El picker manual de "Editar Ajustes Rápidos" no lo lista en algunos
+// fabricantes con System UI muy personalizada (confirmado en un Cubot
+// KingKong 9 con MediaTek) pese a que el manifest está correctamente
+// declarado — TileService.requestAddTile() (Android 13+) es la ruta
+// alternativa: un diálogo del sistema que agrega el tile directamente sin
+// pasar por ese picker. Antes de Android 13 no hay API para esto; ahí el
+// botón queda oculto y el picker manual sigue siendo el único camino.
+class _SosTileButton extends StatefulWidget {
+  const _SosTileButton();
+
+  @override
+  State<_SosTileButton> createState() => _SosTileButtonState();
+}
+
+class _SosTileButtonState extends State<_SosTileButton> {
+  bool _requesting = false;
+
+  Future<void> _request() async {
+    setState(() => _requesting = true);
+    final code = await SosTileChannel.requestAddTile();
+    if (!mounted) return;
+    setState(() => _requesting = false);
+    final message = switch (code) {
+      0 => 'settings_sosTileAlreadyAdded'.tr(),
+      1 => 'settings_sosTileAdded'.tr(),
+      2 => 'settings_sosTileDeclined'.tr(),
+      _ => 'settings_sosTileUnsupported'.tr(),
+    };
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.warning_amber_rounded),
+      title: Text('settings_sosTileTitle'.tr()),
+      subtitle: Text(
+        'settings_sosTileDesc'.tr(),
+        style: const TextStyle(fontSize: 12),
+      ),
+      trailing: _requesting
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : TextButton(
+              onPressed: _request,
+              child: Text('settings_sosTileAction'.tr()),
+            ),
     );
   }
 }

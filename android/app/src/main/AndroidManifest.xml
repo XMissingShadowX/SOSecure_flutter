@@ -101,6 +101,26 @@
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
             android:exported="false"
             android:foregroundServiceType="camera|microphone|location" />
+        <!-- Botón de SOS en el panel de Ajustes Rápidos de Android (SosTileService.kt).
+             BIND_QUICK_SETTINGS_TILE (con guion bajo entre QUICK y SETTINGS) es
+             obligatorio para que el sistema pueda bindear el tile; el intent-filter
+             QS_TILE es lo que lo hace aparecer en "Editar Ajustes Rápidos".
+             android:icon es obligatorio en API 30+ o el tile no se agrega.
+             Bug real: se había escrito "BIND_QUICKSETTINGS_TILE" (sin el guion bajo)
+             — no es un permiso real de Android, así que el sistema simplemente
+             ignoraba el servicio como candidato a tile sin avisar del error. Se
+             confirmó el nombre correcto comparando contra el manifest de una app que
+             sí lista su tile en este mismo dispositivo (com.openai.chatgpt). -->
+        <service
+            android:name=".SosTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile_sos_logo"
+            android:label="SOS"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
         <!-- Sin directBootAware: las preferencias donde vive la configuración
              del gesto están en almacenamiento cifrado con credenciales, que no
              existe hasta el primer desbloqueo tras encender el teléfono. -->

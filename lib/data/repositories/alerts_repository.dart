@@ -109,7 +109,14 @@ class AlertsRepository {
         .update({
           'latitude': latitude,
           'longitude': longitude,
-          'updated_at': DateTime.now().toIso8601String(),
+          // Bug real: DateTime.now() es hora LOCAL del dispositivo, y
+          // toIso8601String() de una hora local no incluye offset ni 'Z' —
+          // Postgres (columna timestamptz) interpreta ese string desnudo con
+          // el timezone de la sesión (UTC por defecto), tratando la hora
+          // local como si ya fuera UTC. En México (UTC-6) esto le resta 6
+          // horas al instante real, y el visor de la alerta mostraba la hora
+          // 6 horas atrasada. .toUtc() antes de serializar corrige el offset.
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
         })
         .eq('alert_id', alertId)
         .eq('user_id', user.id);

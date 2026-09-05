@@ -87,9 +87,17 @@ class Recorder extends _$Recorder {
         orElse: () => cameras.first,
       );
 
+      // Bajado de `high` a `medium`: este mismo controller es el que
+      // live_broadcast_provider.dart corta en segmentos de 2s para la
+      // transmisión en vivo del SOS. Con `high` cada clip pesa más, tarda más
+      // en codificarse al cerrar el segmento y más en subir a Storage —ese
+      // tiempo extra por segmento es lo que se veía como pausas en el
+      // receptor. `medium` (típicamente 720p) sigue siendo evidencia legible
+      // pero recorta bytes por segmento a una fracción, sin cambiar el flujo
+      // de captura ni el bucket de grabaciones.
       final controller = CameraController(
         back,
-        ResolutionPreset.high,
+        ResolutionPreset.medium,
         enableAudio: true,
       );
       await controller.initialize();
@@ -182,15 +190,21 @@ class Recorder extends _$Recorder {
       // TimeoutException capturable, para que el guard de _captureAndSend se
       // libere y el próximo tick pueda reintentar en vez de morir para
       // siempre.
+      // Instrumentado para medir el hueco real de captura (sin video) que
+      // deja el stop+start secuencial sobre el mismo CameraController — es lo
+      // que hace que la grabación no sea continua entre segmentos, ver la
+      // nota de arriba sobre por qué no hay una segunda cámara en paralelo.
+      final sw = Stopwatch()..start();
       debugPrint('[Recorder] rotateSegment: llamando stopVideoRecording()');
       final xfile = await controller.stopVideoRecording().timeout(
         const Duration(seconds: 6),
       );
-      debugPrint('[Recorder] rotateSegment: stop OK, llamando startVideoRecording()');
+      final stopMs = sw.elapsedMilliseconds;
+      debugPrint('[Recorder] rotateSegment: stop OK (${stopMs}ms), llamando startVideoRecording()');
       await controller.startVideoRecording().timeout(
         const Duration(seconds: 6),
       );
-      debugPrint('[Recorder] rotateSegment: start OK');
+      debugPrint('[Recorder] rotateSegment: start OK (total gap ${sw.elapsedMilliseconds}ms, stop=${stopMs}ms start=${sw.elapsedMilliseconds - stopMs}ms)');
       return File(xfile.path);
     } catch (e) {
       debugPrint('[Recorder] rotateSegment: ERROR/timeout — $e');
