@@ -12,6 +12,7 @@ import '../features/onboarding/sign_up_success_screen.dart';
 import '../features/pin/pin_lock_screen.dart';
 import '../features/shell/app_shell_screen.dart';
 import '../features/shell/settings_screen.dart';
+import '../features/tutorial/tutorial_screen.dart';
 
 // Instancia única, creada una sola vez — nunca llamar a buildRouter() dentro de un build()
 // de widget: si SosecureApp lo hiciera en cada rebuild (ej. al cambiar el tema), se crearía
@@ -63,6 +64,15 @@ GoRouter buildRouter() {
       GoRoute(
         path: '/pin-lock',
         builder: (context, state) => const PinLockScreen(),
+      ),
+      // replay=true: la abre Ajustes ("Reproducir tutorial de nuevo") vía context.push,
+      // no en el flujo de arranque — ver TutorialScreen._finish().
+      GoRoute(
+        path: '/tutorial',
+        builder: (context, state) {
+          final replay = state.uri.queryParameters['replay'] == 'true';
+          return TutorialScreen(replay: replay);
+        },
       ),
       GoRoute(
         path: '/settings',
