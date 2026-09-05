@@ -1,7 +1,10 @@
 package com.sosecure.sosecure_flutter
 
 import android.app.NotificationManager
+import android.app.StatusBarManager
+import android.content.ComponentName
 import android.content.Intent
+import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -118,6 +121,41 @@ class MainActivity : FlutterActivity() {
                         result.success(null)
                     }
 
+                    else -> result.notImplemented()
+                }
+            }
+
+        // Canal aparte para el tile de SOS en Ajustes Rápidos (SosTileService.kt).
+        // El picker manual de "Editar Ajustes Rápidos" no lo mostraba en un
+        // Cubot KingKong 9 (System UI de MediaTek muy personalizada) pese a que
+        // el manifest y el registro en PackageManager son correctos — esto usa
+        // la API alternativa StatusBarManager.requestAddTileService() (Android
+        // 13+), que muestra un diálogo del sistema pidiéndole al usuario que
+        // lo agregue directamente, sin pasar por ese picker.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.sosecure.sosecure_flutter/sos_tile")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "requestAddTile" -> {
+                        // La API vive en StatusBarManager, no en TileService —
+                        // TileService.requestAddTile() no existe (verificado
+                        // contra el android.jar real de compileSdk 36; el
+                        // símbolo correcto es
+                        // StatusBarManager.requestAddTileService()).
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            val statusBarManager =
+                                getSystemService(StatusBarManager::class.java)
+                            statusBarManager.requestAddTileService(
+                                ComponentName(this, SosTileService::class.java),
+                                "SOS",
+                                Icon.createWithResource(this, R.drawable.ic_tile_sos_logo),
+                                mainExecutor,
+                            ) { code -> result.success(code) }
+                        } else {
+                            // Antes de Android 13 no existe esta API — el único
+                            // camino es el picker manual de Ajustes Rápidos.
+                            result.success(-1)
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             }

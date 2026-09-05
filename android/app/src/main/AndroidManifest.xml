@@ -102,15 +102,21 @@
             android:exported="false"
             android:foregroundServiceType="camera|microphone|location" />
         <!-- Botón de SOS en el panel de Ajustes Rápidos de Android (SosTileService.kt).
-             BIND_QUICKSETTINGS_TILE es obligatorio para que el sistema pueda bindear el
-             tile; el intent-filter QS_TILE es lo que lo hace aparecer en "Editar Ajustes
-             Rápidos". android:icon es obligatorio en API 30+ o el tile no se agrega. -->
+             BIND_QUICK_SETTINGS_TILE (con guion bajo entre QUICK y SETTINGS) es
+             obligatorio para que el sistema pueda bindear el tile; el intent-filter
+             QS_TILE es lo que lo hace aparecer en "Editar Ajustes Rápidos".
+             android:icon es obligatorio en API 30+ o el tile no se agrega.
+             Bug real: se había escrito "BIND_QUICKSETTINGS_TILE" (sin el guion bajo)
+             — no es un permiso real de Android, así que el sistema simplemente
+             ignoraba el servicio como candidato a tile sin avisar del error. Se
+             confirmó el nombre correcto comparando contra el manifest de una app que
+             sí lista su tile en este mismo dispositivo (com.openai.chatgpt). -->
         <service
             android:name=".SosTileService"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher"
+            android:icon="@drawable/ic_tile_sos_logo"
             android:label="SOS"
-            android:permission="android.permission.BIND_QUICKSETTINGS_TILE">
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
