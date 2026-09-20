@@ -12,16 +12,20 @@ import 'recorder_controller.dart';
 
 part 'live_broadcast_provider.g.dart';
 
-// Subido a 5s (desde 2s, que a su vez venía de 1.5s): medido en dispositivo
-// (Cubot KingKong 9) que rotateSegment() -stop+start de CameraX- tarda
-// ~600-700ms fijos por corte, sin importar la duración del segmento — es el
-// costo de reinicializar la sesión de la cámara en este chipset, no algo que
-// dependa del contenido grabado. Con segmentos de 2s ese hueco era ~30% del
-// ciclo (se sentía muy entrecortado); con 5s baja a ~12-14%, a cambio de que
-// cada clip individual tarde un poco más en aparecer completo del lado del
-// receptor. Streaming continuo real (sin cortar clips) eliminaría el hueco
-// por completo, pero es un cambio de arquitectura mayor (ver CLAUDE.md/plan).
-const segmentDuration = Duration(milliseconds: 5000);
+// Subido a 4s (desde 2s, que ya venía de 1.5s): cada rotateSegment() implica
+// stopVideoRecording() + startVideoRecording() en el MISMO CameraController
+// (un solo encoder de hardware — no hay forma de grabar sin ese corte real
+// con este plugin, ver la nota extensa en recorder_controller.dart). Esa
+// transición es la única fuente real de discontinuidad de la grabación en
+// sí; duplicar la duración del segmento la reduce a la mitad de frecuencia
+// sin tocar su costo individual, y como el encoder de CameraX necesitaba
+// MÁS margen tras startVideoRecording() antes de aceptar el próximo stop
+// (motivo del bump anterior de 1.5s a 2s), alargar el intervalo es
+// estrictamente más seguro en esa misma dirección, nunca menos. El buffer
+// doble del visor (ver live_stream_viewer.dart) ya elimina la pausa de
+// carga entre clips recibidos — este cambio ataca la otra mitad del
+// problema: cuántas veces por minuto ocurre el corte real de cámara.
+const segmentDuration = Duration(milliseconds: 4000);
 
 class LiveBroadcastState {
   final bool live;
@@ -59,6 +63,16 @@ class LiveBroadcast extends _$LiveBroadcast {
   // subida lenta bloquee el siguiente corte de cámara — ver la nota en
   // _captureAndSend sobre por qué esto se separó del guard de captura.
   Future<void> _uploadChain = Future.value();
+  // Con red lenta, la grabación sigue cortando segmentos cada segmentDuration
+  // aunque la subida de los anteriores no haya terminado — sin este límite,
+  // los archivos .mp4 temporales de cada segmento (y la cola de Futures
+  // encadenados) crecerían sin techo durante todo el SOS. Al tope, se
+  // descarta el segmento más nuevo (se borra su archivo) en vez de acumular:
+  // la grabación de evidencia (RecorderController) no se ve afectada, solo
+  // se pierde ese clip puntual de la transmisión en vivo.
+  int _pendingUploads = 0;
+  static const _maxPendingUploads = 3;
+  static const _uploadTimeout = Duration(seconds: 15);
 
   @override
   LiveBroadcastState build() {
@@ -134,37 +148,73 @@ class LiveBroadcast extends _$LiveBroadcast {
       );
       return;
     }
-    if (_channel == null) return;
+    // A partir de acá cualquier salida temprana debe borrar el archivo del
+    // segmento — de lo contrario queda huérfano en el almacenamiento
+    // temporal para siempre (nunca se sube ni se libera).
+    if (_channel == null) {
+      unawaited(_discardSegmentFile(file));
+      return;
+    }
+    if (_pendingUploads >= _maxPendingUploads) {
+      // Red más lenta que la cadencia de segmentos: en vez de acumular
+      // subidas pendientes (y sus archivos temporales) indefinidamente, se
+      // descarta este segmento — la grabación de evidencia sigue intacta,
+      // solo se salta un clip de la transmisión en vivo.
+      debugPrint(
+        '[LiveBroadcast] cola de subida saturada ($_pendingUploads) — se descarta segmento seq=$_seq',
+      );
+      unawaited(_discardSegmentFile(file));
+      return;
+    }
     final seq = _seq++;
     final capturedFile = file;
+    _pendingUploads++;
     // Encadenado (no unawaited) para preservar el orden de seq al mandar el
     // broadcast, aunque una subida sea más lenta que la siguiente.
     _uploadChain = _uploadChain.then((_) async {
       try {
-        final url = await _repo.uploadSegment(
-          file: capturedFile,
-          alertId: alertId,
-          seq: seq,
-        );
+        final url = await _repo
+            .uploadSegment(file: capturedFile, alertId: alertId, seq: seq)
+            .timeout(_uploadTimeout);
         debugPrint('[LiveBroadcast] segmento $seq subido: $url');
         if (_channel == null) return;
-        await _repo.sendSegment(
-          _channel!,
-          VideoSegmentPayload(
-            url: url,
-            seq: seq,
-            ts: DateTime.now().millisecondsSinceEpoch,
-          ),
-        );
+        await _repo
+            .sendSegment(
+              _channel!,
+              VideoSegmentPayload(
+                url: url,
+                seq: seq,
+                ts: DateTime.now().millisecondsSinceEpoch,
+              ),
+            )
+            .timeout(_uploadTimeout);
         debugPrint('[LiveBroadcast] segmento $seq transmitido por broadcast');
         state = state.copyWith(segmentsSent: seq + 1);
       } catch (e, st) {
+        // Red lenta/caída a mitad de subida: se registra el error y se
+        // continúa con el siguiente segmento — nunca se bloquea ni se
+        // reintenta este mismo clip indefinidamente.
         debugPrint('[LiveBroadcast] ERROR en segmento $seq: $e\n$st');
         state = state.copyWith(
           error: 'live_broadcastFailed'.tr(namedArgs: {'e': '$e'}),
         );
+      } finally {
+        _pendingUploads--;
+        await _discardSegmentFile(capturedFile);
       }
     });
+  }
+
+  // Borra el archivo temporal de un segmento ya procesado (subido, fallido o
+  // descartado por saturación) — sin esto, cada segmento cortado por
+  // rotateSegment() (uno cada segmentDuration mientras dura la transmisión)
+  // quedaría en el almacenamiento temporal del dispositivo para siempre.
+  Future<void> _discardSegmentFile(File file) async {
+    try {
+      await file.delete();
+    } catch (_) {
+      /* ya no existía o el filesystem no lo permitió — no es crítico */
+    }
   }
 
   Future<void> stop() async {
